@@ -28,7 +28,11 @@
     "check:concepts": "bun run scripts/check-bootstrap-concepts.ts",
     "check:standalone": "bun run scripts/rehearse-standalone.ts",
     "test": "bun test .",
-    "typecheck": "tsc --noEmit -p ."
+    "typecheck": "tsc --noEmit -p .",
+    "book": "bun run scripts/readme-book.ts",
+    "book:check": "bun run scripts/readme-book.ts --check",
+    "site": "bun run scripts/site.ts",
+    "init": "bun run scripts/init.ts"
   },
   "dependencies": {
     "@playwright/test": "1.63.0",

@@ -55,15 +55,20 @@ export interface SectionOutput {
 
 /**
  * A README section keyed by its marker. The harness's `ReadmeSection` passes
- * a richer context; these two read only `root`, so they fit its registry.
+ * a richer context; these read only `root` — and `readme`, the README as the
+ * sections before it left it, which only the table of contents needs.
  */
 export interface GraphSection {
   /** Marker name; the README carries `<!-- <marker>:begin -->` … `:end`. */
   marker: string;
   /** One line, shown by `--list`. */
   summary: string;
-  render(ctx: { root: string }): SectionOutput;
+  render(ctx: { root: string; readme?: string }): SectionOutput;
 }
+
+/** `a`, `a and b`, `a, b and c`. */
+export const andList = (xs: readonly string[]): string =>
+  xs.length <= 1 ? (xs[0] ?? "") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`;
 
 /** Escape the cell separator so a value containing `|` cannot break a table. */
 const cell = (text: string): string => text.replace(/\|/g, "\\|");
@@ -211,10 +216,18 @@ export const processesSection: GraphSection = {
     const lines: string[] = [];
     for (const p of ordered(g)) {
       const callers = g.bpmn.filter((q) => q.calls.includes(p.id)).map((q) => q.name);
-      const how = callers.length ? `started from ${callers.map((c) => `"${c}"`).join(" and ")}` : "the one you start";
-      const calls = [...new Set(p.calls)].map((c) => byId.get(c)?.name).filter(Boolean);
+      // A Process called from more than one place is a REUSABLE sub-process,
+      // and says so: that is the thing a reader looking for "how do we ask"
+      // or "how do we log" needs to see (owner, 2026-09-30).
+      const how =
+        callers.length > 1
+          ? `a reusable sub-process, started from ${andList(callers.map((c) => `"${c}"`))}`
+          : callers.length
+            ? `started from "${callers[0]}"`
+            : "the one you start";
+      const calls = [...new Set(p.calls)].map((c) => byId.get(c)?.name).filter((c): c is string => Boolean(c));
       lines.push(
-        `**${p.name}**: [\`${p.file}\`](${p.file}), ${how}${calls.length ? `; it calls ${calls.map((c) => `"${c}"`).join(" and ")}` : ""}.`,
+        `**${p.name}**: [\`${p.file}\`](${p.file}), ${how}${calls.length ? `; it calls ${andList(calls.map((c) => `"${c}"`))}` : ""}.`,
         "",
         `![${p.name}](${p.file.replace(/\.bpmn$/, ".svg")})`,
         "",

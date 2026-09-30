@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  * Write — or with `--check`, verify — the generated sections of bootstrap's
- * `README.md`: `kg:processes`, `kg:files` and `kg:roles`.
+ * `README.md`: `kg:processes`, `kg:files`, `kg:roles` and `kg:toc`.
  *
  * @module bootstrap-tools/scripts/readme-sections
  * @covers code
@@ -24,8 +24,10 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { filesSection, processesSection, rolesSection, type GraphSection } from "./readme-graph-sections.ts";
+import { tocSection } from "./readme-toc.ts";
 
-export const SECTIONS: readonly GraphSection[] = [processesSection, filesSection, rolesSection];
+/** In the order they are written. The table of contents is last, so it lists what the others wrote. */
+export const SECTIONS: readonly GraphSection[] = [processesSection, filesSection, rolesSection, tocSection];
 
 /** `readme` with `body` between the marker's begin and end; unchanged when it has no such region. */
 export function inject(readme: string, body: string, marker: string): string {
@@ -44,7 +46,7 @@ export function syncReadme(root: string, readme: string): { content: string; wri
   const notes: string[] = [];
   for (const s of SECTIONS) {
     if (!content.includes(`<!-- ${s.marker}:begin -->`)) continue;
-    const out = s.render({ root });
+    const out = s.render({ root, readme: content });
     notes.push(...out.notes.map((n) => `${s.marker}: ${n}`));
     if (out.skip) continue;
     content = inject(content, out.markdown, s.marker);

@@ -44,6 +44,10 @@ export const REHEARSED: ReadonlyArray<readonly [string, string[]]> = [
   ["node IRIs are their paths", ["run", "scripts/check-node-iris.ts"]],
   ["documents and the built graph parse", ["run", "scripts/validate-bootstrap.ts"]],
   ["README sections are current", ["run", "scripts/readme-sections.ts", "--check"]],
+  ["bootstrap-tools' own README sections are current", ["run", "scripts/readme-sections.ts", "--root", ".", "--check"]],
+  ["every link on bootstrap's README page lands", ["run", "scripts/readme-book.ts", "--root", "../bootstrap", "--check"]],
+  ["every link on bootstrap-tools' README page lands", ["run", "scripts/readme-book.ts", "--root", ".", "--check"]],
+  ["bootstrap's site stages", ["run", "scripts/site.ts", "--root", "../bootstrap", "--out", "../_site-src"]],
   ["the graph exports", ["run", "scripts/export-graph.ts", "--base-url", "https://example.invalid/bootstrap/", "--out", "/dev/null"]],
   ["unit tests", ["test", "."]],
 ];

@@ -1,0 +1,58 @@
+# The site at https://litlfred.github.io/bootstrap-tools/ — every README here
+# as one page with a table of contents, beside every file as it sits.
+#
+# The same build as bootstrap's own .github/workflows/pages.yml, run on this
+# repository: staged by scripts/site.ts, built by Jekyll, deployed by GitHub
+# Pages. Pages must be on with Source "GitHub Actions" (Settings → Pages), or
+# the deploy step is refused; `bun run init -- --root .` says whether it is.
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: bootstrap-tools
+      - uses: oven-sh/setup-bun@v2
+      - name: Install
+        working-directory: bootstrap-tools
+        run: bun install --frozen-lockfile
+      - name: Check every link on the README page lands
+        working-directory: bootstrap-tools
+        run: bun run scripts/readme-book.ts --root . --check
+      - name: Stage the site
+        working-directory: bootstrap-tools
+        run: bun run scripts/site.ts --root . --out ../_site-src
+      - uses: actions/configure-pages@v5
+      - uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./_site-src
+          destination: ./_site
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

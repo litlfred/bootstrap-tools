@@ -6,6 +6,17 @@ Bootstrap is a content Knowledge Graph: files to read (`.md`, `.json`, `.bpmn`) 
 
 It is **one** toolset over swappable content. Someone who wants a different generator, visualiser or checker uses a different toolset against the same bootstrap.
 
+**Contents**
+
+<!-- kg:toc:begin -->
+
+- [What is here](#what-is-here)
+- [Running it](#running-it)
+- [The site](#the-site)
+- [Status](#status)
+
+<!-- kg:toc:end -->
+
 ## What is here
 
 | path | what it is |
@@ -23,7 +34,12 @@ It is **one** toolset over swappable content. Someone who wants a different gene
 | `scripts/iri-sync.ts` | keeps every literal release IRI at the declared version |
 | `scripts/term-links.ts` | links each defined term in README prose to its definition |
 | `scripts/subgraph-readmes.ts`, `scripts/templates/readme/` | writes each declared directory's README from its declaration, through Liquid templates; standalone it writes only the graphs these tools `support` |
-| `scripts/readme-graph-sections.ts` | the `kg:processes` and `kg:files` README sections: every Process drawn, every file described from itself |
+| `scripts/readme-graph-sections.ts` | the `kg:processes`, `kg:files` and `kg:roles` README sections: every Process drawn, every file described from itself, every Role with all its names |
+| `scripts/readme-toc.ts` | the `kg:toc` README section: a README's own level-2 and level-3 headings, linked by GitHub's anchors, outside code and outside its own region |
+| `scripts/readme-sections.ts` | writes (or with `--check`, verifies) every section a README opts into by its marker pair; `--root` names the instance |
+| `scripts/readme-book.ts` | every README in a repository as one page: the root's first, then each directory's by path, with a table of contents, headings demoted per section and relative links rewritten; `--check` fails on any link on the page that would not land |
+| `scripts/site.ts` | stages an instance's GitHub Pages site: its files as they sit, the README page as `index.md`, and for bootstrap its graph at the address its `@id` names |
+| `scripts/init.ts` | walks an instance's initialization steps as its declarations name them (directories, assets, README and its sections, needed harnesses' instructions, the Pages site), performs what a tool can (switching Pages on needs an authenticated `gh`), and reports each as done, not done, could not determine, or stated |
 | `scripts/render-bpmn.ts` | draws each Process as an SVG beside its `.bpmn`, with bpmn-js in headless Chromium; the harness's site renderer uses the same drawing |
 | `scripts/git-files.ts` | the files git accounts for — tracked, plus untracked and not ignored |
 | `scripts/check-closure.ts` | fails if anything here imports beyond itself, `zod`, `liquidjs`, `@playwright/test` and the runtime |
@@ -44,7 +60,22 @@ bun run --cwd bootstrap-tools schemas:check    # fail if they are stale
 bun run --cwd bootstrap-tools check:closure    # nothing here imports above bootstrap
 bun run --cwd bootstrap-tools check:node-iris  # every published identifier is its file's path
 bun run --cwd bootstrap-tools test
+bun run --cwd bootstrap-tools readme-sections -- --root ../bootstrap   # README sections, the TOC among them
+bun run --cwd bootstrap-tools book -- --root ../bootstrap --check      # the one-page README: every link lands
+bun run --cwd bootstrap-tools site -- --root ../bootstrap --out ../_site-src
+bun run --cwd bootstrap-tools init -- --root ../bootstrap              # every initialization step, checked; --dry-run to only check
 ```
+
+## The site
+
+Each repository's `.github/workflows/pages.yml` (bootstrap's, and this
+one's) checks out the instance and these tools side by side, runs
+`site.ts`, builds the staged directory with Jekyll and deploys it to GitHub
+Pages. Pages has to be on, with **Source: GitHub Actions**, for the deploy
+to be accepted: `init.ts` switches it on when an authenticated `gh` is
+present, and otherwise prints the one step for a person, at
+`https://github.com/<owner>/<repo>/settings/pages`. It never reports an
+unchecked step as done.
 
 In this repository the same commands are also root scripts (`bootstrap:schemas`, `check:tools-closure`, `check:node-iris`, `iri:sync`) and run in the gate set.
 
