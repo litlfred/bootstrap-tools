@@ -407,7 +407,12 @@ if (import.meta.main) {
   const repo = resolve(repoAt >= 0 && args[repoAt + 1] ? args[repoAt + 1]! : join(import.meta.dir, "..", ".."));
   const tools = readKnowledgeGraphDeclaration(join(import.meta.dir, "..")) as Record<string, unknown> | undefined;
   const all = instancesIn(repo);
-  const mine = all.filter((i) => tools !== undefined && supportsContent(tools, i.decl.name, i.decl.version));
+  // The graphs these tools support, and these tools themselves: standing
+  // alone, bootstrap-tools has no host to write its own directory READMEs, so
+  // a stale one went unnoticed until the monorepo regenerated it (2026-09-30).
+  const mine = all.filter(
+    (i) => tools !== undefined && (supportsContent(tools, i.decl.name, i.decl.version) || i.decl.name === tools["name"]),
+  );
   if (mine.length === 0) {
     console.error(`✗ no Knowledge Graph under ${repo} is one these tools support (${JSON.stringify(tools?.["supports"] ?? {})}) — nothing was written or checked.`);
     process.exit(2);

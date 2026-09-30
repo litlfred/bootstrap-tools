@@ -27,6 +27,8 @@ Part of [Bootstrap tools](../README.md) 0.1.0, declared as `bootstrap-tools-scri
 | [`publish-files.ts`](publish-files.ts) | a file |  |
 | [`readme-graph-sections.test.ts`](readme-graph-sections.test.ts) | a file |  |
 | [`readme-graph-sections.ts`](readme-graph-sections.ts) | a file |  |
+| [`readme-sections.test.ts`](readme-sections.test.ts) | a file |  |
+| [`readme-sections.ts`](readme-sections.ts) | a file |  |
 | [`rehearse-standalone.ts`](rehearse-standalone.ts) | a file |  |
 | [`render-bpmn.ts`](render-bpmn.ts) | a file |  |
 | [`schema-semver.test.ts`](schema-semver.test.ts) | a file |  |
