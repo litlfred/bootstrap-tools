@@ -22,7 +22,7 @@
  * @module content/pipeline/term-links
  */
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 
 /** One term: its key (`KnowledgeGraph`) and the link to write for it. */
@@ -112,9 +112,10 @@ export function bootstrapTermTargets(repoRoot: string, fromDir: string, keys: re
   return keys.map((key) => ({ key, href: `${href}#${termAnchor(key)}` }));
 }
 
-/** The git work tree `path` is in, or `undefined` outside one. */
+/** The git work tree `path` (a file or a directory) is in, or `undefined` outside one. */
 function gitTop(path: string): string | undefined {
-  const r = spawnSync("git", ["rev-parse", "--show-toplevel"], { cwd: dirname(path), encoding: "utf-8" });
+  const dir = existsSync(path) && statSync(path).isDirectory() ? path : dirname(path);
+  const r = spawnSync("git", ["rev-parse", "--show-toplevel"], { cwd: dir, encoding: "utf-8" });
   return r.status === 0 ? r.stdout.trim() : undefined;
 }
 

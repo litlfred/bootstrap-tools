@@ -43,6 +43,7 @@ export const REHEARSED: ReadonlyArray<readonly [string, string[]]> = [
   ["IRIs are at the declared version", ["run", "scripts/iri-sync.ts", "--check"]],
   ["node IRIs are their paths", ["run", "scripts/check-node-iris.ts"]],
   ["documents and the built graph parse", ["run", "scripts/validate-bootstrap.ts"]],
+  ["README sections are current", ["run", "scripts/readme-sections.ts", "--check"]],
   ["the graph exports", ["run", "scripts/export-graph.ts", "--base-url", "https://example.invalid/bootstrap/", "--out", "/dev/null"]],
   ["unit tests", ["test", "."]],
 ];
