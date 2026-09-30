@@ -8,12 +8,12 @@
  * @covers code
  * @conformsTo w3c-prov-o
  *
- * ## Why here, and not cat-harness's `kg-export`
+ * ## Why here, and not a harness's `kg-export`
  *
  * Owner, 2026-09-30 (bean `xsqm`): *"bootstrap.jsonld, should be in
- * bootstrap-tools"*. Until then cat-harness's general exporter wrote it
+ * bootstrap-tools"*. Until then a harness's general exporter wrote it
  * (`kg-export --instance ./bootstrap`, a 24k-line import cone), and every
- * property in it was cat-harness's (`partOf`, `inSubgraph`, `relaxable`,
+ * property in it was the harness's (`partOf`, `inSubgraph`, `relaxable`,
  * `touchesWorkPlan` …) — bootstrap's own graph described in the vocabulary of
  * the layer above it. Now the content's tools write the content's graph.
  *
@@ -43,7 +43,7 @@
  *
  * `#skill/<name>`, `#process/<id>`, `#process/<id>/node/<id>`,
  * `#process/<id>/flow/<id>`, `#role/<id>`, `#directory/<id>`, `#asset/<id>` —
- * unchanged, because cat-harness mints links into this document (a skill's
+ * unchanged, because a harness mints links into this document (a skill's
  * home) and a moved fragment is a broken link.
  *
  * ## Pure unless asked

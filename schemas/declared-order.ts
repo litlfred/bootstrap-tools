@@ -16,12 +16,12 @@ export interface OrderViolation {
 
 /**
  * Does a list already in its intended order keep it? — the question a
- * glossary asks, where cat-harness's `flattenDependencies` asks the question a
+ * glossary asks, where a harness's `flattenDependencies` asks the question a
  * pipeline asks ("give me AN order").
  *
  * A glossary's order is authored: the owner, 2026-09-29, wanted definitions
  * that are *"logically tight, non self-referential"*, so each term is defined
- * only by terms above it. That is rule 1 of cat-harness's `dependency-order.ts` (a node runs after
+ * only by terms above it. That is rule 1 of a harness's `dependency-order.ts` (a node runs after
  * everything it needs) read the other way round: `steps` here is the order as written, and every `needs` must point
  * UP. Nothing is reordered — a violation names the edge, because moving a
  * term silently would publish an order nobody chose.

@@ -42,27 +42,27 @@ const OUTPUT = read("bootstrap/schemas/discussion.output.schema.json");
 /**
  * Ajv 6, the one installed: it validates draft-07, which these documents are.
  * This said `strict: false`, an Ajv 8 option that Ajv 6 ignores; the file sat
- * outside the typechecked tree until it moved into cat-harness (2026-09-24),
+ * outside the typechecked tree until it moved into a typechecked package (2026-09-24),
  * so nothing noticed. `ajv` is not a direct dependency (it comes with eslint),
  * which is recorded in bean 319n.
  */
 const ajv = new Ajv({ allErrors: true });
 
 const participant = { kind: "person" as const };
-const exchange = [{ asked: "which harness?", answered: "cat-harness" }];
+const exchange = [{ asked: "which harness?", answered: "example-harness" }];
 
 /** Every case carries WHY, because a bare fixture teaches the next reader nothing. */
 const OUTPUT_CASES: Array<{ why: string; doc: unknown; valid: boolean }> = [
   {
     why: "the ordinary settled answer",
-    doc: { outcome: "settled", harness: "cat-harness", determinedBy: "asked", answeredBy: participant, exchange },
+    doc: { outcome: "settled", harness: "example-harness", determinedBy: "asked", answeredBy: participant, exchange },
     valid: true,
   },
   {
     why: "assumed WITH its documented default named",
     doc: {
       outcome: "settled",
-      harness: "cat-harness",
+      harness: "example-harness",
       determinedBy: "assumed",
       assumption: "the README's stated default",
       answeredBy: participant,
@@ -104,7 +104,7 @@ const OUTPUT_CASES: Array<{ why: string; doc: unknown; valid: boolean }> = [
     why: "STRICTNESS: a typo'd key is rejected rather than ignored",
     doc: {
       outcome: "settled",
-      harness: "cat-harness",
+      harness: "example-harness",
       determinedBy: "assumed",
       assumtion: "the README's stated default",
       answeredBy: participant,
@@ -120,7 +120,7 @@ const OUTPUT_CASES: Array<{ why: string; doc: unknown; valid: boolean }> = [
     why: "...and the same document with the key spelled right is accepted",
     doc: {
       outcome: "settled",
-      harness: "cat-harness",
+      harness: "example-harness",
       determinedBy: "assumed",
       assumption: "the README's stated default",
       answeredBy: participant,
@@ -132,7 +132,7 @@ const OUTPUT_CASES: Array<{ why: string; doc: unknown; valid: boolean }> = [
     why: "STRICTNESS reaches NESTED objects too — a participant with a stray key",
     doc: {
       outcome: "settled",
-      harness: "cat-harness",
+      harness: "example-harness",
       determinedBy: "asked",
       answeredBy: { ...participant, nickname: "not a field" },
       exchange,
@@ -148,7 +148,7 @@ const INPUT_CASES: Array<{ why: string; doc: unknown; valid: boolean }> = [
     doc: {
       open: ["harness", "repositories"],
       askedOf: { kind: "agent", id: "session_x" },
-      candidates: ["cat-harness"],
+      candidates: ["example-harness"],
       knownRepositories: [{ url: "https://example.invalid/r", role: "read-from" }],
       context: "read the README",
     },

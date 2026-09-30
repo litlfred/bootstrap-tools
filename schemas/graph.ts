@@ -10,8 +10,8 @@
  * *"bootstrap = self definitional. no semantic leakage, no graph leakage …
  * all terms have a schema in glossary."* Before this file, the words
  * `bootstrap/README.md` is built on (Actor, Role, Process, Skill) were
- * defined in `cat-harness/schemas/vocabulary.ts`, and their published
- * definitions linked to cat-harness pages. So bootstrap, the one layer that
+ * defined in a harness's vocabulary module, and their published
+ * definitions linked to that harness's pages. So bootstrap, the one layer that
  * must be readable with nothing else present, could not define the words it
  * uses. Now it does, here, and `vocabulary.ts` reads these definitions
  * rather than holding its own copies. That is the allowed direction: a
@@ -157,7 +157,7 @@ export const BOOTSTRAP_TERM_DEFINED_BY: Readonly<Record<BootstrapTerm, string>> 
  * The Graph Kinds bootstrap's own Declaration uses, one plain sentence each.
  *
  * Defined HERE so bootstrap can say what its own Subgraphs hold without a
- * Harness present. They were defined only in cat-harness's registry
+ * Harness present. They were defined only in a harness's registry
  * (`graph-kind-registry.ts`), which now reads these sentences as its
  * summaries rather than holding its own (bean `r3gy`, D1). A Harness adds
  * kinds of its own; to a reader that knows only bootstrap, those are
@@ -239,7 +239,7 @@ export const KnowledgeGraphDeclarationSchema = z
     assets: z.array(AssetSchema).optional(),
   })
   // Every other field is an Extension: a Harness above bootstrap adds its
-  // own (`stickies`, and a sticky's `theme`, are cat-harness's), and a reader
+  // own (`stickies`, and a sticky's `theme`, are one harness's), and a reader
   // that does not know one ignores it rather than rejecting the file.
   .passthrough()
   .describe(`A Declaration. Any field not listed here is an Extension: ${BOOTSTRAP_TERMS.Extension}`);

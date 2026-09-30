@@ -11,7 +11,7 @@
  *
  * Every IRI bootstrap's files mint in its namespace (`<iriBase><version>/ns#…`)
  * must dereference to a definition. Until 2026-09-30 the document at that
- * address was produced by cat-harness (`ns-export --layer bootstrap`), and it
+ * address was produced by a harness (`ns-export --layer bootstrap`), and it
  * held what the HARNESS minted under bootstrap's prefix: 18 IRIs, 9 of them no
  * bootstrap term (`Directory`, `KGraph`, seven `*Graph` classes,
  * `performerVaries`), while 13 of bootstrap's 22 terms had no IRI at all.

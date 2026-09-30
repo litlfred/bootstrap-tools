@@ -13,9 +13,7 @@ description: >
 skill defining major/minor/patch for bootstrap's published schemas and graph,
 with the bump **computed** by this instance's pipeline from a diff of the
 generated schemas — in the spirit of the instance-versioning proposal
-([#592](https://github.com/litlfred/folio-assistant/issues/592),
-[`instance-versioning.md`](../../cat-harness/docs/proposals/instance-versioning.md)
-§4.1): *"a version bump COMPUTED by diffing the exported graph rather than
+(§4.1): *"a version bump COMPUTED by diffing the exported graph rather than
 asserted"*.
 
 This is **not** the every-instance version the proposal designs, and the

@@ -2,7 +2,7 @@
  * A REQUIREMENT — what a harness, or something built with one, must do, said so it
  * can be checked.
  *
- * @module cat-harness/schemas/requirement
+ * @module bootstrap-tools/schemas/requirement
  * @graphNode schema
  *
  * Owner, 2026-09-23 — the ask and its wording are on issue #1164, and are NOT

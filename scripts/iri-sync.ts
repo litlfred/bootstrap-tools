@@ -102,7 +102,7 @@ if (import.meta.main) {
     process.exit(2);
   }
   // The whole checkout when it is one repository (the monorepo, where
-  // cat-harness's literal citations of bootstrap's IRIs are kept in step too);
+  // a harness's literal citations of bootstrap's IRIs are kept in step too);
   // otherwise each declaring instance's own repository — the standalone case,
   // where bootstrap and bootstrap-tools are sibling clones in a directory that
   // is not itself a repository (found by `rehearse-standalone`).

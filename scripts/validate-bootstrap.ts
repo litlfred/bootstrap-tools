@@ -38,7 +38,7 @@
  * ## What it does NOT validate, and why
  *
  * Nothing it can reach, since 2026-09-30. The GRAPH document,
- * `bootstrap.jsonld`, was the gap: its Zod lived in cat-harness, which these
+ * `bootstrap.jsonld`, was the gap: its Zod lived in a harness, which these
  * tools may not import. It is now written here (`export-graph.ts`, shape
  * `GraphExportSchema`, bean `xsqm`), so it is BUILT in memory and parsed like
  * the rest. It is built rather than read because it is never committed; the

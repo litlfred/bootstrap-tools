@@ -4,7 +4,7 @@
  *
  * @module bootstrap-tools/scripts/git-files
  *
- * The same rule as cat-harness's `gitCorpus`, restated here in a dozen lines
+ * The same rule a harness applies to its git corpus, restated here in a dozen lines
  * rather than imported, because importing it reached the harness (bean
  * `xsqm`: bootstrap-tools depends on bootstrap and nothing above it).
  *

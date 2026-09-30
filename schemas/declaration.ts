@@ -3,16 +3,16 @@
  *
  * @module bootstrap-tools/schemas/declaration
  *
- * ## Why this exists instead of cat-harness's reader
+ * ## Why this exists instead of a harness's reader
  *
- * bootstrap-tools needed three things from `cat-harness/schemas/cat-harness.ts`
+ * bootstrap-tools needed three things from the hosting harness's declaration module
  * — find a directory's declaration, parse it, list the instances in a
  * checkout — and importing them pulled in that module and seven more: 9,299 of
  * the 11,577 lines the bootstrap code reached (measured 2026-09-29). A -tools
  * package for bootstrap may depend on bootstrap and nothing above it (owner,
  * 2026-09-29: the Zod moves down, and bootstrap-tools depends on `zod` alone).
  *
- * The rule is the same one cat-harness applies, so the two cannot disagree
+ * The rule is the same one the hosting harness applies, so the two cannot disagree
  * about which file is a declaration: **a directory's declaration is the
  * `<stem>.json` whose own `name` equals `<stem>`.** Nothing is inferred from
  * the directory's name. The shape is bootstrap's `KnowledgeGraphDeclarationSchema`,

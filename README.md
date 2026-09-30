@@ -1,6 +1,6 @@
 # bootstrap-tools
 
-**The toolset that describes [`bootstrap`](../bootstrap/README.md), kept outside it so bootstrap does not have one.**
+**The toolset that describes [`bootstrap`](https://github.com/litlfred/bootstrap), kept outside it so bootstrap does not have one.**
 
 Bootstrap is a content Knowledge Graph: files to read (`.md`, `.json`, `.bpmn`) and nothing to run. Its README promises an agent that it needs nothing installed. So the code that writes bootstrap's schemas and checks its content lives here, beside it, and bootstrap never imports from here.
 

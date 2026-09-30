@@ -21,8 +21,9 @@
  *
  * @module content/pipeline/term-links
  */
-import { existsSync } from "node:fs";
-import { join, relative } from "node:path";
+import { spawnSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join, relative } from "node:path";
 
 /** One term: its key (`KnowledgeGraph`) and the link to write for it. */
 export interface TermTarget {
@@ -100,6 +101,29 @@ export function unlinkedTerms(markdown: string, targets: readonly TermTarget[]):
 export function bootstrapTermTargets(repoRoot: string, fromDir: string, keys: readonly string[]): TermTarget[] {
   const page = join(repoRoot, "bootstrap", "schemas", "README.md");
   if (!existsSync(page)) return [];
-  const rel = relative(fromDir, page).split("\\").join("/");
-  return keys.map((key) => ({ key, href: `${rel}#${termAnchor(key)}` }));
+  // A relative path only within ONE repository. Across two — bootstrap-tools
+  // and bootstrap as sibling clones — a relative link would point outside the
+  // repository the README is read in, so it names bootstrap's own repository
+  // instead (the `repository` its declaration states).
+  const across = gitTop(fromDir) !== gitTop(page);
+  const repo = across ? declaredRepository(join(repoRoot, "bootstrap")) : undefined;
+  if (across && !repo) return [];
+  const href = across ? `https://github.com/${repo}/blob/main/schemas/README.md` : relative(fromDir, page).split("\\").join("/");
+  return keys.map((key) => ({ key, href: `${href}#${termAnchor(key)}` }));
+}
+
+/** The git work tree `path` is in, or `undefined` outside one. */
+function gitTop(path: string): string | undefined {
+  const r = spawnSync("git", ["rev-parse", "--show-toplevel"], { cwd: dirname(path), encoding: "utf-8" });
+  return r.status === 0 ? r.stdout.trim() : undefined;
+}
+
+/** The `owner/name` a declaration says it is published from, if it says. */
+function declaredRepository(root: string): string | undefined {
+  try {
+    const d = JSON.parse(readFileSync(join(root, "bootstrap.json"), "utf-8")) as { repository?: unknown };
+    return typeof d.repository === "string" && /^[\w.-]+\/[\w.-]+$/.test(d.repository) ? d.repository : undefined;
+  } catch {
+    return undefined;
+  }
 }

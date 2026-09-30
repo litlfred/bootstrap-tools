@@ -9,8 +9,8 @@
  * remark and let GitHub Pages render .md". bootstrap's own site serves only
  * what bootstrap-tools generates plus bootstrap's files; a `.md` is rendered
  * by Pages, not here, so this has no Markdown dependency. A harness that
- * hosts a copy of bootstrap on a site Pages does NOT render (cat-harness's)
- * renders the `.md` itself, after this — `cat-harness/scripts/publish-instance-files.ts`.
+ * hosts a copy of bootstrap on a site Pages does NOT render renders the
+ * `.md` itself, after this, with its own renderer.
  *
  * NEVER OVERWRITES. A site build may already have written a file at the same
  * address (the graph's `.json` copy shares its name with `bootstrap.json`); the

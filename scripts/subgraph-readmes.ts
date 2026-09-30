@@ -15,7 +15,7 @@
  * ## Why this lives in bootstrap-tools, and what it does not know
  *
  * One copy of the README writers, in the tools repository (owner, 2026-09-29,
- * bean `xsqm`), which cat-harness calls. It knows bootstrap's declaration
+ * bean `xsqm`), which the harness that hosts bootstrap calls. It knows bootstrap's declaration
  * shape and nothing above it. So it takes its instances ALREADY RESOLVED
  * ({@link InstanceInput}): a harness whose declarations carry Extensions —
  * a directory scoped to the repository, one allowed to be absent — resolves
@@ -56,7 +56,7 @@
  * the caller supplies a {@link ProcessView}.
  *
  * **Resolved by the caller, like every other Extension here.** A process name
- * is declared in a field this reader does not know (in cat-harness,
+ * is declared in a field this reader does not know (in one harness,
  * `coverage.process`), and a diagram has a home the calling harness's
  * declaration knows; this writer defines only the SHAPE it renders. So a
  * harness resolves the name to a diagram and hands over the view.

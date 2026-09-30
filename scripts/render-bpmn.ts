@@ -19,7 +19,7 @@
  * responsive — and the copy beside the source, whose call activities link
  * only to diagrams in the same directory, since a content graph's pictures
  * must not name anything outside it. A harness that also publishes a site
- * (cat-harness's `render:bpmn`) calls {@link openRenderer} and
+ * (with its own `render:bpmn`) calls {@link openRenderer} and
  * {@link drawing} for its own copies, with links into its own pages.
  *
  * ## Deterministic by construction

@@ -20,8 +20,7 @@
  * nobody has looked at.
  *
  * THIS FILE is code, and bootstrap holds none (its FR-7). Zod lives in
- * cat-harness, with the Tools that read the registry (`check-model-languages`),
- * so it lives here and `gen-bootstrap-schemas.ts` publishes it into bootstrap as
+ * bootstrap-tools, beside bootstrap rather than in it, so it lives here and `gen-bootstrap-schemas.ts` publishes it into bootstrap as
  * `schemas/model-registry.schema.json`, which is what a reader with nothing
  * installed opens. Moved 2026-09-23 on the owner's ruling (bean iwtn).
  *

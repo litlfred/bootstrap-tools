@@ -11,16 +11,13 @@
  * you read, not something you run". Measured: that directory holds `.md`,
  * `.json` and `.bpmn` and **no executable code**. So its shapes cannot be Zod
  * *in it* — owner, 2026-09-20, *"bootstrap should not know zod at all"*. They
- * lived in a sibling instance, `bootstrap-tools`, until 2026-09-24. Owner,
- * that day, *"Validate/zod in cat-harness. Graph and Subgraph too"*:
- * Zod is an AUTHORING TOOL for the Knowledge Graph, *"different tools can/will
- * be used, but the core KG should be unchanged"*. So it lives in cat-harness
- * with the other validators, and what bootstrap carries is only what it
- * generates.
+ * live in this sibling instance, `bootstrap-tools`: Zod is an AUTHORING TOOL
+ * for the Knowledge Graph, *"different tools can/will be used, but the core KG
+ * should be unchanged"*, and what bootstrap carries is only what it generates.
  *
  * `bootstrap/skills/discussion.*.schema.json` is GENERATED from here. The
  * `$id`s are unchanged and must stay so: they are a published contract, and
- * the filenames are cited from `discussion.bpmn`, `cat-harness/tools/index.ts`,
+ * the filenames are cited from `discussion.bpmn`, a harness's tool registry,
  * the generated skill docs and `.pot` catalogues in five languages.
  *
  * ## What Zod cannot carry across, and why it is handled rather than accepted

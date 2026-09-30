@@ -8,7 +8,7 @@
  * bootstrap-tools exists to be released and run without anything above
  * bootstrap: its Zod is bootstrap's contract, and a bootstrap release must not
  * wait on a harness (owner, 2026-09-29, bean `xsqm`). Before it was re-created,
- * the same code reached 19 files / 11,577 lines of cat-harness through three
+ * the same code reached 19 files / 11,577 lines of the harness above it through three
  * imports nobody had looked at (measured). A boundary nothing checks is the
  * boundary that erodes first: every gate in this repository that guarded a
  * boundary without failing on a planted violation turned out not to guard it

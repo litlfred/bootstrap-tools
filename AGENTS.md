@@ -1,6 +1,6 @@
 # AGENTS.md — bootstrap-tools
 
-What binds everywhere is the repository's [`AGENTS.md`](../AGENTS.md). What this toolset *is* is [`README.md`](README.md). Three rules govern work here, and each guards a boundary that is easy to erase by accident.
+What this toolset *is* is [`README.md`](README.md). Three rules govern work here, and each guards a boundary that is easy to erase by accident.
 
 ## 1. Nothing you add here may make `bootstrap` need a tool
 
@@ -25,7 +25,7 @@ After a change here: `bun run bootstrap:schemas`, then `bun test bootstrap-tools
 
 Each script is a step an agent can perform in a process lane: the agent runs it, reads its output, and reports. Nothing here requires a CI service; a GitHub Actions workflow may be described but is not enabled unless the owner asks (owner, 2026-09-29: *"assume primarily agentic"*, and no paid runs without an explicit request).
 
-Which lane runs what — the lanes are the roles of [`kg-separation.bpmn`](../cat-harness/processes/kg-separation.bpmn) while the pair is staged, and of the content repository's own review once it is not:
+Which lane runs what — the lanes are the roles of the hosting harness's `kg-separation.bpmn` while the pair is staged, and of the content repository's own review once it is not:
 
 | step | command (from this directory) | lane | fails when |
 |---|---|---|---|

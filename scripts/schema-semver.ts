@@ -6,8 +6,7 @@
  *
  * Owner, 2026-09-29 (bean `81tw`), choosing "bootstrap contract semver": the
  * bump is COMPUTED by the pipeline from the generated schemas, in the spirit of
- * the instance-versioning proposal (#592, `cat-harness/docs/proposals/
- * instance-versioning.md`): *"a version bump COMPUTED by diffing the exported
+ * the instance-versioning proposal: *"a version bump COMPUTED by diffing the exported
  * graph rather than asserted"*. The rules are the skill
  * `bootstrap-contract-semver`; this is those rules as code.
  *

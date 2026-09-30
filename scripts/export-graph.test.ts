@@ -34,7 +34,7 @@ describe("bootstrap's graph, from bootstrap's files, in standard terms", () => {
     expect(text).not.toContain("folio-assistant");
   });
 
-  test("every skill bootstrap holds is a node, at the id cat-harness links to", () => {
+  test("every skill bootstrap holds is a node, at the id a harness links to", () => {
     const onDisk = readdirSync(join(BOOTSTRAP, "skills"))
       .filter((f) => f.endsWith(".md") && f !== "README.md")
       .map((f) => /^name:\s*(.+)$/m.exec(readFileSync(join(BOOTSTRAP, "skills", f), "utf-8"))?.[1]?.trim() ?? f.slice(0, -3))

@@ -196,7 +196,7 @@ describe("nothing in bootstrap/ names anything above it (bean iwtn)", () => {
    *
    * The `folio-*` schema identifiers are no longer allowed: bootstrap's own
    * files carry `model-registry/1.0.0`, resolving to a schema inside bootstrap
-   * (bean r3gy, D2); `glossary-ledger/1.0.0` moved up to cat-harness with the
+   * (bean r3gy, D2); `glossary-ledger/1.0.0` moved up to the hosting harness with the
    * hosted ledger (bean xsqm). The `folio:` diagram prefix
    * went earlier (bean 12s9, stage 2).
    */
@@ -211,7 +211,7 @@ describe("nothing in bootstrap/ names anything above it (bean iwtn)", () => {
       // 15 `.pot` extraction templates, which are tooling OUTPUT — nobody reads
       // a `.pot`, so they contradicted bootstrap's own promise of "a file you
       // read, not something you run" and have moved to
-      // `cat-harness/translations/<locale>/bootstrap/processes/`.
+      // the hosting harness's own translations tree.
       //
       // The exception is gone rather than kept-and-unused, because while it
       // stood this test scanned 23 of 38 files under a name claiming all of
