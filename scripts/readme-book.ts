@@ -251,7 +251,13 @@ function sectionOf(path: string, md: string, ctx: Ctx): BookSection {
 export function buildBook(
   root: string,
   readmes: ReadonlyMap<string, string>,
-  opts: { title: string; description?: string; jekyll?: boolean } = { title: "README" },
+  opts: {
+    title: string;
+    description?: string;
+    jekyll?: boolean;
+    /** A last section that is not a README — the site's list of published documents — listed in the contents like the rest. */
+    appendix?: { id: string; title: string; body: string };
+  } = { title: "README" },
 ): Book {
   const order = readmeOrder([...readmes.keys()]);
   const byPath = new Map<string, { id: string; anchors: Map<string, string> }>();
@@ -279,9 +285,11 @@ export function buildBook(
     out.push(`${i + 1}. [${s.title}](#${s.id}) — \`${s.path}\``);
     for (const h of s.headings) out.push(`   - [${h.text}](#${h.anchor})`);
   });
+  if (opts.appendix) out.push(`${sections.length + 1}. [${opts.appendix.title}](#${opts.appendix.id})`);
   for (const s of sections) {
     out.push("", "---", "", `## <a id="${s.id}"></a>${s.title}`, "", `*From [\`${s.path}\`](${s.path}).*`, "", s.body);
   }
+  if (opts.appendix) out.push("", "---", "", `## <a id="${opts.appendix.id}"></a>${opts.appendix.title}`, "", opts.appendix.body.trim());
   if (opts.jekyll) out.push("", "{% endraw %}");
   return { markdown: `${out.join("\n")}\n`, sections, problems: ctx.problems };
 }

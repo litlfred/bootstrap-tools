@@ -27,6 +27,8 @@
  * | `declaration` | the file itself: `<name>.json` parses | no |
  * | `needs:<name>` | `needs` — the dependency is beside it, and parses | no |
  * | `instructions:<name>` | FR-4 — `<name>/docs/bootstrap/initialization.md`, when the dependency has one | no: *stated* |
+ * | `schemas:staged` | each JSON Schema `$id` and JSON-LD `@id` under `iriBase` — PRIMARY | checked: the site stages each at its IRI |
+ * | `schemas:published` | the same IRIs — PRIMARY | no: the Pages workflow publishes them; this checks they answer |
  * | `directory:<id>` | `directories[]` — the path exists | no |
  * | `asset:<id>` | `assets[]` — the file exists | no |
  * | `readme` | FR-8 — the root has a `README.md` | no |
@@ -34,6 +36,12 @@
  * | `site:workflow` | `repository` — a workflow deploys the site to GitHub Pages | no |
  * | `site:enabled` | `repository` — Pages is on, built by that workflow | yes, with `gh` |
  * | `site:live` | `iriBase`, else the Pages address — the address answers | no |
+ *
+ * The two `schemas:` steps come first after the declarations are read, and
+ * lead the printed summary: owner, 2026-09-30, *"json(ld) is primary step in
+ * initializing KG harness"*. The site is the vehicle, the documents at their
+ * addresses the goal. A 404 is `not-done`; a 403, 407, 5xx or no answer is
+ * `could-not-determine` ({@link httpAnswer}).
  *
  * A directory is NOT created for you: an empty directory is not tracked by
  * git, so creating one would satisfy this check on one machine and nowhere
@@ -59,11 +67,13 @@
  * Usage: bun run bootstrap-tools/scripts/init.ts [--root ../bootstrap] [--dry-run] [--offline] [--json]
  */
 import { spawnSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
 
 import { readKnowledgeGraphDeclaration, type KnowledgeGraphDeclaration } from "../schemas/declaration.ts";
 import { syncReadme } from "./readme-sections.ts";
+import { publishedDocuments, stageSite, type SiteReport } from "./site.ts";
 
 export type StepState = "done" | "not-done" | "could-not-determine" | "stated";
 
@@ -214,18 +224,100 @@ async function siteSteps(root: string, decl: KnowledgeGraphDeclaration, probe: P
 
   const url = decl.iriBase ?? `https://${o.owner.toLowerCase()}.github.io/${o.repo}/`;
   const status = await probe.httpStatus(url);
+  const answer = httpAnswer(status);
   steps.push({
     id: "site:live",
     namedBy: named,
     what: `the site answers at ${url}`,
-    state: status === undefined ? "could-not-determine" : status >= 200 && status < 400 ? "done" : "not-done",
-    detail: status === undefined ? `${url} could not be reached from here` : `${url} answered ${status}`,
+    state: answer,
+    detail: status === undefined ? `${url} could not be reached from here` : `${url} answered ${status}${answer === "could-not-determine" ? " — an answer about the way here (a proxy, an access rule), not about the site" : ""}`,
     action:
-      status !== undefined && status >= 200 && status < 400
+      answer === "done"
         ? undefined
-        : status === undefined
+        : answer === "could-not-determine"
           ? `open ${url} in a browser`
           : `once Pages is enabled and the workflow has run once, ${url} serves the site; the run is at https://github.com/${o.owner}/${o.repo}/actions`,
+  });
+  return steps;
+}
+
+/**
+ * What an HTTP status says about an address. 2xx and 3xx: it is there. 404
+ * and 410: it is not. Anything else — 401, 403, 407, 5xx — or no answer at
+ * all is an answer about the way HERE (a proxy, an access rule, an outage),
+ * not about the address, so it is could-not-determine and never not-done:
+ * measured 2026-09-30, this sandbox's proxy answers 403 for a site that does
+ * not exist yet.
+ */
+export function httpAnswer(status: number | undefined): StepState {
+  if (status === undefined) return "could-not-determine";
+  if (status >= 200 && status < 400) return "done";
+  if (status === 404 || status === 410) return "not-done";
+  return "could-not-determine";
+}
+
+/**
+ * The PRIMARY initialization step of a Knowledge Graph harness (owner,
+ * 2026-09-30: *"json(ld) is primary step in initializing KG harness"*): every
+ * JSON Schema and JSON-LD document the instance names an address for is
+ * published AT that address. Two steps, because they answer different
+ * questions — `schemas:staged`, does the site this toolset builds put each
+ * one where its IRI says (checked here, no network); and
+ * `schemas:published`, does each IRI answer now. The site is the vehicle;
+ * these are the goal. Nothing is emitted when the instance publishes no
+ * document (no `iriBase`, nothing under it): an empty list checked is not a
+ * pass, so it is not reported as one.
+ */
+export async function documentSteps(root: string, decl: KnowledgeGraphDeclaration, probe: Probe): Promise<InitStep[]> {
+  const docs = publishedDocuments(root);
+  if (docs.length === 0) return [];
+  const name = decl.name;
+  const steps: InitStep[] = [];
+  const tmp = mkdtempSync(join(tmpdir(), "init-site-"));
+  try {
+    let report: SiteReport | undefined;
+    let error: string | undefined;
+    try {
+      report = stageSite(root, tmp);
+    } catch (e) {
+      error = (e as Error).message;
+    }
+    const missing = docs.filter((d) => !existsSync(join(tmp, d.path)));
+    const differ = docs.filter((d) => d.source && existsSync(join(tmp, d.path)) && readFileSync(join(tmp, d.path), "utf-8") !== readFileSync(join(root, d.source), "utf-8"));
+    const bad = [...missing.map((d) => `${d.iri} is not at ${d.path}`), ...differ.map((d) => `${d.path} is not ${d.source}`), ...(error ? [error] : [])];
+    steps.push({
+      id: "schemas:staged",
+      namedBy: name,
+      what: `each of ${docs.length} JSON Schema / JSON-LD documents is staged at the address it names`,
+      state: bad.length ? "not-done" : "done",
+      detail: bad.length ? bad.join("; ") : `${docs.length} documents, each at its own IRI${report?.problems.length ? `; site problems: ${report.problems.join("; ")}` : ""}`,
+      action: bad.length ? "fix the document or its address; `bun run scripts/site.ts --root <instance> --out <dir>` shows what is staged" : undefined,
+    });
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+
+  const answers = await Promise.all(docs.map(async (d) => ({ d, status: await probe.httpStatus(d.iri) })));
+  const by = (st: StepState) => answers.filter((a) => httpAnswer(a.status) === st);
+  const absent = by("not-done");
+  const unknown = by("could-not-determine");
+  steps.push({
+    id: "schemas:published",
+    namedBy: name,
+    what: `each of ${docs.length} document IRIs answers`,
+    state: absent.length ? "not-done" : unknown.length ? "could-not-determine" : "done",
+    detail: [
+      `${by("done").length} answer`,
+      absent.length ? `${absent.length} not found: ${absent.map((a) => a.d.iri).join(", ")}` : "",
+      unknown.length ? `${unknown.length} could not be checked from here (${[...new Set(unknown.map((a) => a.status ?? "unreachable"))].join(", ")})` : "",
+    ]
+      .filter(Boolean)
+      .join("; "),
+    action: absent.length
+      ? "they are published by the Pages workflow: once Pages is on (site:enabled) and the workflow has run, each IRI answers"
+      : unknown.length
+        ? `open one in a browser, e.g. ${unknown[0]!.d.iri}`
+        : undefined,
   });
   return steps;
 }
@@ -268,6 +360,9 @@ export async function initSteps(root: string, opts: { probe?: Probe; dryRun?: bo
       });
     }
   }
+
+  // PRIMARY: the documents at their IRIs, before anything cosmetic.
+  steps.push(...(await documentSteps(root, decl, probe)));
 
   for (const d of decl.directories ?? []) {
     const p = join(root, d.path);
@@ -344,6 +439,9 @@ if (import.meta.main) {
     console.log(JSON.stringify({ root: resolve(root), name, steps, exit: code }, null, 2));
   } else {
     console.log(`Initialization steps for ${name ?? root}, as its declarations name them:`);
+    // The primary step first, on its own line (owner: "json(ld) is primary step").
+    const docs = steps.filter((s) => s.id.startsWith("schemas:"));
+    if (docs.length) console.log(`  JSON Schema and JSON-LD at their IRIs: ${docs.map((s) => `${s.id.slice("schemas:".length)} ${MARK[s.state]} ${s.state}`).join(", ")}\n`);
     for (const s of steps) {
       console.log(`  ${MARK[s.state]} ${s.id.padEnd(28)} ${s.state.padEnd(20)} ${s.what}${s.performed ? " (done now)" : ""}`);
       console.log(`      ${s.detail}`);

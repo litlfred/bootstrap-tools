@@ -38,8 +38,8 @@ It is **one** toolset over swappable content. Someone who wants a different gene
 | `scripts/readme-toc.ts` | the `kg:toc` README section: a README's own level-2 and level-3 headings, linked by GitHub's anchors, outside code and outside its own region |
 | `scripts/readme-sections.ts` | writes (or with `--check`, verifies) every section a README opts into by its marker pair; `--root` names the instance |
 | `scripts/readme-book.ts` | every README in a repository as one page: the root's first, then each directory's by path, with a table of contents, headings demoted per section and relative links rewritten; `--check` fails on any link on the page that would not land |
-| `scripts/site.ts` | stages an instance's GitHub Pages site: its files as they sit, the README page as `index.md`, and for bootstrap its graph at the address its `@id` names |
-| `scripts/init.ts` | walks an instance's initialization steps as its declarations name them (directories, assets, README and its sections, needed harnesses' instructions, the Pages site), performs what a tool can (switching Pages on needs an authenticated `gh`), and reports each as done, not done, could not determine, or stated |
+| `scripts/site.ts` | stages an instance's GitHub Pages site. First every JSON Schema and JSON-LD document at the IRI it names (`$id` / `@id` under `iriBase`, an extensionless one included, with a `.json` copy beside each JSON-LD), and for bootstrap its graph. Then its files as they sit, also under `<version>/`, and the README page as `index.md`, ending in a "Published documents" list. `--check` stages into a temporary directory and lists every address |
+| `scripts/init.ts` | walks an instance's initialization steps as its declarations name them. PRIMARY and first: `schemas:staged` and `schemas:published`, the JSON Schemas and JSON-LD at their IRIs. Then directories, assets, the README and its sections, needed harnesses' instructions and the Pages site. It performs what a tool can (switching Pages on needs an authenticated `gh`) and reports each as done, not done, could not determine, or stated. A 404 is not done; a 403, 407, 5xx or no answer could not be determined |
 | `scripts/render-bpmn.ts` | draws each Process as an SVG beside its `.bpmn`, with bpmn-js in headless Chromium; the harness's site renderer uses the same drawing |
 | `scripts/git-files.ts` | the files git accounts for — tracked, plus untracked and not ignored |
 | `scripts/check-closure.ts` | fails if anything here imports beyond itself, `zod`, `liquidjs`, `@playwright/test` and the runtime |
@@ -67,6 +67,12 @@ bun run --cwd bootstrap-tools init -- --root ../bootstrap              # every i
 ```
 
 ## The site
+
+The site is how a harness's JSON Schemas and JSON-LD reach the IRIs they
+name, which is the primary initialization step; the README page rides along.
+bootstrap-tools itself declares no `iriBase` and publishes no JSON Schema of
+its own (its schemas are the Zod that bootstrap's are generated from), so its
+site carries only its README page and files.
 
 Each repository's `.github/workflows/pages.yml` (bootstrap's, and this
 one's) checks out the instance and these tools side by side, runs

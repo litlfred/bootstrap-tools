@@ -3,7 +3,9 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { enablePagesByHand, exitStatus, initSteps, offlineProbe, ownerRepo, type Probe } from "./init.ts";
+import { spawnSync } from "node:child_process";
+
+import { enablePagesByHand, exitStatus, httpAnswer, initSteps, offlineProbe, ownerRepo, type Probe } from "./init.ts";
 
 /** A fake instance `demo` needing `base`, as sibling checkouts. */
 function fixture(opts: { workflow?: boolean; withBase?: boolean } = {}): string {
@@ -112,4 +114,46 @@ describe("init — the steps the declarations name, in four states", () => {
       ]),
     ).toBe(1);
   });
+
+  test("an HTTP answer: 404 is not there; 403, 407, 5xx and silence are about the way here", () => {
+    expect(httpAnswer(200)).toBe("done");
+    expect(httpAnswer(301)).toBe("done");
+    expect(httpAnswer(404)).toBe("not-done");
+    expect(httpAnswer(403)).toBe("could-not-determine");
+    expect(httpAnswer(407)).toBe("could-not-determine");
+    expect(httpAnswer(503)).toBe("could-not-determine");
+    expect(httpAnswer(undefined)).toBe("could-not-determine");
+  });
+
+  describe("the PRIMARY step: JSON Schema and JSON-LD at their IRIs", () => {
+    const top = mkdtempSync(join(tmpdir(), "init-docs-"));
+    const root = join(top, "kg");
+    mkdirSync(join(root, "schemas"), { recursive: true });
+    writeFileSync(join(root, "kg.json"), JSON.stringify({ name: "kg", version: "0.1.0", iriBase: "https://o.github.io/kg/", repository: "o/kg", directories: [{ id: "schemas", path: "schemas/", graphKinds: ["schemas"] }] }));
+    writeFileSync(join(root, "README.md"), "# kg\n");
+    writeFileSync(join(root, "schemas", "a.schema.json"), JSON.stringify({ $id: "https://o.github.io/kg/0.1.0/schemas/a.schema.json" }));
+    spawnSync("git", ["init", "-q"], { cwd: root });
+    const probeWith = (status: (url: string) => number | undefined): Probe => ({ gh: () => undefined, httpStatus: async (u) => status(u) });
+
+    test("comes right after the declaration, before any directory, README or site step", async () => {
+      const { steps } = await initSteps(root, { probe: offlineProbe, dryRun: true });
+      const ids = steps.map((s) => s.id);
+      expect(ids.slice(0, 3)).toEqual(["declaration", "schemas:staged", "schemas:published"]);
+      expect(state(steps, "schemas:staged")).toBe("done");
+      expect(state(steps, "schemas:published")).toBe("could-not-determine");
+    });
+
+    test("a 404 is not published; a proxy's 403 could not be determined; 200 is done", async () => {
+      const at = async (code: number) => state((await initSteps(root, { probe: probeWith(() => code), dryRun: true })).steps, "schemas:published");
+      expect(await at(404)).toBe("not-done");
+      expect(await at(403)).toBe("could-not-determine");
+      expect(await at(200)).toBe("done");
+    });
+
+    test("site:live: a 403 is could-not-determine, not not-done", async () => {
+      const { steps } = await initSteps(root, { probe: probeWith(() => 403), dryRun: true });
+      expect(state(steps, "site:live")).toBe("could-not-determine");
+    });
+  });
 });
+
