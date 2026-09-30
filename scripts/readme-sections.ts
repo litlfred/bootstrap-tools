@@ -18,7 +18,7 @@
  * section's markers has not opted into it, and is left alone. A section that
  * says it could not determine its content (`skip`) leaves the region as it is.
  *
- * Usage: bun run scripts/readme-sections.ts [--root ../bootstrap] [--check]
+ * Usage: bun run bootstrap-tools/scripts/readme-sections.ts [--root ./bootstrap] [--check]
  */
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
