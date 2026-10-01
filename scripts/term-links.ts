@@ -21,9 +21,8 @@
  *
  * @module content/pipeline/term-links
  */
-import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, statSync } from "node:fs";
-import { dirname, join, relative } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join, relative, resolve } from "node:path";
 
 /** One term: its key (`KnowledgeGraph`) and the link to write for it. */
 export interface TermTarget {
@@ -93,37 +92,45 @@ export function unlinkedTerms(markdown: string, targets: readonly TermTarget[]):
 }
 
 /**
- * bootstrap's defined terms, each linked to its row in bootstrap's schema page
- * as seen from `fromDir` — or none when that page is not there, so a README
- * outside a repository that carries bootstrap links nothing rather than
- * pointing at a file that does not exist.
+ * Where bootstrap's schema page is published: the directory README Pages
+ * serves at `schemas/` (GitHub Pages' `jekyll-readme-index` makes a
+ * directory's README its index). A README outside bootstrap links here, and
+ * only here.
  */
-export function bootstrapTermTargets(repoRoot: string, fromDir: string, keys: readonly string[]): TermTarget[] {
-  const page = join(repoRoot, "bootstrap", "schemas", "README.md");
-  if (!existsSync(page)) return [];
-  // A relative path only within ONE repository. Across two — bootstrap-tools
-  // and bootstrap as sibling clones — a relative link would point outside the
-  // repository the README is read in, so it names bootstrap's own repository
-  // instead (the `repository` its declaration states).
-  const across = gitTop(fromDir) !== gitTop(page);
-  const repo = across ? declaredRepository(join(repoRoot, "bootstrap")) : undefined;
-  if (across && !repo) return [];
-  const href = across ? `https://github.com/${repo}/blob/main/schemas/README.md` : relative(fromDir, page).split("\\").join("/");
+export const BOOTSTRAP_SCHEMA_PAGE = "https://litlfred.github.io/bootstrap/schemas/";
+
+/**
+ * bootstrap's defined terms, each linked to its row in bootstrap's schema page.
+ *
+ * Inside bootstrap — `fromDir` at or under a directory whose `bootstrap.json`
+ * names `bootstrap` and which carries `schemas/README.md` — the link is
+ * relative, so it works in a clone with nothing published. Anywhere else it is
+ * the published page, whatever sits beside the README: a sibling checkout, a
+ * monorepo, or nothing at all. The output must not depend on the layout it
+ * was generated in (2026-10-01: bootstrap-tools' README gained `../bootstrap/`
+ * links when regenerated next to bootstrap, and none standing alone).
+ *
+ * `repoRoot` is kept for callers and no longer decides anything.
+ */
+export function bootstrapTermTargets(_repoRoot: string, fromDir: string, keys: readonly string[]): TermTarget[] {
+  const own = bootstrapRootAbove(resolve(fromDir));
+  const href = own ? relative(resolve(fromDir), join(own, "schemas", "README.md")).split("\\").join("/") : BOOTSTRAP_SCHEMA_PAGE;
   return keys.map((key) => ({ key, href: `${href}#${termAnchor(key)}` }));
 }
 
-/** The git work tree `path` (a file or a directory) is in, or `undefined` outside one. */
-function gitTop(path: string): string | undefined {
-  const dir = existsSync(path) && statSync(path).isDirectory() ? path : dirname(path);
-  const r = spawnSync("git", ["rev-parse", "--show-toplevel"], { cwd: dir, encoding: "utf-8" });
-  return r.status === 0 ? r.stdout.trim() : undefined;
+/** The nearest directory at or above `dir` that is bootstrap itself, if any. */
+function bootstrapRootAbove(dir: string): string | undefined {
+  for (let d = dir; ; d = dirname(d)) {
+    if (existsSync(join(d, "schemas", "README.md")) && declaredName(d) === "bootstrap") return d;
+    if (dirname(d) === d) return undefined;
+  }
 }
 
-/** The `owner/name` a declaration says it is published from, if it says. */
-function declaredRepository(root: string): string | undefined {
+/** The `name` the `bootstrap.json` in `root` declares, if it parses. */
+function declaredName(root: string): string | undefined {
   try {
-    const d = JSON.parse(readFileSync(join(root, "bootstrap.json"), "utf-8")) as { repository?: unknown };
-    return typeof d.repository === "string" && /^[\w.-]+\/[\w.-]+$/.test(d.repository) ? d.repository : undefined;
+    const d = JSON.parse(readFileSync(join(root, "bootstrap.json"), "utf-8")) as { name?: unknown };
+    return typeof d.name === "string" ? d.name : undefined;
   } catch {
     return undefined;
   }
