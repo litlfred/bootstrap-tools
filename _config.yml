@@ -1,0 +1,3 @@
+title: "Bootstrap tools"
+description: "The Zod source of bootstrap's schemas, the generators that write bootstrap's JSON Schemas, schema page and READMEs, and the checks bootstrap's content must pass — runnable by an agent, with zod, liquidjs, Playwright and bpmn-js as its dependencies."
+theme: jekyll-theme-primer

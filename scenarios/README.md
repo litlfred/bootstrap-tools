@@ -1,0 +1,11 @@
+<!-- kg:subgraph:begin -->
+# The toolset's Roles
+
+`roles.json`: the [Roles](https://github.com/litlfred/bootstrap/blob/main/schemas/README.md#role) the toolset's [Processes](https://github.com/litlfred/bootstrap/blob/main/schemas/README.md#process) bind their lanes to. The Site Publisher, who renders, deploys, checks and reports; and GitHub Pages, the host, acted upon.
+
+Part of [Bootstrap tools](../README.md) 0.1.0, declared as `bootstrap-tools-scenarios`, holding `scenarios`.
+
+| file | what it is | used by |
+|---|---|---|
+| [`roles.json`](roles.json) | data |  |
+<!-- kg:subgraph:end -->

@@ -1,0 +1,13 @@
+<!-- kg:subgraph:begin -->
+# The toolset's skills
+
+The skills this toolset owns: `bootstrap-contract-semver`, what MAJOR, MINOR and PATCH mean for bootstrap's published schemas and why the bump is computed from a diff; and `render-kg-to-github-pages`, rendering a [Knowledge Graph](https://github.com/litlfred/bootstrap/blob/main/schemas/README.md#knowledge-graph) (or a list of its [Subgraphs](https://github.com/litlfred/bootstrap/blob/main/schemas/README.md#subgraph)) to GitHub Pages at a publication root URL and reporting the push's status with one message.
+
+Part of [Bootstrap tools](../README.md) 0.1.0, declared as `bootstrap-tools-skills`, holding `skills`.
+
+| file | what it is | used by |
+|---|---|---|
+| [`bootstrap-contract-semver.md`](bootstrap-contract-semver.md) | What MAJOR, MINOR and PATCH mean for bootstrap's PUBLISHED schemas and graph, and why the bump is computed from a diff of the generated documents rather than… |  |
+| [`package-manifest.json`](package-manifest.json) | The toolset's skills: how bootstrap's published contract is versioned (what MAJOR, MINOR and PATCH mean for its generated schemas, and how the bump is comput… |  |
+| [`render-kg-to-github-pages.md`](render-kg-to-github-pages.md) | Render a [Knowledge Graph](https://github.com/litlfred/bootstrap/blob/main/schemas/README.md#knowledge-graph), or a list of its [Subgraphs](https://github.com/litlfred/bootstrap/blob/main/schemas/README.md#subgraph), to GitHub Pages at a publication root URL, and report the push: a status (pushed, not pushed, could not… | "Render a Knowledge Graph to GitHub Pages" |
+<!-- kg:subgraph:end -->
