@@ -101,3 +101,62 @@ describe("plan, on a fixture", async () => {
     rmSync(r, { recursive: true, force: true });
   });
 });
+
+describe("a subdirectory row says what it IS when the caller resolved one", async () => {
+  // Bean `kgho` / folio-assistant#1724. A file COUNT is re-derived from the
+  // filesystem on every run, so two branches that each add a file compute two
+  // different totals and NEITHER is right for the merge: one line of
+  // `beans/README.md` conflicted three times in a single day (2026-10-01).
+  // A declared description changes only when the declaration changes.
+  //
+  // The caller resolves it, not this writer. `declarationFileIn` recognises a
+  // declaration by `name` matching its basename, and that is load-bearing:
+  // `bootstrap-tools/` holds both `package.json` and `bootstrap-tools.json`,
+  // BOTH satisfy `KnowledgeGraphDeclarationSchema`, and the function throws on
+  // two — so a "whatever validates" rule would throw on this very repository.
+  // Declarations that legitimately break the basename rule (`beans/beans.json`,
+  // whose `name` says whose work plan it is) are their harness's to resolve.
+  const r = repo();
+  const withDesc = instancesIn(r).map((i) => ({
+    ...i,
+    dirs: i.dirs.map((d) => (d.id === "skills" ? { ...d, subdirs: { pack: "A bundle of related skills." } } : d)),
+  }));
+  const p = await plan(r, withDesc);
+  const skills = p.writes.get(join(r, "demo", "skills", "README.md"))!;
+
+  test("the description replaces the count", () => {
+    expect(skills).toContain("| [`pack/`](pack/) | A bundle of related skills. | |");
+  });
+
+  test("and the count is GONE, not merely accompanied", () => {
+    // The row carries one answer. Printing both would make a reader ask which
+    // is the subject of the row, and reintroduce the drifting value this
+    // change exists to remove.
+    expect(skills).not.toContain("1 file");
+  });
+
+  test("a name with no description still gets its count", () => {
+    // Partial resolution is the normal case: a directory may declare some of
+    // its children and not others. The unnamed ones must not go blank.
+    const partial = instancesIn(r).map((i) => ({
+      ...i,
+      dirs: i.dirs.map((d) => (d.id === "skills" ? { ...d, subdirs: { nothing: "unrelated" } } : d)),
+    }));
+    return plan(r, partial).then((q) => {
+      expect(q.writes.get(join(r, "demo", "skills", "README.md"))!).toContain("| [`pack/`](pack/) | 1 file | |");
+    });
+  });
+
+  test("an empty string is not a description — it falls back", () => {
+    // `""` is what the writer itself passes down for "nothing declared", so a
+    // caller supplying it must behave the same way rather than emitting a
+    // blank cell.
+    const blank = instancesIn(r).map((i) => ({
+      ...i,
+      dirs: i.dirs.map((d) => (d.id === "skills" ? { ...d, subdirs: { pack: "" } } : d)),
+    }));
+    return plan(r, blank).then((q) => {
+      expect(q.writes.get(join(r, "demo", "skills", "README.md"))!).toContain("| [`pack/`](pack/) | 1 file | |");
+    });
+  });
+});
