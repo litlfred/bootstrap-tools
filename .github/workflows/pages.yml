@@ -1,10 +1,11 @@
-# The site at https://litlfred.github.io/bootstrap-tools/ — every README here
+# The site at https://litlfred.github.io/bootstrap-tools/ (landing on README.html) — every README here
 # as one page with a table of contents, beside every file as it sits.
 #
-# The same build as bootstrap's own .github/workflows/pages.yml, run on this
-# repository: staged by scripts/site.ts, built by Jekyll, deployed by GitHub
-# Pages. Pages must be on with Source "GitHub Actions" (Settings → Pages), or
-# the deploy step is refused; `bun run init -- --root .` says whether it is.
+# Staged by scripts/site.ts and committed onto the gh-pages branch as a full
+# replace; GitHub Pages builds the branch (Jekyll). Pages must be on, serving
+# gh-pages, and the branch must exist first (owner, 2026-10-01) —
+# `bun run scripts/init.ts --root .` checks both (site:branch, site:enabled).
+# The process is processes/render-kg-to-github-pages.bpmn.
 name: Pages
 
 on:
@@ -13,16 +14,14 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
-  build:
+  publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,21 +37,24 @@ jobs:
       - name: Stage the site
         working-directory: bootstrap-tools
         run: bun run scripts/site.ts --root . --out ../_site-src
-      - uses: actions/configure-pages@v5
-      - uses: actions/jekyll-build-pages@v1
-        with:
-          source: ./_site-src
-          destination: ./_site
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./_site
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Commit the staged site onto gh-pages (full replace; rebuild, never rebase)
+        env:
+          REPO: ${{ github.repository }}
+          SRC: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            rm -rf _gh && git clone --quiet --branch gh-pages --single-branch \
+              "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${REPO}.git" _gh
+            find _gh -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+            cp -a _site-src/. _gh/
+            cd _gh
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            if git diff --cached --quiet; then echo "gh-pages already current"; exit 0; fi
+            git commit --quiet -m "Publish ${SRC}"
+            if git push --quiet origin gh-pages; then echo "gh-pages $(git rev-parse HEAD)"; exit 0; fi
+            cd ..; sleep $((attempt * 5))
+          done
+          echo "push to gh-pages failed after 3 attempts" >&2; exit 1

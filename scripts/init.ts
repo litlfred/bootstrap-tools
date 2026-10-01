@@ -33,9 +33,10 @@
  * | `asset:<id>` | `assets[]` — the file exists | no |
  * | `readme` | FR-8 — the root has a `README.md` | no |
  * | `readme-sections` | the README's own markers — every opted-in section is current | yes |
- * | `site:workflow` | `repository` — a workflow deploys the site to GitHub Pages | no |
- * | `site:enabled` | `repository` — Pages is on, built by that workflow | yes, with `gh` |
- * | `site:live` | `iriBase`, else the Pages address — the address answers | no |
+ * | `site:workflow` | `repository` — a workflow commits the site onto gh-pages | no |
+ * | `site:branch` | `repository` — a gh-pages branch exists (2026-10-01: it must, before Pages can be on) | no: says how |
+ * | `site:enabled` | `repository` — Pages is on, serving gh-pages | yes, with `gh`, once the branch exists |
+ * | `site:live` | `iriBase`, else the Pages address — the address answers, and so does its `README.html` | no |
  *
  * The two `schemas:` steps come first after the declarations are read, and
  * lead the printed summary: owner, 2026-09-30, *"json(ld) is primary step in
@@ -73,7 +74,7 @@ import { basename, dirname, join, resolve } from "node:path";
 
 import { readKnowledgeGraphDeclaration, type KnowledgeGraphDeclaration } from "../schemas/declaration.ts";
 import { syncReadme } from "./readme-sections.ts";
-import { publishedDocuments, stageSite, type SiteReport } from "./site.ts";
+import { ownerRepo, publishedDocuments, stageSite, type SiteReport } from "./site.ts";
 
 export type StepState = "done" | "not-done" | "could-not-determine" | "stated";
 
@@ -96,11 +97,18 @@ export interface Probe {
   gh(args: string[]): { status: number; stdout: string; stderr: string } | undefined;
   /** The HTTP status `url` answers with; `undefined` when it could not be reached. */
   httpStatus(url: string): Promise<number | undefined>;
+  /** Run `git` in `cwd`; `undefined` when there is no `git` to run. Absent means could-not-determine. */
+  git?(args: string[], cwd: string): { status: number; stdout: string; stderr: string } | undefined;
 }
 
 export const realProbe: Probe = {
   gh(args) {
     const r = spawnSync("gh", args, { encoding: "utf-8" });
+    if (r.error) return undefined;
+    return { status: r.status ?? 1, stdout: r.stdout ?? "", stderr: r.stderr ?? "" };
+  },
+  git(args, cwd) {
+    const r = spawnSync("git", args, { cwd, encoding: "utf-8" });
     if (r.error) return undefined;
     return { status: r.status ?? 1, stdout: r.stdout ?? "", stderr: r.stderr ?? "" };
   },
@@ -117,18 +125,14 @@ export const realProbe: Probe = {
 /** Probe that reaches nothing: every outside check becomes `could-not-determine`. */
 export const offlineProbe: Probe = { gh: () => undefined, httpStatus: async () => undefined };
 
-/** `owner/repo` from a declaration's `repository`, in either the short or the URL form. */
-export function ownerRepo(repository: unknown): { owner: string; repo: string } | undefined {
-  if (typeof repository !== "string") return undefined;
-  const m = /^(?:https:\/\/github\.com\/)?([\w.-]+)\/([\w.-]+?)(?:\.git)?\/?$/.exec(repository.trim());
-  return m ? { owner: m[1]!, repo: m[2]! } : undefined;
-}
+/** `owner/repo` from a declaration's `repository` — defined in `site.ts`, which composes a page's source links from it. */
+export { ownerRepo };
 
 const pagesSettings = (o: { owner: string; repo: string }) => `https://github.com/${o.owner}/${o.repo}/settings/pages`;
 
 /** The person's one step, written so it can be followed without opening anything else. */
 export function enablePagesByHand(o: { owner: string; repo: string }): string {
-  return `open ${pagesSettings(o)} → "Build and deployment" → Source: "GitHub Actions" (free for a public repository). Then re-run the Pages workflow from the Actions tab, or push to main.`;
+  return `open ${pagesSettings(o)} → "Build and deployment" → Source: "Deploy from a branch" → branch \`gh-pages\`, folder \`/ (root)\` (free for a public repository; the branch must exist first — site:branch). Then re-run the Pages workflow from the Actions tab, or push to main.`;
 }
 
 /** A workflow under `.github/workflows/` that deploys to Pages, or `undefined`. */
@@ -137,7 +141,7 @@ export function pagesWorkflow(root: string): string | undefined {
   if (!existsSync(dir)) return undefined;
   for (const f of readdirSync(dir).sort()) {
     if (!/\.ya?ml$/.test(f)) continue;
-    if (/actions\/deploy-pages@/.test(readFileSync(join(dir, f), "utf-8"))) return `.github/workflows/${f}`;
+    if (/\bgh-pages\b/.test(readFileSync(join(dir, f), "utf-8"))) return `.github/workflows/${f}`;
   }
   return undefined;
 }
@@ -167,11 +171,29 @@ async function siteSteps(root: string, decl: KnowledgeGraphDeclaration, probe: P
     namedBy: named,
     what: "a workflow that builds the site and deploys it to GitHub Pages",
     state: wf ? "done" : "not-done",
-    detail: wf ? wf : "no workflow under .github/workflows/ uses actions/deploy-pages",
-    action: wf ? undefined : "add .github/workflows/pages.yml — bootstrap's is the pattern: stage the site with bootstrap-tools' scripts/site.ts, build it with actions/jekyll-build-pages, upload and deploy",
+    detail: wf ? wf : "no workflow under .github/workflows/ publishes to the gh-pages branch",
+    action: wf ? undefined : "add .github/workflows/pages.yml — bootstrap's is the pattern: stage the site with bootstrap-tools' scripts/site.ts and commit it onto gh-pages as a full replace",
   });
 
-  const enabled: InitStep = { id: "site:enabled", namedBy: named, what: `GitHub Pages is on for ${o.owner}/${o.repo}, built by a workflow`, state: "could-not-determine", detail: "" };
+  // The branch must exist before Pages can serve it — owner, 2026-10-01:
+  // "need to create gh-pages branch before can turn on".
+  const branch: InitStep = { id: "site:branch", namedBy: named, what: `a gh-pages branch exists on ${o.owner}/${o.repo}, for Pages to serve`, state: "could-not-determine", detail: "" };
+  const remote = `https://github.com/${o.owner}/${o.repo}`;
+  const ls = probe.git?.(["ls-remote", "--heads", remote, "gh-pages"], root);
+  if (!ls || ls.status !== 0) {
+    branch.detail = ls ? `\`git ls-remote ${remote}\` failed: ${(ls.stderr || ls.stdout).trim().split("\n")[0] ?? "no output"}` : "no `git` here to ask the remote";
+    branch.action = `create it: an orphan gh-pages holding a placeholder index.html and .nojekyll, pushed to ${remote}`;
+  } else if (/refs\/heads\/gh-pages/.test(ls.stdout)) {
+    branch.state = "done";
+    branch.detail = "gh-pages exists";
+  } else {
+    branch.state = "not-done";
+    branch.detail = "no gh-pages branch — Pages cannot be switched on to serve it until it exists";
+    branch.action = `create it: \`git checkout --orphan gh-pages && git rm -rfq . && echo placeholder > index.html && touch .nojekyll && git add . && git commit -m "Create gh-pages" && git push origin gh-pages\` — init never creates a branch on a remote by itself`;
+  }
+  steps.push(branch);
+
+  const enabled: InitStep = { id: "site:enabled", namedBy: named, what: `GitHub Pages is on for ${o.owner}/${o.repo}, serving the gh-pages branch`, state: "could-not-determine", detail: "" };
   const auth = probe.gh(["auth", "status"]);
   if (!auth) {
     enabled.detail = "no `gh` CLI here, so Pages could not be checked or enabled";
@@ -183,32 +205,37 @@ async function siteSteps(root: string, decl: KnowledgeGraphDeclaration, probe: P
     const api = `repos/${o.owner}/${o.repo}/pages`;
     const read = () => probe.gh(["api", api])!;
     const r = read();
-    const buildType = (s: string) => {
+    const source = (s: string) => {
       try {
-        return (JSON.parse(s) as { build_type?: string }).build_type;
+        return (JSON.parse(s) as { source?: { branch?: string } }).source?.branch;
       } catch {
         return undefined;
       }
     };
-    if (r.status === 0 && buildType(r.stdout) === "workflow") {
+    const create = ["api", "-X", "POST", api, "-f", "source[branch]=gh-pages", "-f", "source[path]=/"];
+    if (r.status === 0 && source(r.stdout) === "gh-pages") {
       enabled.state = "done";
-      enabled.detail = "Pages is on, built by a workflow";
+      enabled.detail = "Pages is on, serving gh-pages";
     } else if (r.status === 0) {
       enabled.state = "not-done";
-      enabled.detail = `Pages is on but built from a branch (build_type ${buildType(r.stdout) ?? "unknown"}) — the workflow's deploy will be refused`;
-      enabled.action = `switch it with \`gh api -X PUT ${api} -f build_type=workflow\`, or ${enablePagesByHand(o)} — left to you, because it changes how an existing site is built`;
+      enabled.detail = `Pages is on but serves ${source(r.stdout) ?? "a workflow build"}, not gh-pages`;
+      enabled.action = `switch it with \`gh api -X PUT ${api} -f 'source[branch]=gh-pages' -f 'source[path]=/'\`, or ${enablePagesByHand(o)} — left to you, because it changes how an existing site is built`;
     } else if (/HTTP 404|Not Found/i.test(r.stderr + r.stdout)) {
-      if (dryRun) {
+      if (branch.state !== "done") {
+        enabled.state = "not-done";
+        enabled.detail = "Pages is not enabled, and cannot be until gh-pages exists (site:branch)";
+        enabled.action = "create gh-pages first (site:branch), then re-run";
+      } else if (dryRun) {
         enabled.state = "not-done";
         enabled.detail = "Pages is not enabled (dry run: not enabling it)";
-        enabled.action = `\`gh api -X POST ${api} -f build_type=workflow\`, or ${enablePagesByHand(o)}`;
+        enabled.action = `\`gh ${create.join(" ")}\`, or ${enablePagesByHand(o)}`;
       } else {
-        const c = probe.gh(["api", "-X", "POST", api, "-f", "build_type=workflow"])!;
+        const c = probe.gh(create)!;
         const again = c.status === 0 ? read() : undefined;
-        if (again && again.status === 0 && buildType(again.stdout) === "workflow") {
+        if (again && again.status === 0 && source(again.stdout) === "gh-pages") {
           enabled.state = "done";
           enabled.performed = true;
-          enabled.detail = "Pages was not enabled; enabled it, built by a workflow";
+          enabled.detail = "Pages was not enabled; enabled it, serving gh-pages";
         } else {
           enabled.state = "not-done";
           enabled.detail = `enabling Pages failed: ${(c.stderr || c.stdout).trim().split("\n")[0] ?? "no output"}`;
@@ -222,21 +249,28 @@ async function siteSteps(root: string, decl: KnowledgeGraphDeclaration, probe: P
   }
   steps.push(enabled);
 
-  const url = decl.iriBase ?? `https://${o.owner.toLowerCase()}.github.io/${o.repo}/`;
-  const status = await probe.httpStatus(url);
-  const answer = httpAnswer(status);
+  const url = (decl.iriBase ?? `https://${o.owner.toLowerCase()}.github.io/${o.repo}/`).replace(/\/?$/, "/");
+  // The root AND the README page: the root is the landing page (by default a
+  // redirect, which a fetch follows), and README.html is where the README
+  // page lands (owner, 2026-10-01). A root that answers over a README page
+  // that does not is not a live site.
+  const readmeUrl = `${url}README.html`;
+  const [status, readmeStatus] = await Promise.all([probe.httpStatus(url), probe.httpStatus(readmeUrl)]);
+  const answers = [httpAnswer(status), httpAnswer(readmeStatus)];
+  const answer: StepState = answers.includes("not-done") ? "not-done" : answers.includes("could-not-determine") ? "could-not-determine" : "done";
+  const said = (u: string, st: number | undefined) => (st === undefined ? `${u} could not be reached from here` : `${u} answered ${st}`);
   steps.push({
     id: "site:live",
     namedBy: named,
-    what: `the site answers at ${url}`,
+    what: `the site answers at ${url}, and its README page at ${readmeUrl}`,
     state: answer,
-    detail: status === undefined ? `${url} could not be reached from here` : `${url} answered ${status}${answer === "could-not-determine" ? " — an answer about the way here (a proxy, an access rule), not about the site" : ""}`,
+    detail: `${said(url, status)}; ${said(readmeUrl, readmeStatus)}${answer === "could-not-determine" ? " — an answer about the way here (a proxy, an access rule), not about the site" : ""}`,
     action:
       answer === "done"
         ? undefined
         : answer === "could-not-determine"
-          ? `open ${url} in a browser`
-          : `once Pages is enabled and the workflow has run once, ${url} serves the site; the run is at https://github.com/${o.owner}/${o.repo}/actions`,
+          ? `open ${readmeUrl} in a browser`
+          : `once Pages is enabled and the workflow has run once, ${url} serves the site and ${readmeUrl} its README page; the run is at https://github.com/${o.owner}/${o.repo}/actions`,
   });
   return steps;
 }
@@ -291,7 +325,7 @@ export async function documentSteps(root: string, decl: KnowledgeGraphDeclaratio
       what: `each of ${docs.length} JSON Schema / JSON-LD documents is staged at the address it names`,
       state: bad.length ? "not-done" : "done",
       detail: bad.length ? bad.join("; ") : `${docs.length} documents, each at its own IRI${report?.problems.length ? `; site problems: ${report.problems.join("; ")}` : ""}`,
-      action: bad.length ? "fix the document or its address; `bun run scripts/site.ts --root <instance> --out <dir>` shows what is staged" : undefined,
+      action: bad.length ? "fix the document or its address; `bun run bootstrap-tools/scripts/site.ts --root <instance> --out <dir>` shows what is staged" : undefined,
     });
   } finally {
     rmSync(tmp, { recursive: true, force: true });

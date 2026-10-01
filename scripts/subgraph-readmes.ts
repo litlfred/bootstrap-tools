@@ -95,6 +95,7 @@ import {
 } from "../schemas/declaration.ts";
 import { BOOTSTRAP_TERMS } from "../schemas/graph.ts";
 import { releaseIris } from "../schemas/release-iri.ts";
+import { GENERATED_BY, generatedBanner } from "./generated-by.ts";
 import { gitFiles } from "./git-files.ts";
 import { describe as describeFile, linkTarget, usedByIndex } from "./readme-graph-sections.ts";
 import { bootstrapTermTargets, linkTerms } from "./term-links.ts";
@@ -396,7 +397,23 @@ export async function plan(repo: string, instances: InstanceInput[], templates: 
       // and merging the two would send a reader to the wrong repair.
       if (d.process !== undefined && d.process.bpmn === "") out.findings["unresolved-process"].push(at);
 
+      const readme = join(abs, "README.md");
+      const existing = existsSync(readme) ? readFileSync(readme, "utf-8") : undefined;
+      // The notice at the top of the region (owner, 2026-10-01). It speaks
+      // for the PAGE when nothing outside the region was written by a person
+      // — the file is ours, or what is outside is another generator's — and
+      // for this SECTION otherwise, since a page-wide claim would be false.
+      const outside = existing === undefined ? "" : (splice(existing, "") ?? existing).replace(`${BEGIN}\n\n${END}`, "").trim();
+      const unit = outside === "" || outside.includes(GENERATED_BY) ? "page" : "section";
+      const declName = declFile ? basename(declFile) : `${name}.json`;
+      const banner = generatedBanner(
+        "scripts/subgraph-readmes.ts",
+        `the \`${d.id}\` entry of \`${declName}\` and the files in this directory`,
+        `change that entry or the files, and regenerate`,
+        unit,
+      );
       const region = await liquid.renderFile("subgraph", {
+        banner,
         subgraph: { id: d.id, path: d.path, title, description: description ? linked(description) : description, kinds: d.graphKinds },
         process: d.process,
         instance: { name, title: decl.title, readme: relative(abs, instLink) },
@@ -406,8 +423,6 @@ export async function plan(repo: string, instances: InstanceInput[], templates: 
         subdirs,
         summary,
       });
-      const readme = join(abs, "README.md");
-      const existing = existsSync(readme) ? readFileSync(readme, "utf-8") : undefined;
       const next = splice(existing, region.replace(/\n{3,}/g, "\n\n"));
       if (next === undefined) {
         out.findings["unmarked-readme"].push({ ...at, path: relative(repo, readme) });

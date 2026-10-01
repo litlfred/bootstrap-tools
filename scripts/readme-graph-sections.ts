@@ -63,6 +63,8 @@ export interface GraphSection {
   marker: string;
   /** One line, shown by `--list`. */
   summary: string;
+  /** What the section is generated FROM, as the generated-by notice at its top says it. */
+  from: string;
   render(ctx: { root: string; readme?: string }): SectionOutput;
 }
 
@@ -203,6 +205,7 @@ const skip = (why: string): SectionOutput => ({ markdown: "", notes: [`left unch
 export const processesSection: GraphSection = {
   marker: "kg:processes",
   summary: "Every Process the instance declares, drawn — the SVG beside each .bpmn",
+  from: "the Process diagrams the declaration lists",
   render(ctx) {
     const dirs = declaredDirs(ctx.root);
     if (!dirs) return skip("no readable declaration at this root");
@@ -308,6 +311,7 @@ export function describe(root: string, file: string, assets: Map<string, string>
 export const filesSection: GraphSection = {
   marker: "kg:files",
   summary: "Every file the instance holds, grouped by declared directory, each described from itself",
+  from: "the declared directories and each file in them",
   render(ctx) {
     const root = ctx.root;
     const dirs = declaredDirs(root);
@@ -409,6 +413,7 @@ interface RoleNames {
 export const rolesSection: GraphSection = {
   marker: "kg:roles",
   summary: "Every Role the instance declares: its definition, other names, and former names with the date retired",
+  from: "the Roles the instance declares",
   render(ctx) {
     let decl: ReturnType<typeof readKnowledgeGraphDeclaration>;
     try {

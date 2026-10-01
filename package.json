@@ -32,7 +32,8 @@
     "book": "bun run scripts/readme-book.ts",
     "book:check": "bun run scripts/readme-book.ts --check",
     "site": "bun run scripts/site.ts",
-    "init": "bun run scripts/init.ts"
+    "init": "bun run scripts/init.ts",
+    "pages:status": "bun run scripts/pages-status.ts"
   },
   "dependencies": {
     "@playwright/test": "1.63.0",

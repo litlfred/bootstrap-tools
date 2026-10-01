@@ -28,7 +28,7 @@ function fixture(opts: { workflow?: boolean; withBase?: boolean } = {}): string 
   );
   if (opts.workflow) {
     mkdirSync(join(root, ".github", "workflows"), { recursive: true });
-    writeFileSync(join(root, ".github", "workflows", "pages.yml"), "steps:\n  - uses: actions/deploy-pages@v4\n");
+    writeFileSync(join(root, ".github", "workflows", "pages.yml"), "steps:\n  - run: git push origin HEAD:gh-pages\n");
   }
   if (opts.withBase) {
     mkdirSync(join(top, "base", "docs", "bootstrap"), { recursive: true });
@@ -72,7 +72,28 @@ describe("init — the steps the declarations name, in four states", () => {
     expect(state(steps, "site:live")).toBe("could-not-determine");
   });
 
-  test("with a signed-in gh and Pages off, it enables Pages built by a workflow, then checks again", async () => {
+  const branchExists = (yes: boolean): Probe["git"] => () => ({ status: 0, stdout: yes ? "abc123\trefs/heads/gh-pages\n" : "", stderr: "" });
+
+  test("site:branch: gh-pages must exist before Pages can be on — and init never creates it on the remote", async () => {
+    const probe: Probe = {
+      gh: (args) => (args[0] === "auth" ? { status: 0, stdout: "", stderr: "" } : args.includes("POST") ? (() => { throw new Error("enabled before the branch exists"); })() : { status: 1, stdout: "", stderr: "HTTP 404" }),
+      httpStatus: async () => 404,
+      git: branchExists(false),
+    };
+    const { steps } = await initSteps(fixture({ workflow: true }), { probe });
+    expect(state(steps, "site:branch")).toBe("not-done");
+    expect(steps.find((x) => x.id === "site:branch")!.action).toContain("--orphan gh-pages");
+    expect(state(steps, "site:enabled")).toBe("not-done");
+    const ids = steps.map((x) => x.id);
+    expect(ids.indexOf("site:branch")).toBeLessThan(ids.indexOf("site:enabled"));
+  });
+
+  test("site:branch without git is could-not-determine", async () => {
+    const { steps } = await initSteps(fixture({ workflow: true }), { probe: offlineProbe, dryRun: true });
+    expect(state(steps, "site:branch")).toBe("could-not-determine");
+  });
+
+  test("with a signed-in gh, gh-pages present and Pages off, it enables Pages serving gh-pages, then checks again", async () => {
     const calls: string[][] = [];
     let on = false;
     const probe: Probe = {
@@ -83,15 +104,16 @@ describe("init — the steps the declarations name, in four states", () => {
           on = true;
           return { status: 0, stdout: "{}", stderr: "" };
         }
-        return on ? { status: 0, stdout: '{"build_type":"workflow"}', stderr: "" } : { status: 1, stdout: "", stderr: "HTTP 404: Not Found" };
+        return on ? { status: 0, stdout: '{"source":{"branch":"gh-pages","path":"/"}}', stderr: "" } : { status: 1, stdout: "", stderr: "HTTP 404: Not Found" };
       },
       httpStatus: async () => 404,
+      git: branchExists(true),
     };
     const { steps } = await initSteps(fixture({ workflow: true }), { probe });
     const s = steps.find((x) => x.id === "site:enabled")!;
     expect(s.state).toBe("done");
     expect(s.performed).toBe(true);
-    expect(calls).toContainEqual(["api", "-X", "POST", "repos/someone/demo/pages", "-f", "build_type=workflow"]);
+    expect(calls).toContainEqual(["api", "-X", "POST", "repos/someone/demo/pages", "-f", "source[branch]=gh-pages", "-f", "source[path]=/"]);
     expect(state(steps, "site:live")).toBe("not-done");
   });
 
@@ -99,6 +121,7 @@ describe("init — the steps the declarations name, in four states", () => {
     const probe: Probe = {
       gh: (args) => (args[0] === "auth" ? { status: 0, stdout: "", stderr: "" } : args.includes("POST") ? (() => { throw new Error("enabled in a dry run"); })() : { status: 1, stdout: "", stderr: "HTTP 404" }),
       httpStatus: async () => undefined,
+      git: branchExists(true),
     };
     const { steps } = await initSteps(fixture({ workflow: true }), { probe, dryRun: true });
     expect(state(steps, "site:enabled")).toBe("not-done");
@@ -148,6 +171,13 @@ describe("init — the steps the declarations name, in four states", () => {
       expect(await at(404)).toBe("not-done");
       expect(await at(403)).toBe("could-not-determine");
       expect(await at(200)).toBe("done");
+    });
+
+    test("site:live asks the README page too: a root answering over a missing README.html is not done", async () => {
+      const { steps } = await initSteps(root, { probe: probeWith((u) => (u.endsWith("README.html") ? 404 : 200)), dryRun: true });
+      const live = steps.find((x) => x.id === "site:live")!;
+      expect(live.state).toBe("not-done");
+      expect(live.detail).toContain("README.html answered 404");
     });
 
     test("site:live: a 403 is could-not-determine, not not-done", async () => {

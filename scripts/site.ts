@@ -35,9 +35,28 @@
  * 3. every file of the instance, as it sits (`publish-files.ts`), so every
  *    relative link in them still resolves — and again under `<version>/`,
  *    because an IRI a program reads is `<iriBase><version>/…`;
- * 4. `index.md`, the book (`readme-book.ts`), with its links checked, ending
- *    in a "Published documents" section that links every address above;
- * 5. `_config.yml`, when the instance has none: the title and the theme.
+ * 3a. `README.md`, the book (`readme-book.ts`), with its links checked,
+ *    ending in a "Published documents" section that links every address
+ *    above — rendered at `<root>/README.html`. Written BEFORE the files, so it
+ *    takes the root README's place: the book opens with that README;
+ * 4. `index.html`, a redirect to `README.html` — the DEFAULT landing page,
+ *    and only that (owner, 2026-10-01: *"the harness landing page at
+ *    …/index.html is a redirect to the README.html. Will make it easier for
+ *    harnesses to change landing page behaviour"*). To change it, an
+ *    instance (or the harness staging it) puts its own `index.html` or
+ *    `index.md` at its root: that file is staged as it sits and the redirect
+ *    is not written, reported as skipped. A file rather than a declaration
+ *    field, because it is what Pages itself serves first and what anybody
+ *    looking at the branch would look for;
+ * 5. `_config.yml`, when the instance has none: the title, the theme, and a
+ *    `defaults:` entry per page saying what its footer links to; and
+ *    `_layouts/default.html` (`templates/site/default.html`), the theme's
+ *    layout with that footer. The theme's own footer links GitHub's editor
+ *    for the file on `gh-pages` — a staged copy — and for a generated page
+ *    any edit is overwritten (owner, 2026-10-01: *"footer should not take
+ *    them to edit page when bootstrap-tools used"*). A generated page's
+ *    footer names bootstrap-tools, the script, and its source; an authored
+ *    page's links the editor for its SOURCE on the instance's branch.
  *
  * Every `@context` bootstrap writes is inline in its document (measured
  * 2026-09-30: no file names an external context), so publishing each document
@@ -45,19 +64,115 @@
  *
  * `--check` stages into a temporary directory, lists every document address
  * and fails on any problem: an address nothing is staged at, a link on the
- * index page that would not land, an address taken by a different file.
+ * README page that would not land, an address taken by a different file.
  *
- * Usage: bun run bootstrap-tools/scripts/site.ts --root ../bootstrap (--out ../_site-src | --check) [--base-url <url>] [--provenance]
+ * `--subgraph <id>` (repeatable) renders only the named Subgraphs — the
+ * directories the declaration lists under those ids — plus the files at the
+ * instance root (its declaration, README and assets), which say what the
+ * Subgraphs are part of. Absent, the whole Knowledge Graph is rendered. An id
+ * the declaration does not list is a problem, never silently an empty site
+ * (`processes/render-kg-to-github-pages.bpmn`, the process this is a step of).
+ *
+ * Usage: bun run bootstrap-tools/scripts/site.ts --root ../bootstrap (--out ../_site-src | --check) [--base-url <url>] [--subgraph <id>]… [--provenance] [--branch <source branch, default main>]
  */
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, posix, relative } from "node:path";
 
 import { readKnowledgeGraphDeclaration } from "../schemas/declaration.ts";
+import { TOOLS_REPOSITORY, generatedScripts, wholeFileGenerated } from "./generated-by.ts";
 import { exportGraph } from "./export-graph.ts";
 import { publishFiles } from "./publish-files.ts";
 import { gitFiles } from "./git-files.ts";
 import { buildBook, danglingFragments, readReadmes } from "./readme-book.ts";
+
+/** `owner/repo` from a declaration's `repository`, in either the short or the URL form. */
+export function ownerRepo(repository: unknown): { owner: string; repo: string } | undefined {
+  if (typeof repository !== "string") return undefined;
+  const m = /^(?:https:\/\/github\.com\/)?([\w.-]+)\/([\w.-]+?)(?:\.git)?\/?$/.exec(repository.trim());
+  return m ? { owner: m[1]!, repo: m[2]! } : undefined;
+}
+
+/** The README page's path in the site: rendered at `<root>/README.html`. */
+export const BOOK = "README.md";
+
+/** The layout staged beside the pages: the theme's, with a footer that never links an edit page for a generated file. */
+export const LAYOUT = join(import.meta.dir, "templates", "site", "default.html");
+
+/** A page at the root that is the instance's own landing page; any one of them stops the default redirect. */
+export const LANDING = ["index.html", "index.md", "index.markdown", "index.htm"];
+
+/** The default landing page: a redirect to the README page, with nothing to run. */
+export function redirectPage(target: string = "README.html"): string {
+  return [
+    "<!DOCTYPE html>",
+    `<!-- The default landing page of a site staged by bootstrap-tools (scripts/site.ts): a redirect to ${target}. To land somewhere else, put your own index.html or index.md at the instance's root; it is staged instead of this. -->`,
+    '<html lang="en">',
+    "<head>",
+    '<meta charset="utf-8">',
+    `<meta http-equiv="refresh" content="0; url=${target}">`,
+    `<link rel="canonical" href="${target}">`,
+    "<title>Redirecting…</title>",
+    "</head>",
+    "<body>",
+    `<p>This page has moved to <a href="${target}">${target}</a>.</p>`,
+    "</body>",
+    "</html>",
+    "",
+  ].join("\n");
+}
+
+/** What one page's footer links to, as its `defaults:` entry carries it. */
+export interface PageFooter {
+  generated_by?: string[];
+  generated_from?: string;
+  source_url?: string;
+  edit_url?: string;
+  generated_sections?: string[];
+}
+
+/**
+ * The footer facts for a page staged from `rel` (its source, relative to the
+ * instance root): wholly generated → the scripts and the source, no edit link;
+ * authored → the editor for its source on `branch`, and any generated regions.
+ * `repo` is `https://github.com/<owner>/<repo>`, or `undefined` when the
+ * declaration names none — then no link is composed at all.
+ */
+export function pageFooter(rel: string, text: string, repo: string | undefined, branch: string): PageFooter {
+  const notes = generatedScripts(text);
+  const scripts = [...new Set(notes.map((n) => n.script))];
+  const dir = posix.dirname(rel);
+  if (wholeFileGenerated(text)) {
+    return {
+      generated_by: scripts,
+      generated_from: notes.map((n) => n.from).join("; "),
+      ...(repo ? { source_url: `${repo}/tree/${branch}/${dir === "." ? "" : dir}`.replace(/\/$/, "") } : {}),
+    };
+  }
+  return {
+    ...(repo ? { edit_url: `${repo}/edit/${branch}/${rel}` } : {}),
+    ...(scripts.length ? { generated_sections: scripts } : {}),
+  };
+}
+
+/** `_config.yml`: title, theme, the tools' address, and a `defaults:` entry per page with a footer. */
+export function siteConfig(decl: { name: string; title?: string; description?: string }, footers: ReadonlyMap<string, PageFooter>): string {
+  const out = [
+    `title: ${JSON.stringify(decl.title ?? decl.name)}`,
+    `description: ${JSON.stringify(decl.description ?? "")}`,
+    "theme: jekyll-theme-primer",
+    `generated_by_tools: ${JSON.stringify(TOOLS_REPOSITORY)}`,
+  ];
+  const entries = [...footers].filter(([, f]) => Object.keys(f).length > 0);
+  if (entries.length) {
+    out.push("# What each page's footer links to (scripts/site.ts, templates/site/default.html).", "defaults:");
+    for (const [path, f] of entries) {
+      out.push(`  - scope: { path: ${JSON.stringify(path)} }`, "    values:");
+      for (const [k, v] of Object.entries(f)) out.push(`      ${k}: ${JSON.stringify(v)}`);
+    }
+  }
+  return `${out.join("\n")}\n`;
+}
 
 /** A document the instance publishes at an address it names itself. */
 export interface PublishedDocument {
@@ -108,7 +223,7 @@ export function stagedPaths(d: PublishedDocument): string[] {
   return [d.path];
 }
 
-/** The "Published documents" section of the index page: every address, linked. */
+/** The "Published documents" section of the README page: every address, linked. */
 export function documentsSection(docs: readonly PublishedDocument[]): string {
   if (docs.length === 0) return "";
   const rows = docs.map((d) => {
@@ -125,6 +240,24 @@ export function documentsSection(docs: readonly PublishedDocument[]): string {
   ].join("\n");
 }
 
+/**
+ * Which of `root`'s files a selection of Subgraphs keeps: every file directly
+ * at the root, and every file under the path of a directory the declaration
+ * lists under one of `ids`. `undefined` or empty `ids` keeps everything — the
+ * whole Knowledge Graph. An id the declaration does not list is returned in
+ * `unknown` so the caller reports it rather than rendering less than asked.
+ */
+export function subgraphSelection(
+  decl: { directories?: { id: string; path: string }[] },
+  ids: readonly string[] | undefined,
+): { keep?: (rel: string) => boolean; unknown: string[] } {
+  if (!ids || ids.length === 0) return { unknown: [] };
+  const dirs = decl.directories ?? [];
+  const unknown = ids.filter((id) => !dirs.some((d) => d.id === id));
+  const prefixes = dirs.filter((d) => ids.includes(d.id)).map((d) => d.path.replace(/^\.\//, "").replace(/\/?$/, "/"));
+  return { keep: (rel) => !rel.includes("/") || prefixes.some((p) => rel.startsWith(p)), unknown };
+}
+
 export interface SiteReport {
   written: string[];
   skipped: string[];
@@ -132,13 +265,17 @@ export interface SiteReport {
 }
 
 /** Stage `root`'s site in `out`. Throws when there is no declaration to read. */
-export function stageSite(root: string, out: string, opts: { baseUrl?: string; provenance?: boolean } = {}): SiteReport {
+export function stageSite(root: string, out: string, opts: { baseUrl?: string; provenance?: boolean; subgraphs?: readonly string[]; branch?: string } = {}): SiteReport {
   const decl = readKnowledgeGraphDeclaration(root);
   if (!decl) throw new Error(`${root} carries no Knowledge Graph declaration — there is no instance to publish`);
   mkdirSync(out, { recursive: true });
   const report: SiteReport = { written: [], skipped: [], problems: [] };
+  const selection = subgraphSelection(decl, opts.subgraphs);
+  for (const id of selection.unknown) report.problems.push(`--subgraph ${id}: ${decl.name}.json declares no directory with that id`);
+  const keep = selection.keep ?? (() => true);
   const put = (rel: string, content: string) => {
     const p = join(out, rel);
+    mkdirSync(dirname(p), { recursive: true });
     if (existsSync(p)) {
       report.skipped.push(rel);
       return;
@@ -161,7 +298,7 @@ export function stageSite(root: string, out: string, opts: { baseUrl?: string; p
   }
 
   // Each document at the address it names, and its `.json` copy.
-  const docs = publishedDocuments(root, opts.baseUrl);
+  const docs = publishedDocuments(root, opts.baseUrl).filter((d) => !d.source || keep(d.source));
   for (const d of docs) {
     if (!d.source) continue;
     const bytes = readFileSync(join(root, d.source), "utf-8");
@@ -177,25 +314,11 @@ export function stageSite(root: string, out: string, opts: { baseUrl?: string; p
     }
   }
 
-  // Then every file as it sits. An authored index.md would be the
-  // instance's own front page and win, with the book reported as not written.
-  // A skip is reported only where the file there DIFFERS: a document already
-  // staged at its own address is the same bytes, not a collision.
-  const differs = (dir: string, f: string) => readFileSync(join(dir, f)).compare(readFileSync(join(root, f))) !== 0;
-  const files = publishFiles(root, out);
-  report.written.push(...files.written);
-  report.skipped.push(...files.skipped.filter((f) => differs(out, f)));
-  if (decl.version && decl.iriBase) {
-    const v = publishFiles(root, join(out, decl.version));
-    report.written.push(...v.written.map((f) => `${decl.version}/${f}`));
-    report.skipped.push(...v.skipped.filter((f) => differs(join(out, decl.version!), f)).map((f) => `${decl.version}/${f}`));
-  }
-
-  // A document whose address is taken by something else is a broken IRI.
-  for (const d of docs) if (!existsSync(join(out, d.path))) report.problems.push(`${d.iri} is not staged at ${d.path}`);
-
-  const readmes = readReadmes(root);
-  if (!readmes) report.problems.push("git could not say which READMEs there are, so there is no index page");
+  // The README page, before the files: it takes the root README's place,
+  // and opens with it.
+  const all = readReadmes(root);
+  const readmes = all && new Map([...all].filter(([rel]) => keep(rel)));
+  if (!readmes) report.problems.push("git could not say which READMEs there are, so there is no README page");
   else {
     const book = buildBook(root, readmes, {
       title: decl.title ?? decl.name,
@@ -203,11 +326,51 @@ export function stageSite(root: string, out: string, opts: { baseUrl?: string; p
       jekyll: true,
       appendix: docs.length ? { id: "published-documents", title: "Published documents", body: documentsSection(docs) } : undefined,
     });
-    report.problems.push(...book.problems, ...danglingFragments(book.markdown).map((f) => `index.md links to ${f}, which no anchor carries`));
-    put("index.md", book.markdown);
+    report.problems.push(...book.problems, ...danglingFragments(book.markdown).map((f) => `${BOOK} links to ${f}, which no anchor carries`));
+    put(BOOK, book.markdown);
   }
 
-  put("_config.yml", [`title: ${JSON.stringify(decl.title ?? decl.name)}`, `description: ${JSON.stringify(decl.description ?? "")}`, "theme: jekyll-theme-primer", ""].join("\n"));
+
+  // Then every file as it sits. An authored index.html or index.md is the
+  // instance's own landing page, and the default redirect is not written.
+  // A skip is reported only where the file there DIFFERS: a document already
+  // staged at its own address is the same bytes, not a collision.
+  const differs = (dir: string, f: string) => readFileSync(join(dir, f)).compare(readFileSync(join(root, f))) !== 0;
+  const files = publishFiles(root, out, selection.keep);
+  report.written.push(...files.written);
+  report.skipped.push(...files.skipped.filter((f) => f !== BOOK && differs(out, f)));
+  if (decl.version && decl.iriBase) {
+    const v = publishFiles(root, join(out, decl.version), selection.keep);
+    report.written.push(...v.written.map((f) => `${decl.version}/${f}`));
+    report.skipped.push(...v.skipped.filter((f) => differs(join(out, decl.version!), f)).map((f) => `${decl.version}/${f}`));
+  }
+
+  // A document whose address is taken by something else is a broken IRI.
+  for (const d of docs) if (!existsSync(join(out, d.path))) report.problems.push(`${d.iri} is not staged at ${d.path}`);
+
+  // The default landing page, unless the instance brought its own.
+  if (!LANDING.some((f) => existsSync(join(out, f)))) put("index.html", redirectPage());
+  else report.skipped.push("index.html (the instance's own landing page is staged instead of the redirect)");
+
+  // Each page's footer: a generated page links its generator and source,
+  // never an edit page; an authored one links the editor for its source.
+  const o = ownerRepo(decl.repository);
+  const repo = o ? `https://github.com/${o.owner}/${o.repo}` : undefined;
+  const branch = opts.branch ?? "main";
+  const footers = new Map<string, PageFooter>();
+  const pages = files.written.filter((f) => /\.(md|markdown)$/.test(f));
+  for (const rel of pages) {
+    const f = pageFooter(rel, readFileSync(join(root, rel), "utf-8"), repo, branch);
+    footers.set(rel, f);
+    if (decl.version && decl.iriBase) footers.set(`${decl.version}/${rel}`, f);
+  }
+  if (existsSync(join(out, BOOK)) && report.written.includes(BOOK)) {
+    // The book is ONE generator's page, whatever notes the READMEs it gathers carry.
+    footers.set(BOOK, { generated_by: ["scripts/readme-book.ts"], generated_from: "every README in this repository", ...(repo ? { source_url: `${repo}/tree/${branch}` } : {}) });
+    if (decl.version && decl.iriBase && existsSync(join(root, BOOK))) footers.set(`${decl.version}/${BOOK}`, pageFooter(BOOK, readFileSync(join(root, BOOK), "utf-8"), repo, branch));
+  }
+  put("_config.yml", siteConfig(decl, footers));
+  put("_layouts/default.html", readFileSync(LAYOUT, "utf-8"));
   return report;
 }
 
@@ -221,11 +384,14 @@ if (import.meta.main) {
   const check = args.includes("--check");
   const out = arg("--out") ?? (check ? mkdtempSync(join(tmpdir(), "site-check-")) : undefined);
   if (!out) {
-    console.error("usage: site.ts --root <instance> (--out <dir> | --check) [--base-url <url>] [--provenance]");
+    console.error("usage: site.ts --root <instance> (--out <dir> | --check) [--base-url <url>] [--subgraph <id>]… [--provenance]");
     process.exit(2);
   }
-  const r = stageSite(root, out, { baseUrl: arg("--base-url"), provenance: args.includes("--provenance") });
-  const docs = publishedDocuments(root, arg("--base-url"));
+  const subgraphs = args.flatMap((a, i) => (a === "--subgraph" && args[i + 1] ? [args[i + 1]!] : []));
+  const r = stageSite(root, out, { baseUrl: arg("--base-url"), provenance: args.includes("--provenance"), subgraphs, branch: arg("--branch") });
+  const decl = readKnowledgeGraphDeclaration(root);
+  const keep = (decl && subgraphSelection(decl, subgraphs).keep) ?? (() => true);
+  const docs = publishedDocuments(root, arg("--base-url")).filter((d) => !d.source || keep(d.source));
   console.log(`Staged ${r.written.length} file(s) from ${root} in ${out}.`);
   console.log(`${docs.length} document(s) at the address each names:`);
   for (const d of docs) console.log(`  ${existsSync(join(out, d.path)) ? "✓" : "✗"} ${d.iri}  ←  ${d.source ?? "built"}`);
