@@ -322,7 +322,7 @@ export async function documentSteps(root: string, decl: KnowledgeGraphDeclaratio
       what: `each of ${docs.length} JSON Schema / JSON-LD documents is staged at the address it names`,
       state: bad.length ? "not-done" : "done",
       detail: bad.length ? bad.join("; ") : `${docs.length} documents, each at its own IRI${report?.problems.length ? `; site problems: ${report.problems.join("; ")}` : ""}`,
-      action: bad.length ? "fix the document or its address; `bun run scripts/site.ts --root <instance> --out <dir>` shows what is staged" : undefined,
+      action: bad.length ? "fix the document or its address; `bun run bootstrap-tools/scripts/site.ts --root <instance> --out <dir>` shows what is staged" : undefined,
     });
   } finally {
     rmSync(tmp, { recursive: true, force: true });
