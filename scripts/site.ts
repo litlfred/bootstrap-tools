@@ -47,7 +47,14 @@
  * and fails on any problem: an address nothing is staged at, a link on the
  * index page that would not land, an address taken by a different file.
  *
- * Usage: bun run bootstrap-tools/scripts/site.ts --root ../bootstrap (--out ../_site-src | --check) [--base-url <url>] [--provenance]
+ * `--subgraph <id>` (repeatable) renders only the named Subgraphs — the
+ * directories the declaration lists under those ids — plus the files at the
+ * instance root (its declaration, README and assets), which say what the
+ * Subgraphs are part of. Absent, the whole Knowledge Graph is rendered. An id
+ * the declaration does not list is a problem, never silently an empty site
+ * (`processes/render-kg-to-github-pages.bpmn`, the process this is a step of).
+ *
+ * Usage: bun run bootstrap-tools/scripts/site.ts --root ../bootstrap (--out ../_site-src | --check) [--base-url <url>] [--subgraph <id>]… [--provenance]
  */
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -125,6 +132,24 @@ export function documentsSection(docs: readonly PublishedDocument[]): string {
   ].join("\n");
 }
 
+/**
+ * Which of `root`'s files a selection of Subgraphs keeps: every file directly
+ * at the root, and every file under the path of a directory the declaration
+ * lists under one of `ids`. `undefined` or empty `ids` keeps everything — the
+ * whole Knowledge Graph. An id the declaration does not list is returned in
+ * `unknown` so the caller reports it rather than rendering less than asked.
+ */
+export function subgraphSelection(
+  decl: { directories?: { id: string; path: string }[] },
+  ids: readonly string[] | undefined,
+): { keep?: (rel: string) => boolean; unknown: string[] } {
+  if (!ids || ids.length === 0) return { unknown: [] };
+  const dirs = decl.directories ?? [];
+  const unknown = ids.filter((id) => !dirs.some((d) => d.id === id));
+  const prefixes = dirs.filter((d) => ids.includes(d.id)).map((d) => d.path.replace(/^\.\//, "").replace(/\/?$/, "/"));
+  return { keep: (rel) => !rel.includes("/") || prefixes.some((p) => rel.startsWith(p)), unknown };
+}
+
 export interface SiteReport {
   written: string[];
   skipped: string[];
@@ -132,11 +157,14 @@ export interface SiteReport {
 }
 
 /** Stage `root`'s site in `out`. Throws when there is no declaration to read. */
-export function stageSite(root: string, out: string, opts: { baseUrl?: string; provenance?: boolean } = {}): SiteReport {
+export function stageSite(root: string, out: string, opts: { baseUrl?: string; provenance?: boolean; subgraphs?: readonly string[] } = {}): SiteReport {
   const decl = readKnowledgeGraphDeclaration(root);
   if (!decl) throw new Error(`${root} carries no Knowledge Graph declaration — there is no instance to publish`);
   mkdirSync(out, { recursive: true });
   const report: SiteReport = { written: [], skipped: [], problems: [] };
+  const selection = subgraphSelection(decl, opts.subgraphs);
+  for (const id of selection.unknown) report.problems.push(`--subgraph ${id}: ${decl.name}.json declares no directory with that id`);
+  const keep = selection.keep ?? (() => true);
   const put = (rel: string, content: string) => {
     const p = join(out, rel);
     if (existsSync(p)) {
@@ -161,7 +189,7 @@ export function stageSite(root: string, out: string, opts: { baseUrl?: string; p
   }
 
   // Each document at the address it names, and its `.json` copy.
-  const docs = publishedDocuments(root, opts.baseUrl);
+  const docs = publishedDocuments(root, opts.baseUrl).filter((d) => !d.source || keep(d.source));
   for (const d of docs) {
     if (!d.source) continue;
     const bytes = readFileSync(join(root, d.source), "utf-8");
@@ -182,11 +210,11 @@ export function stageSite(root: string, out: string, opts: { baseUrl?: string; p
   // A skip is reported only where the file there DIFFERS: a document already
   // staged at its own address is the same bytes, not a collision.
   const differs = (dir: string, f: string) => readFileSync(join(dir, f)).compare(readFileSync(join(root, f))) !== 0;
-  const files = publishFiles(root, out);
+  const files = publishFiles(root, out, selection.keep);
   report.written.push(...files.written);
   report.skipped.push(...files.skipped.filter((f) => differs(out, f)));
   if (decl.version && decl.iriBase) {
-    const v = publishFiles(root, join(out, decl.version));
+    const v = publishFiles(root, join(out, decl.version), selection.keep);
     report.written.push(...v.written.map((f) => `${decl.version}/${f}`));
     report.skipped.push(...v.skipped.filter((f) => differs(join(out, decl.version!), f)).map((f) => `${decl.version}/${f}`));
   }
@@ -194,7 +222,8 @@ export function stageSite(root: string, out: string, opts: { baseUrl?: string; p
   // A document whose address is taken by something else is a broken IRI.
   for (const d of docs) if (!existsSync(join(out, d.path))) report.problems.push(`${d.iri} is not staged at ${d.path}`);
 
-  const readmes = readReadmes(root);
+  const all = readReadmes(root);
+  const readmes = all && new Map([...all].filter(([rel]) => keep(rel)));
   if (!readmes) report.problems.push("git could not say which READMEs there are, so there is no index page");
   else {
     const book = buildBook(root, readmes, {
@@ -221,11 +250,14 @@ if (import.meta.main) {
   const check = args.includes("--check");
   const out = arg("--out") ?? (check ? mkdtempSync(join(tmpdir(), "site-check-")) : undefined);
   if (!out) {
-    console.error("usage: site.ts --root <instance> (--out <dir> | --check) [--base-url <url>] [--provenance]");
+    console.error("usage: site.ts --root <instance> (--out <dir> | --check) [--base-url <url>] [--subgraph <id>]… [--provenance]");
     process.exit(2);
   }
-  const r = stageSite(root, out, { baseUrl: arg("--base-url"), provenance: args.includes("--provenance") });
-  const docs = publishedDocuments(root, arg("--base-url"));
+  const subgraphs = args.flatMap((a, i) => (a === "--subgraph" && args[i + 1] ? [args[i + 1]!] : []));
+  const r = stageSite(root, out, { baseUrl: arg("--base-url"), provenance: args.includes("--provenance"), subgraphs });
+  const decl = readKnowledgeGraphDeclaration(root);
+  const keep = (decl && subgraphSelection(decl, subgraphs).keep) ?? (() => true);
+  const docs = publishedDocuments(root, arg("--base-url")).filter((d) => !d.source || keep(d.source));
   console.log(`Staged ${r.written.length} file(s) from ${root} in ${out}.`);
   console.log(`${docs.length} document(s) at the address each names:`);
   for (const d of docs) console.log(`  ${existsSync(join(out, d.path)) ? "✓" : "✗"} ${d.iri}  ←  ${d.source ?? "built"}`);

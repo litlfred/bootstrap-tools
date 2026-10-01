@@ -34,12 +34,17 @@ export function filesIn(dir: string): string[] {
   return out;
 }
 
-/** Copy every file of `root` into `outDir`, keeping its relative path. */
-export function publishFiles(root: string, outDir: string): { written: string[]; skipped: string[] } {
+/**
+ * Copy every file of `root` into `outDir`, keeping its relative path —
+ * or, with `keep`, only the files it keeps (a site rendered from a list of
+ * subgraphs rather than the whole graph; `site.ts --subgraph`).
+ */
+export function publishFiles(root: string, outDir: string, keep?: (rel: string) => boolean): { written: string[]; skipped: string[] } {
   const written: string[] = [];
   const skipped: string[] = [];
   for (const file of filesIn(root)) {
     const rel = relative(root, file);
+    if (keep && !keep(rel.split("\\").join("/"))) continue;
     const dest = join(outDir, rel);
     if (existsSync(dest)) {
       skipped.push(rel);

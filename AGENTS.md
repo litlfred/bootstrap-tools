@@ -37,6 +37,9 @@ Which lane runs what — the lanes are the roles of the hosting harness's `kg-se
 | imports stay inside the toolset | `bun run check:closure` | build pipeline | an import leaves or names a package not allowed |
 | READMEs and diagrams are current | `bun run readmes:check`, `bun run render:check` | build pipeline | a generated region or picture is stale |
 | unit tests | `bun test .` | build pipeline | any fails |
+| status of a push to GitHub Pages, and its message | `bun run pages:status -- --root <instance> [--url <root>] [--sha <commit>]` | Site Publisher (`processes/render-kg-to-github-pages.bpmn`) | exit 1 not pushed, 3 could not determine |
+
+The last row is a step of this toolset's own Process, not of the hosting harness's: `render-kg-to-github-pages.bpmn`, with its Skill and Roles here, renders a Knowledge Graph (or a list of its Subgraphs) to GitHub Pages at a publication root URL. A harness above may name it as one way of publishing; nothing here names that harness.
 
 A step that fails is reported with its output and the command to reproduce it; the agent does not "fix" a check by editing what the check reads unless that is the change under review.
 
