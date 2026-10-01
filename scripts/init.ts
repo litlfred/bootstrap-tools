@@ -36,7 +36,7 @@
  * | `site:workflow` | `repository` — a workflow commits the site onto gh-pages | no |
  * | `site:branch` | `repository` — a gh-pages branch exists (2026-10-01: it must, before Pages can be on) | no: says how |
  * | `site:enabled` | `repository` — Pages is on, serving gh-pages | yes, with `gh`, once the branch exists |
- * | `site:live` | `iriBase`, else the Pages address — the address answers | no |
+ * | `site:live` | `iriBase`, else the Pages address — the address answers, and so does its `README.html` | no |
  *
  * The two `schemas:` steps come first after the declarations are read, and
  * lead the printed summary: owner, 2026-09-30, *"json(ld) is primary step in
@@ -74,7 +74,7 @@ import { basename, dirname, join, resolve } from "node:path";
 
 import { readKnowledgeGraphDeclaration, type KnowledgeGraphDeclaration } from "../schemas/declaration.ts";
 import { syncReadme } from "./readme-sections.ts";
-import { publishedDocuments, stageSite, type SiteReport } from "./site.ts";
+import { ownerRepo, publishedDocuments, stageSite, type SiteReport } from "./site.ts";
 
 export type StepState = "done" | "not-done" | "could-not-determine" | "stated";
 
@@ -125,12 +125,8 @@ export const realProbe: Probe = {
 /** Probe that reaches nothing: every outside check becomes `could-not-determine`. */
 export const offlineProbe: Probe = { gh: () => undefined, httpStatus: async () => undefined };
 
-/** `owner/repo` from a declaration's `repository`, in either the short or the URL form. */
-export function ownerRepo(repository: unknown): { owner: string; repo: string } | undefined {
-  if (typeof repository !== "string") return undefined;
-  const m = /^(?:https:\/\/github\.com\/)?([\w.-]+)\/([\w.-]+?)(?:\.git)?\/?$/.exec(repository.trim());
-  return m ? { owner: m[1]!, repo: m[2]! } : undefined;
-}
+/** `owner/repo` from a declaration's `repository` — defined in `site.ts`, which composes a page's source links from it. */
+export { ownerRepo };
 
 const pagesSettings = (o: { owner: string; repo: string }) => `https://github.com/${o.owner}/${o.repo}/settings/pages`;
 
@@ -253,21 +249,28 @@ async function siteSteps(root: string, decl: KnowledgeGraphDeclaration, probe: P
   }
   steps.push(enabled);
 
-  const url = decl.iriBase ?? `https://${o.owner.toLowerCase()}.github.io/${o.repo}/`;
-  const status = await probe.httpStatus(url);
-  const answer = httpAnswer(status);
+  const url = (decl.iriBase ?? `https://${o.owner.toLowerCase()}.github.io/${o.repo}/`).replace(/\/?$/, "/");
+  // The root AND the README page: the root is the landing page (by default a
+  // redirect, which a fetch follows), and README.html is where the README
+  // page lands (owner, 2026-10-01). A root that answers over a README page
+  // that does not is not a live site.
+  const readmeUrl = `${url}README.html`;
+  const [status, readmeStatus] = await Promise.all([probe.httpStatus(url), probe.httpStatus(readmeUrl)]);
+  const answers = [httpAnswer(status), httpAnswer(readmeStatus)];
+  const answer: StepState = answers.includes("not-done") ? "not-done" : answers.includes("could-not-determine") ? "could-not-determine" : "done";
+  const said = (u: string, st: number | undefined) => (st === undefined ? `${u} could not be reached from here` : `${u} answered ${st}`);
   steps.push({
     id: "site:live",
     namedBy: named,
-    what: `the site answers at ${url}`,
+    what: `the site answers at ${url}, and its README page at ${readmeUrl}`,
     state: answer,
-    detail: status === undefined ? `${url} could not be reached from here` : `${url} answered ${status}${answer === "could-not-determine" ? " — an answer about the way here (a proxy, an access rule), not about the site" : ""}`,
+    detail: `${said(url, status)}; ${said(readmeUrl, readmeStatus)}${answer === "could-not-determine" ? " — an answer about the way here (a proxy, an access rule), not about the site" : ""}`,
     action:
       answer === "done"
         ? undefined
         : answer === "could-not-determine"
-          ? `open ${url} in a browser`
-          : `once Pages is enabled and the workflow has run once, ${url} serves the site; the run is at https://github.com/${o.owner}/${o.repo}/actions`,
+          ? `open ${readmeUrl} in a browser`
+          : `once Pages is enabled and the workflow has run once, ${url} serves the site and ${readmeUrl} its README page; the run is at https://github.com/${o.owner}/${o.repo}/actions`,
   });
   return steps;
 }

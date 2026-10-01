@@ -22,7 +22,7 @@ description: >
 
 | status | when |
 |---|---|
-| `pushed` | the staged tree had no problem, the root URL answers, and every document address answers |
+| `pushed` | the staged tree had no problem, the root URL answers, its README page (`README.html`) answers, and every document address answers |
 | `not-pushed` | a check ran and failed: a staging problem, or a 404 at the root or at a document address |
 | `could-not-determine` | nothing failed, but an answer was about the way here (403, 407, 5xx, no network) |
 
@@ -60,7 +60,16 @@ Every command below is run from bootstrap-tools, with the instance as `--root`.
 3. **Stage the rendering.**
    `bun run scripts/site.ts --root <instance> --out <dir> [--subgraph <id>]…`:
    every JSON Schema and JSON-LD document at the IRI it names, the files as
-   they sit, the README page as `index.md`
+   they sit, the README page as `README.md` — served at `<root>/README.html`
+   — and `index.html`, a redirect to it (owner, 2026-10-01: *"the harness
+   landing page at …/index.html is a redirect to the README.html. Will make
+   it easier for harnesses to change landing page behaviour"*). The redirect
+   is only the default: an instance that carries its own `index.html` or
+   `index.md` at its root gets that as its landing page instead. Every
+   generated page opens with a notice naming bootstrap-tools and the script
+   that wrote it, and its footer links the generator and its source rather
+   than GitHub's editor — the theme's own footer would send a reader to edit
+   the `gh-pages` copy, which the next publish overwrites
    (bootstrap's `publish-documents` and `publish-site` say why).
 4. **Check what was staged.** `site.ts --check` and
    `bun run scripts/readme-book.ts --root <instance> --check`. Any problem

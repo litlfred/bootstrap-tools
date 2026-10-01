@@ -53,6 +53,13 @@ describe("pages-status — the push's status and its message", () => {
     expect(r.message).toStartWith("pushed 1a2b3c4 to https://x.example/demo/ — QA: staged ok");
   });
 
+  test("a root that answers over a README.html that does not is not pushed", async () => {
+    const r = (await pagesStatus(root, { sha: "abc", probe: probeWith((u) => (u.endsWith("README.html") ? 404 : 200)) }))!;
+    expect(r.status).toBe("not-pushed");
+    expect(r.qa.readme).toEqual({ state: "not-done", http: 404 });
+    expect(r.message).toContain("README.html 404");
+  });
+
   test("a document answering 404 is not pushed; a 403 could not be determined", async () => {
     const missing = (await pagesStatus(root, { sha: "abc", probe: probeWith((u) => (u.endsWith(".json") ? 404 : 200)) }))!;
     expect(missing.status).toBe("not-pushed");

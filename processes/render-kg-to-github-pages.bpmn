@@ -56,7 +56,7 @@ NO work-plan element on any activity, and isExecutable is false: this is bootstr
     </bpmn:task>
 
     <bpmn:task id="A_Stage" name="Stage the rendering">
-      <bpmn:documentation>site.ts --root &lt;instance&gt; --out &lt;dir&gt; [--subgraph &lt;id&gt;]…: every JSON Schema and JSON-LD document at the IRI it names, the files as they sit, the README page as index.md.</bpmn:documentation>
+      <bpmn:documentation>site.ts --root &lt;instance&gt; --out &lt;dir&gt; [--subgraph &lt;id&gt;]…: every JSON Schema and JSON-LD document at the IRI it names, the files as they sit, the README page as README.md (served as README.html), and index.html as a redirect to it — the default landing page, which an index.html or index.md at the instance root replaces. Generated pages carry the generated-by notice at their top, and a footer that links their generator and source, never an edit page.</bpmn:documentation>
       <bpmn:extensionElements><bootstrap.processes:skill ref="render-kg-to-github-pages"/></bpmn:extensionElements>
     </bpmn:task>
 

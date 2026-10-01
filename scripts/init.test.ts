@@ -173,6 +173,13 @@ describe("init — the steps the declarations name, in four states", () => {
       expect(await at(200)).toBe("done");
     });
 
+    test("site:live asks the README page too: a root answering over a missing README.html is not done", async () => {
+      const { steps } = await initSteps(root, { probe: probeWith((u) => (u.endsWith("README.html") ? 404 : 200)), dryRun: true });
+      const live = steps.find((x) => x.id === "site:live")!;
+      expect(live.state).toBe("not-done");
+      expect(live.detail).toContain("README.html answered 404");
+    });
+
     test("site:live: a 403 is could-not-determine, not not-done", async () => {
       const { steps } = await initSteps(root, { probe: probeWith(() => 403), dryRun: true });
       expect(state(steps, "site:live")).toBe("could-not-determine");

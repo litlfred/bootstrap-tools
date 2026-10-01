@@ -1,3 +1,48 @@
 title: "Bootstrap tools"
 description: "The Zod source of bootstrap's schemas, the generators that write bootstrap's JSON Schemas, schema page and READMEs, and the checks bootstrap's content must pass — runnable by an agent, with zod, liquidjs, Playwright and bpmn-js as its dependencies."
 theme: jekyll-theme-primer
+generated_by_tools: "https://github.com/litlfred/bootstrap-tools"
+# What each page's footer links to (scripts/site.ts, templates/site/default.html).
+defaults:
+  - scope: { path: "AGENTS.md" }
+    values:
+      edit_url: "https://github.com/litlfred/bootstrap-tools/edit/main/AGENTS.md"
+  - scope: { path: "LICENSE-CONTENT.md" }
+    values:
+      edit_url: "https://github.com/litlfred/bootstrap-tools/edit/main/LICENSE-CONTENT.md"
+  - scope: { path: "processes/README.md" }
+    values:
+      generated_by: ["scripts/subgraph-readmes.ts"]
+      generated_from: "the `bootstrap-tools-processes` entry of `bootstrap-tools.json` and the files in this directory"
+      source_url: "https://github.com/litlfred/bootstrap-tools/tree/main/processes"
+  - scope: { path: "scenarios/README.md" }
+    values:
+      generated_by: ["scripts/subgraph-readmes.ts"]
+      generated_from: "the `bootstrap-tools-scenarios` entry of `bootstrap-tools.json` and the files in this directory"
+      source_url: "https://github.com/litlfred/bootstrap-tools/tree/main/scenarios"
+  - scope: { path: "schemas/README.md" }
+    values:
+      generated_by: ["scripts/subgraph-readmes.ts"]
+      generated_from: "the `bootstrap-tools-schemas` entry of `bootstrap-tools.json` and the files in this directory"
+      source_url: "https://github.com/litlfred/bootstrap-tools/tree/main/schemas"
+  - scope: { path: "scripts/README.md" }
+    values:
+      generated_by: ["scripts/subgraph-readmes.ts"]
+      generated_from: "the `bootstrap-tools-scripts` entry of `bootstrap-tools.json` and the files in this directory"
+      source_url: "https://github.com/litlfred/bootstrap-tools/tree/main/scripts"
+  - scope: { path: "skills/README.md" }
+    values:
+      generated_by: ["scripts/subgraph-readmes.ts"]
+      generated_from: "the `bootstrap-tools-skills` entry of `bootstrap-tools.json` and the files in this directory"
+      source_url: "https://github.com/litlfred/bootstrap-tools/tree/main/skills"
+  - scope: { path: "skills/bootstrap-contract-semver.md" }
+    values:
+      edit_url: "https://github.com/litlfred/bootstrap-tools/edit/main/skills/bootstrap-contract-semver.md"
+  - scope: { path: "skills/render-kg-to-github-pages.md" }
+    values:
+      edit_url: "https://github.com/litlfred/bootstrap-tools/edit/main/skills/render-kg-to-github-pages.md"
+  - scope: { path: "README.md" }
+    values:
+      generated_by: ["scripts/readme-book.ts"]
+      generated_from: "every README in this repository"
+      source_url: "https://github.com/litlfred/bootstrap-tools/tree/main"

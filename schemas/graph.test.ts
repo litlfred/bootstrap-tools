@@ -3,6 +3,7 @@
  * (owner, 2026-09-23: "bootstrap = self definitional. no semantic leakage, no
  * graph leakage").
  */
+import { TOOLS_REPOSITORY } from "../scripts/generated-by.ts";
 import { describe, expect, test } from "bun:test";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -107,8 +108,12 @@ describe("bootstrap/README.md is self-definitional", () => {
   const readme = readFileSync(join(BOOTSTRAP, "README.md"), "utf-8");
   const links = [...readme.matchAll(/\]\(([^)]+)\)/g)].map((m) => m[1]!);
 
-  test("every link stays inside bootstrap/", () => {
-    expect(links.filter((l) => l.startsWith("../") || l.startsWith("/") || /^[a-z]+:/.test(l))).toEqual([]);
+  test("every link stays inside bootstrap/ — except the generated-by notice's, to bootstrap-tools", () => {
+    // The one name bootstrap may carry from outside itself, and only as the
+    // answer to "what wrote this?" (generated-by.ts; owner 2026-09-30, and
+    // 2026-10-01: the notice links bootstrap-tools).
+    const tools = (l: string) => l === TOOLS_REPOSITORY || l.startsWith(`${TOOLS_REPOSITORY}/blob/main/scripts/`);
+    expect(links.filter((l) => !tools(l) && (l.startsWith("../") || l.startsWith("/") || /^[a-z]+:/.test(l)))).toEqual([]);
   });
 
   test("every relative link and image resolves to a file in bootstrap/", () => {
