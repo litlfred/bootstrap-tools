@@ -43,9 +43,11 @@ The last row is a step of this toolset's own Process, not of the hosting harness
 
 A step that fails is reported with its output and the command to reproduce it; the agent does not "fix" a check by editing what the check reads unless that is the change under review.
 
-## CI — described, not enabled
+## CI — the README checks are enabled; the rest is described
 
-When the owner asks for CI, this is the whole of it: one workflow in the **content** repository, calling the tools at a pinned version. It is written here rather than committed as `.github/workflows/*.yml` so that nothing runs, and nothing is billed, until someone decides it should.
+Owner, 2026-10-01: *"each repo owns its README"* — no hosting harness regenerates or checks it any more, so each repository's own CI fails when its README is stale. Here that is `.github/workflows/check.yml`: this repository's READMEs, checked with bootstrap-tools standing alone, because their output must not depend on what sits beside them (a term outside bootstrap links to bootstrap's published schema page, never to a sibling path). bootstrap's own `check.yml` does the same for bootstrap's READMEs, with the tools checked out beside it.
+
+The fuller check below is still only described. When the owner asks for it, this is the whole of it: one workflow in the **content** repository, calling the tools at a pinned version. It is written here rather than committed so that nothing more runs, and nothing more is billed, until someone decides it should.
 
 ```yaml
 # litlfred/bootstrap — .github/workflows/check.yml (NOT ENABLED)

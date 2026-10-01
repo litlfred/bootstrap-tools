@@ -123,7 +123,7 @@ the commit that is live and the QA result. Each step and its command are in
 
 | Role | what it is | also called | formerly |
 |---|---|---|---|
-| **Site Publisher** | Renders a Knowledge Graph — the whole of it, or a list of its Subgraphs — for GitHub Pages at a publication root URL, has it deployed, checks what is served,… |  |  |
+| **Site Publisher** | Renders a [Knowledge Graph](https://litlfred.github.io/bootstrap/schemas/#knowledge-graph) — the whole of it, or a list of its [Subgraphs](https://litlfred.github.io/bootstrap/schemas/#subgraph) — for GitHub Pages at a publication root URL, has it deployed, checks what is served,… |  |  |
 | **GitHub Pages** | The host that serves what the Site Publisher deployed, at the publication root URL. |  |  |
 
 <!-- kg:roles:end -->
