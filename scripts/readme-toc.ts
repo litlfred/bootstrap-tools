@@ -83,6 +83,7 @@ export function tocOf(md: string): string {
 export const tocSection: GraphSection = {
   marker: TOC_MARKER,
   summary: "The README's table of contents: its level-2 and level-3 headings, linked by GitHub's anchors",
+  from: "this README's own headings",
   render(ctx) {
     const md = ctx.readme ?? (existsSync(join(ctx.root, "README.md")) ? readFileSync(join(ctx.root, "README.md"), "utf-8") : undefined);
     if (md === undefined) return { markdown: "", notes: ["left unchanged — no README to read headings from"], skip: true };

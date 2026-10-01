@@ -18,11 +18,19 @@
  * section's markers has not opted into it, and is left alone. A section that
  * says it could not determine its content (`skip`) leaves the region as it is.
  *
+ * Each region opens with the generated-by notice (`generatedBanner`, owner
+ * 2026-10-01): a README with marker sections is only PARTLY generated, so the
+ * notice is on each region a tool wrote, saying "this section", rather than
+ * once at the top of a page that is mostly a person's — which would be false,
+ * and would have to be written outside the markers, where this tool may not
+ * write.
+ *
  * Usage: bun run bootstrap-tools/scripts/readme-sections.ts [--root ./bootstrap] [--check]
  */
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
+import { generatedBanner } from "./generated-by.ts";
 import { filesSection, processesSection, rolesSection, type GraphSection } from "./readme-graph-sections.ts";
 import { tocSection } from "./readme-toc.ts";
 
@@ -49,7 +57,8 @@ export function syncReadme(root: string, readme: string): { content: string; wri
     const out = s.render({ root, readme: content });
     notes.push(...out.notes.map((n) => `${s.marker}: ${n}`));
     if (out.skip) continue;
-    content = inject(content, out.markdown, s.marker);
+    const banner = generatedBanner("scripts/readme-sections.ts", `${s.from} (section \`${s.marker}\`)`, "edit outside the markers, or change what it is generated from", "section");
+    content = inject(content, `${banner}\n\n${out.markdown}`, s.marker);
     written.push(s.marker);
   }
   return { content, written, notes };

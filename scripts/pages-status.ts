@@ -18,8 +18,8 @@
  *
  * ## Three states, never two
  *
- * - `pushed` — the staged tree has no problem, the root URL answers, and
- *   every document address answers;
+ * - `pushed` — the staged tree has no problem, the root URL answers, its
+ *   README page (`README.html`) answers, and every document address answers;
  * - `not-pushed` — something checked and failed: a staging problem (so
  *   nothing should have been pushed), the root URL or a document address
  *   answering 404;
@@ -32,7 +32,7 @@
  * One line a caller can post as it stands — on a pull request, in a log, to
  * the person who asked:
  *
- * `pushed 1a2b3c4 to https://owner.github.io/repo/ — QA: staged ok (120 files, 7 documents); root 200; documents 7/7 answer`
+ * `pushed 1a2b3c4 to https://owner.github.io/repo/ — QA: staged ok (120 files, 7 documents); root 200; README.html 200; documents 7/7 answer`
  *
  * The commit is the one the site was built from: `--sha`, or the root's
  * `HEAD`. A site here is served from the `gh-pages` BRANCH, so pass the
@@ -65,6 +65,8 @@ export interface PagesStatus {
   qa: {
     staged: { state: StepState; files: number; documents: number; problems: string[] };
     root: { state: StepState; http?: number };
+    /** The README page, `<root>README.html`, where the README lands (owner, 2026-10-01). */
+    readme: { state: StepState; http?: number };
     documents: { answering: number; total: number; missing: string[]; unchecked: string[] };
   };
   /** One line, postable as it stands. */
@@ -113,6 +115,8 @@ export async function pagesStatus(
   // QA of what is served: the root, then each document at its own address.
   const http = await probe.httpStatus(url);
   const rootState = httpAnswer(http);
+  const readmeHttp = await probe.httpStatus(`${url}README.html`);
+  const readmeState = httpAnswer(readmeHttp);
   const answers = await Promise.all(docs.map(async (d) => ({ iri: d.iri, state: httpAnswer(await probe.httpStatus(d.iri)) })));
   const documents = {
     answering: answers.filter((a) => a.state === "done").length,
@@ -127,15 +131,15 @@ export async function pagesStatus(
     const g = spawnSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf-8" });
     if (g.status === 0) sha = g.stdout.trim();
   }
-  const status = pushStatus([staged.state, rootState, docState]);
+  const status = pushStatus([staged.state, rootState, readmeState, docState]);
   const word = { done: "ok", "not-done": "FAILED", "could-not-determine": "could not tell", stated: "stated" } as const;
   const message =
     `${status} ${sha ? sha.slice(0, 7) : "(commit unknown)"} to ${url} — QA: ` +
     `staged ${word[staged.state]} (${staged.files} files, ${staged.documents} documents${staged.problems.length ? `; ${staged.problems.join("; ")}` : ""}); ` +
-    `root ${http ?? "unreachable"}; documents ${documents.answering}/${documents.total} answer` +
+    `root ${http ?? "unreachable"}; README.html ${readmeHttp ?? "unreachable"}; documents ${documents.answering}/${documents.total} answer` +
     (documents.missing.length ? `; missing: ${documents.missing.join(", ")}` : "") +
     (documents.unchecked.length ? `; ${documents.unchecked.length} could not be checked from here` : "");
-  return { status, target: "github-pages", url, sha, qa: { staged, root: { state: rootState, http }, documents }, message };
+  return { status, target: "github-pages", url, sha, qa: { staged, root: { state: rootState, http }, readme: { state: readmeState, http: readmeHttp }, documents }, message };
 }
 
 if (import.meta.main) {
