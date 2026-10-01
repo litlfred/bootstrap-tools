@@ -4,7 +4,7 @@
 
 # The tools
 
-The schema generator and drawn schema page, the README writers (each directory's README, and the `kg:processes` and `kg:files` sections) with their Liquid templates, the [Process](https://github.com/litlfred/bootstrap/blob/main/schemas/README.md#process) renderer, the release-IRI sync, the term linker, and the checks: import closure, node identifiers, bootstrap's concepts, bootstrap's documents parsed against their Zod (`bootstrap:validate`), and the semver bump the published schemas require, computed from a diff (`bootstrap:semver`).
+The schema generator and drawn schema page, the README writers (each directory's README, and the `kg:processes` and `kg:files` sections) with their Liquid templates, the [Process](https://litlfred.github.io/bootstrap/schemas/#process) renderer, the release-IRI sync, the term linker, and the checks: import closure, node identifiers, bootstrap's concepts, bootstrap's documents parsed against their Zod (`bootstrap:validate`), and the semver bump the published schemas require, computed from a diff (`bootstrap:semver`).
 
 Part of [Bootstrap tools](../README.md) 0.1.0, declared as `bootstrap-tools-scripts`, holding `code`.
 

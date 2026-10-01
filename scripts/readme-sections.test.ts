@@ -21,37 +21,43 @@ describe("README sections, written standalone", () => {
   });
 });
 
-describe("a term link across two repositories is a URL; within one, a relative path", () => {
+describe("a term link outside bootstrap is the published page, whatever sits beside it; inside, a relative path", () => {
   const git = (cwd: string) => spawnSync("git", ["init", "-q"], { cwd });
-  const mk = (base: string, separateRepos: boolean) => {
+  const PUBLISHED = "https://litlfred.github.io/bootstrap/schemas/#process";
+  const mk = (base: string, layout: "split" | "mono" | "alone") => {
     const b = join(base, "bootstrap");
-    mkdirSync(join(b, "schemas"), { recursive: true });
-    writeFileSync(join(b, "schemas", "README.md"), "# terms\n");
-    writeFileSync(join(b, "bootstrap.json"), '{"name":"bootstrap","repository":"litlfred/bootstrap"}\n');
+    if (layout !== "alone") {
+      mkdirSync(join(b, "schemas"), { recursive: true });
+      writeFileSync(join(b, "schemas", "README.md"), "# terms\n");
+      writeFileSync(join(b, "bootstrap.json"), '{"name":"bootstrap","repository":"litlfred/bootstrap"}\n');
+    }
     const t = join(base, "bootstrap-tools", "scripts");
     mkdirSync(t, { recursive: true });
-    if (separateRepos) {
+    if (layout === "split") {
       git(b);
       git(join(base, "bootstrap-tools"));
     } else git(base);
     return { base, tools: t, bootstrap: b };
   };
 
-  test("sibling clones: the tools' README names bootstrap's repository", () => {
-    const { base, tools } = mk(join(tmp, "split"), true);
-    const [t] = bootstrapTermTargets(base, tools, ["Process"]);
-    expect(t!.href).toBe("https://github.com/litlfred/bootstrap/blob/main/schemas/README.md#process");
+  test("sibling clones: the tools' README links the published page", () => {
+    const { base, tools } = mk(join(tmp, "split"), "split");
+    expect(bootstrapTermTargets(base, tools, ["Process"])[0]!.href).toBe(PUBLISHED);
+  });
+
+  test("one repository holding both: still the published page, never a sibling-relative path", () => {
+    const { base, tools } = mk(join(tmp, "mono"), "mono");
+    expect(bootstrapTermTargets(base, tools, ["Process"])[0]!.href).toBe(PUBLISHED);
+  });
+
+  test("the tools alone, with no bootstrap anywhere: the same published page", () => {
+    const { base, tools } = mk(join(tmp, "alone"), "alone");
+    expect(bootstrapTermTargets(base, tools, ["Process"])[0]!.href).toBe(PUBLISHED);
   });
 
   test("bootstrap's own README, in its own repository, links relatively", () => {
-    const { base, bootstrap } = mk(join(tmp, "own"), true);
-    const [t] = bootstrapTermTargets(base, bootstrap, ["Process"]);
-    expect(t!.href).toBe("schemas/README.md#process");
-  });
-
-  test("one repository holding both: relative, as before", () => {
-    const { base, tools } = mk(join(tmp, "mono"), false);
-    const [t] = bootstrapTermTargets(base, tools, ["Process"]);
-    expect(t!.href).toBe("../../bootstrap/schemas/README.md#process");
+    const { base, bootstrap } = mk(join(tmp, "own"), "split");
+    expect(bootstrapTermTargets(base, bootstrap, ["Process"])[0]!.href).toBe("schemas/README.md#process");
+    expect(bootstrapTermTargets(base, join(bootstrap, "schemas"), ["Process"])[0]!.href).toBe("README.md#process");
   });
 });
