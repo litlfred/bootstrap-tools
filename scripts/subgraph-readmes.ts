@@ -178,6 +178,33 @@ export interface SubgraphInput {
    * carries no process section at all.
    */
   process?: ProcessView;
+  /**
+   * What each SUBDIRECTORY is, by its name — a description the CALLER resolved
+   * from whatever declares that subdirectory. Absent, or absent for one name,
+   * falls back to a file count.
+   *
+   * The caller resolves it rather than this writer, and that is the point.
+   * `declarationFileIn` recognises a declaration by `name` matching its own
+   * basename, which is a deliberate discriminator: `bootstrap-tools/` holds
+   * BOTH `package.json` and `bootstrap-tools.json`, and both satisfy
+   * `KnowledgeGraphDeclarationSchema` — npm's `package.json` has a `name` and
+   * supports `directories` — so a "whatever validates" rule would make that
+   * function throw on its own repository. Measured 2026-10-01.
+   *
+   * Some declarations legitimately do NOT match that rule. `beans/beans.json`
+   * carries `name: "folio-assistant"`, because there `name` answers *whose*
+   * work plan this is, and the filename comes from the graph kind — the
+   * owner's rule, 2026-09-20: each type declares its own filename, so that
+   * relocating `beans/` to `work/` renames nothing inside it. Both
+   * conventions are right for what they guard, and reconciling them is a
+   * separate question from naming a row in a table.
+   *
+   * So the harness, which knows its own kinds, hands the answer down. A file
+   * COUNT drifts on every commit that adds a file — it is why one line of
+   * `beans/README.md` conflicted three times in one day — while a declared
+   * description changes only when the declaration does.
+   */
+  subdirs?: Readonly<Record<string, string>>;
 }
 
 /** One Knowledge Graph, resolved. */
@@ -333,7 +360,16 @@ export async function plan(repo: string, instances: InstanceInput[], templates: 
       for (const f of all) if (f.includes("/")) counts.set(f.split("/")[0]!, (counts.get(f.split("/")[0]!) ?? 0) + 1);
       const subdirs = [...counts]
         .sort((a, b) => a[0].localeCompare(b[0]))
-        .map(([n, count]) => ({ name: n, href: linkTarget(n), count, readme: existsSync(join(abs, n, "README.md")) ? `${linkTarget(n)}/README.md` : "" }));
+        .map(([n, count]) => ({
+          name: n,
+          href: linkTarget(n),
+          count,
+          // Empty string rather than undefined, matching every other optional
+          // the templates read: `subgraph.liquid` states the convention —
+          // "Empty strings where not declared — never a typed number."
+          description: linked(cell(d.subdirs?.[n] ?? "")),
+          readme: existsSync(join(abs, n, "README.md")) ? `${linkTarget(n)}/README.md` : "",
+        }));
       const listed = direct.length <= LIST_LIMIT;
       const files = listed
         ? direct.map((f) => {

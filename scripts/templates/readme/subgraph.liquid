@@ -13,7 +13,10 @@
     kg        the whole declaration, for any field a template wants
     files     each file directly here: path, what (read from the file),
               usedBy (from diagrams that name it)
-    subdirs   each subdirectory: name, count, readme (a link, or empty)
+    subdirs   each subdirectory: name, count, description (what it is, as
+              the CALLER resolved it from whatever declares that
+              subdirectory — empty when nothing does, and the row then
+              shows the count), readme (a link, or empty)
     process   the DECLARED governing process (`coverage.process`), resolved
               to its diagram and its rendered SVG — or nil when the directory
               declares none, which is an answer and not a gap

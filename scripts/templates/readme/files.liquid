@@ -1,6 +1,13 @@
 {%- comment -%}
   The file table: files directly in the directory, then its subdirectories.
   Included by subgraph.liquid; reads `files`, `subdirs` and `summary`.
+
+  A subdirectory row says WHAT IT IS when the caller resolved a description
+  for it, and falls back to a file count when nothing declares one. The
+  description is preferred because a count drifts on every commit that adds a
+  file: one line of `beans/README.md` conflicted three times in a single day
+  (2026-10-01), each branch computing a different total from the same
+  generator and none of them right for the merge.
 {%- endcomment -%}
 {%- if summary != "" -%}
 _{{ summary }}_
@@ -15,6 +22,6 @@ _This directory holds no files yet._
 | [`{{ f.path }}`]({{ f.href }}) | {{ f.what }} | {{ f.usedBy }} |
 {% endfor -%}
 {% for d in subdirs -%}
-| [`{{ d.name }}/`]({% if d.readme != "" %}{{ d.readme }}{% else %}{{ d.href }}/{% endif %}) | {{ d.count }} file{% if d.count != 1 %}s{% endif %} | |
+| [`{{ d.name }}/`]({% if d.readme != "" %}{{ d.readme }}{% else %}{{ d.href }}/{% endif %}) | {% if d.description != "" %}{{ d.description }}{% else %}{{ d.count }} file{% if d.count != 1 %}s{% endif %}{% endif %} | |
 {% endfor -%}
 {%- endif %}
