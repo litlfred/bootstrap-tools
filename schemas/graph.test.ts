@@ -194,10 +194,14 @@ describe("nothing in bootstrap/ names anything above it (bean iwtn)", () => {
    * - Nothing that names the repository bootstrap was staged in. Since
    *   bootstrap has its own repository (`litlfred/bootstrap`, 2026-09-30) its
    *   source and publication addresses are its own, and `livesAt` is gone.
-   * - `bootstrap-tools`, which LEAKS does not list: the one name outside
-   *   itself bootstrap may carry, as the answer to "what wrote this file?"
-   *   (owner, 2026-09-30, bean `xsqm`). Every generated file carries it —
-   *   `scripts/generated-by.test.ts`.
+   * - `bootstrap-tools` — the layer directly above — only as an ADDRESS
+   *   (`TOOLS_REPOSITORY` and paths under it) or as the link text of a
+   *   README's visible generated-by notice. Owner, 2026-09-30 (bean `xsqm`)
+   *   let generated files name it as the answer to "what wrote this file?";
+   *   owner, 2026-10-01 (folio-assistant#1770) narrowed that: README notices
+   *   may keep the name, every other generated note says "the bootstrap
+   *   toolset" and gives the address (`scripts/generated-by.ts`). Authored
+   *   prose names no toolset, except by address.
    *
    * The `folio-*` schema identifiers are no longer allowed: bootstrap's own
    * files carry `model-registry/1.0.0`, resolving to a schema inside bootstrap
@@ -205,9 +209,27 @@ describe("nothing in bootstrap/ names anything above it (bean iwtn)", () => {
    * hosted ledger (bean xsqm). The `folio:` diagram prefix
    * went earlier (bean 12s9, stage 2).
    */
-  const ALLOW: RegExp[] = [];
-  /** Structural, awaiting the owner's ruling (bean iwtn). Each entry is `file: the leaking text`. */
-  const PENDING: string[] = [];
+  const ALLOW: RegExp[] = [
+    new RegExp(TOOLS_REPOSITORY.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&") + "[^\\s)\"`]*", "g"),
+    /\[bootstrap-tools\]\(/g, // a README notice's link text (generatedBanner)
+  ];
+  /** Above bootstrap: LEAKS, plus the toolset directly above it. */
+  const ABOVE = [...LEAKS, /bootstrap-tools/];
+  /**
+   * Structural, awaiting the owner's ruling (bean iwtn). Each entry is `file: the leaking text`.
+   * bootstrap's README check (`.github/workflows/check.yml`) checks the toolset out by name;
+   * where it should live instead is the open question (folio-assistant#1770).
+   */
+  const PENDING: string[] = [
+    ".github/workflows/check.yml: # bootstrap runs nothing itself: the generators are bootstrap-tools,",
+    ".github/workflows/check.yml: repository: litlfred/bootstrap-tools",
+    ".github/workflows/check.yml: path: bootstrap-tools",
+    ".github/workflows/check.yml: - name: Install bootstrap-tools",
+    ".github/workflows/check.yml: working-directory: bootstrap-tools",
+    ".github/workflows/check.yml: working-directory: bootstrap-tools",
+    ".github/workflows/check.yml: working-directory: bootstrap-tools",
+    ".github/workflows/check.yml: working-directory: bootstrap-tools",
+  ];
   const files: string[] = [];
   const walk = (d: string) => {
     for (const f of readdirSync(d)) {
@@ -236,7 +258,7 @@ describe("nothing in bootstrap/ names anything above it (bean iwtn)", () => {
       let text = readFileSync(p, "utf-8");
       for (const a of ALLOW) text = text.replace(a, "");
       for (const line of text.split("\n")) {
-        if (LEAKS.some((re) => re.test(line))) found.push(`${p.slice(BOOTSTRAP.length + 1)}: ${line.trim()}`);
+        if (ABOVE.some((re) => re.test(line))) found.push(`${p.slice(BOOTSTRAP.length + 1)}: ${line.trim()}`);
       }
     }
     expect(found.sort()).toEqual([...PENDING].sort());

@@ -19,7 +19,7 @@
  * ## Beside bean `iwtn`'s test, not instead of it
  *
  * `bootstrap-tools/schemas/graph.test.ts` holds ALL of `bootstrap/` to a stricter
- * list — no layer above it may be named either (`cat-harness`, `folio`),
+ * list — no layer above it may be named either (no harness or folio built on it),
  * because bootstrap is self-definitional. This check covers the narrower
  * rule, no OUTSIDE concept, and applies it to one thing that test does not
  * read: the Zod SOURCES bootstrap's schemas are generated from. Those live in
