@@ -33,7 +33,7 @@
  * | `asset:<id>` | `assets[]` — the file exists | no |
  * | `readme` | FR-8 — the root has a `README.md` | no |
  * | `readme-sections` | the README's own markers — every opted-in section is current | yes |
- * | `site:workflow` | `repository` — a workflow commits the site onto gh-pages | no |
+ * | `site:workflow` | `repository` — a workflow commits the site onto gh-pages: the instance's own, or one in this toolset that checks it out | no |
  * | `site:branch` | `repository` — a gh-pages branch exists (2026-10-01: it must, before Pages can be on) | no: says how |
  * | `site:enabled` | `repository` — Pages is on, serving gh-pages | yes, with `gh`, once the branch exists |
  * | `site:live` | `iriBase`, else the Pages address — the address answers, and so does its `README.html` | no |
@@ -135,15 +135,31 @@ export function enablePagesByHand(o: { owner: string; repo: string }): string {
   return `open ${pagesSettings(o)} → "Build and deployment" → Source: "Deploy from a branch" → branch \`gh-pages\`, folder \`/ (root)\` (free for a public repository; the branch must exist first — site:branch). Then re-run the Pages workflow from the Actions tab, or push to main.`;
 }
 
-/** A workflow under `.github/workflows/` that deploys to Pages, or `undefined`. */
-export function pagesWorkflow(root: string): string | undefined {
-  const dir = join(root, ".github", "workflows");
-  if (!existsSync(dir)) return undefined;
-  for (const f of readdirSync(dir).sort()) {
-    if (!/\.ya?ml$/.test(f)) continue;
-    if (/\bgh-pages\b/.test(readFileSync(join(dir, f), "utf-8"))) return `.github/workflows/${f}`;
-  }
-  return undefined;
+/** This toolset's own checkout, whose workflows may publish an instance from outside it. */
+const TOOLSET_ROOT = join(import.meta.dir, "..");
+
+/**
+ * A workflow that deploys `root`'s site to Pages, or `undefined`: one under
+ * the instance's own `.github/workflows/`, or — for an instance that carries
+ * no workflow naming its toolset (bootstrap, owner 2026-10-01) — one under
+ * the toolset's that checks out `owner/repo` and pushes its gh-pages.
+ */
+export function pagesWorkflow(root: string, o?: { owner: string; repo: string }, toolsetRoot: string = TOOLSET_ROOT): string | undefined {
+  const inDir = (dir: string, match: (text: string) => boolean): string | undefined => {
+    if (!existsSync(dir)) return undefined;
+    for (const f of readdirSync(dir).sort()) {
+      if (/\.ya?ml$/.test(f) && match(readFileSync(join(dir, f), "utf-8"))) return f;
+    }
+    return undefined;
+  };
+  const gh = (t: string) => /\bgh-pages\b/.test(t);
+  const own = inDir(join(root, ".github", "workflows"), gh);
+  if (own) return `.github/workflows/${own}`;
+  if (!o || resolve(root) === resolve(toolsetRoot)) return undefined;
+  const target = `${o.owner}/${o.repo}`;
+  const names = (t: string) => new RegExp(`^\\s*(?:repository|REPO):\\s*${target.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`, "m").test(t);
+  const outside = inDir(join(toolsetRoot, ".github", "workflows"), (t) => gh(t) && names(t));
+  return outside ? `the toolset's .github/workflows/${outside}, publishing ${target}` : undefined;
 }
 
 /** The declarations `root` needs, each resolved as a sibling checkout; `undefined` where it is not there. */
@@ -165,14 +181,14 @@ async function siteSteps(root: string, decl: KnowledgeGraphDeclaration, probe: P
   const named = decl.name;
   const steps: InitStep[] = [];
 
-  const wf = pagesWorkflow(root);
+  const wf = pagesWorkflow(root, o);
   steps.push({
     id: "site:workflow",
     namedBy: named,
     what: "a workflow that builds the site and deploys it to GitHub Pages",
     state: wf ? "done" : "not-done",
     detail: wf ? wf : "no workflow under .github/workflows/ publishes to the gh-pages branch",
-    action: wf ? undefined : "add .github/workflows/pages.yml — bootstrap's is the pattern: stage the site with bootstrap-tools' scripts/site.ts and commit it onto gh-pages as a full replace",
+    action: wf ? undefined : "add .github/workflows/pages.yml — bootstrap-tools' own is the pattern: stage the site with scripts/site.ts and commit it onto gh-pages as a full replace",
   });
 
   // The branch must exist before Pages can serve it — owner, 2026-10-01:

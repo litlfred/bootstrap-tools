@@ -32,7 +32,7 @@
  * ```
  *
  * @module scripts/iri-sync
- * @covers cat-harness
+ * @covers computed — every declared Knowledge Graph's text files that carry an instance's release IRI (`knowledgeGraphsIn`)
  */
 import { readFileSync, statSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";

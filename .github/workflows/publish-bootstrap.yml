@@ -1,0 +1,89 @@
+# The site at https://litlfred.github.io/bootstrap/ (landing on README.html) —
+# every README in litlfred/bootstrap as one page with a table of contents,
+# beside every file as it sits, and bootstrap's own graph at the address its
+# @id names.
+#
+# Published FROM HERE, not from bootstrap (owner, 2026-10-01,
+# folio-assistant#1770): bootstrap names nothing above it, so it carries no
+# workflow that checks out this toolset. The dependency points the right way —
+# the toolset reads bootstrap and pushes to bootstrap's gh-pages branch.
+#
+# Same steps as bootstrap's former .github/workflows/pages.yml: check every
+# link on the README page lands, stage the site with scripts/site.ts, and
+# commit it onto bootstrap's gh-pages as a full replace; GitHub Pages builds
+# the branch (Jekyll). Pages must be on in litlfred/bootstrap, serving
+# gh-pages, and the branch must exist first — skills/render-kg-to-github-pages
+# and processes/render-kg-to-github-pages.bpmn.
+#
+# Not on push: a push to bootstrap cannot trigger a workflow here, so it runs
+# on a schedule and by hand. A run with nothing new to publish is a no-op
+# ("gh-pages already current").
+#
+# Needs the secret BOOTSTRAP_PAGES_TOKEN in THIS repository: a fine-grained
+# personal access token scoped to litlfred/bootstrap only, with Contents:
+# read and write. GITHUB_TOKEN cannot push to another repository.
+name: Publish bootstrap's site
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-bootstrap
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: The token that pushes to bootstrap's gh-pages is set
+        env:
+          TOKEN: ${{ secrets.BOOTSTRAP_PAGES_TOKEN }}
+        run: |
+          if [ -z "${TOKEN}" ]; then
+            echo "::error::Set the repository secret BOOTSTRAP_PAGES_TOKEN in litlfred/bootstrap-tools: a fine-grained token for litlfred/bootstrap with Contents read and write. Without it this workflow cannot push bootstrap's gh-pages." >&2
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+        with:
+          path: bootstrap-tools
+      - uses: actions/checkout@v4
+        with:
+          repository: litlfred/bootstrap
+          path: bootstrap
+      - uses: oven-sh/setup-bun@v2
+      - name: Install
+        working-directory: bootstrap-tools
+        run: bun install --frozen-lockfile
+      - name: Check every link on bootstrap's README page lands
+        working-directory: bootstrap-tools
+        run: bun run scripts/readme-book.ts --root ../bootstrap --check
+      - name: Stage bootstrap's site
+        working-directory: bootstrap-tools
+        run: bun run scripts/site.ts --root ../bootstrap --out ../_site-src
+      - name: Commit the staged site onto bootstrap's gh-pages (full replace; rebuild, never rebase)
+        env:
+          REPO: litlfred/bootstrap
+          TOKEN: ${{ secrets.BOOTSTRAP_PAGES_TOKEN }}
+        run: |
+          set -euo pipefail
+          SRC="$(git -C bootstrap rev-parse HEAD)"
+          for attempt in 1 2 3; do
+            rm -rf _gh && git clone --quiet --branch gh-pages --single-branch \
+              "https://x-access-token:${TOKEN}@github.com/${REPO}.git" _gh
+            find _gh -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+            cp -a _site-src/. _gh/
+            cd _gh
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            if git diff --cached --quiet; then echo "gh-pages already current"; exit 0; fi
+            git commit --quiet -m "Publish ${SRC}"
+            if git push --quiet origin gh-pages; then echo "gh-pages $(git rev-parse HEAD)"; exit 0; fi
+            cd ..; sleep $((attempt * 5))
+          done
+          echo "push to gh-pages failed after 3 attempts" >&2; exit 1
