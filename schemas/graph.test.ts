@@ -215,21 +215,8 @@ describe("nothing in bootstrap/ names anything above it (bean iwtn)", () => {
   ];
   /** Above bootstrap: LEAKS, plus the toolset directly above it. */
   const ABOVE = [...LEAKS, /bootstrap-tools/];
-  /**
-   * Structural, awaiting the owner's ruling (bean iwtn). Each entry is `file: the leaking text`.
-   * bootstrap's README check (`.github/workflows/check.yml`) checks the toolset out by name;
-   * where it should live instead is the open question (folio-assistant#1770).
-   */
-  const PENDING: string[] = [
-    ".github/workflows/check.yml: # bootstrap runs nothing itself: the generators are bootstrap-tools,",
-    ".github/workflows/check.yml: repository: litlfred/bootstrap-tools",
-    ".github/workflows/check.yml: path: bootstrap-tools",
-    ".github/workflows/check.yml: - name: Install bootstrap-tools",
-    ".github/workflows/check.yml: working-directory: bootstrap-tools",
-    ".github/workflows/check.yml: working-directory: bootstrap-tools",
-    ".github/workflows/check.yml: working-directory: bootstrap-tools",
-    ".github/workflows/check.yml: working-directory: bootstrap-tools",
-  ];
+  /** Structural, awaiting the owner's ruling (bean iwtn). Each entry is `file: the leaking text`. */
+  const PENDING: string[] = [];
   const files: string[] = [];
   const walk = (d: string) => {
     for (const f of readdirSync(d)) {
