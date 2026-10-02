@@ -45,21 +45,21 @@ A step that fails is reported with its output and the command to reproduce it; t
 
 ## CI — the README checks are enabled; the rest is described
 
-Owner, 2026-10-01: *"each repo owns its README"* — no hosting harness regenerates or checks it any more, so each repository's own CI fails when its README is stale. Here that is `.github/workflows/check.yml`: this repository's READMEs, checked with bootstrap-tools standing alone, because their output must not depend on what sits beside them (a term outside bootstrap links to bootstrap's published schema page, never to a sibling path). bootstrap's own `check.yml` does the same for bootstrap's READMEs, with the tools checked out beside it.
+Owner, 2026-10-01: *"each repo owns its README"* — no hosting harness regenerates or checks it any more, so each repository's own CI fails when its README is stale. Here that is `.github/workflows/check.yml`: this repository's READMEs, checked with bootstrap-tools standing alone, because their output must not depend on what sits beside them (a term outside bootstrap links to bootstrap's published schema page, never to a sibling path). bootstrap's READMEs and schemas are checked from here too, by `.github/workflows/check-bootstrap.yml`, with bootstrap checked out beside the tools: bootstrap carries no workflow, because one would name this toolset (owner, 2026-10-02). It runs on a schedule, by hand, and after each publish of bootstrap's site, never on a bootstrap PR.
 
-The fuller check below is still only described. When the owner asks for it, this is the whole of it: one workflow in the **content** repository, calling the tools at a pinned version. It is written here rather than committed so that nothing more runs, and nothing more is billed, until someone decides it should.
+The fuller check below is still only described. When the owner asks for it, this is the whole of it: one more job in `check-bootstrap.yml`, calling the tools at a pinned version. It is written here rather than committed so that nothing more runs, and nothing more is billed, until someone decides it should.
 
 ```yaml
-# litlfred/bootstrap — .github/workflows/check.yml (NOT ENABLED)
-on: [pull_request]
+# litlfred/bootstrap-tools — a further job for check-bootstrap.yml (NOT ENABLED)
+on: [workflow_dispatch]
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: { path: bootstrap }
+        with: { repository: litlfred/bootstrap, path: bootstrap }
       - uses: actions/checkout@v4
-        with: { repository: litlfred/bootstrap-tools, ref: v0.1.0, path: bootstrap-tools }
+        with: { ref: v0.1.0, path: bootstrap-tools }
       - uses: oven-sh/setup-bun@v2
       - run: bun install --cwd bootstrap-tools
       - run: |
