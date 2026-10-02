@@ -5,7 +5,7 @@ import { join } from "node:path";
 
 import { spawnSync } from "node:child_process";
 
-import { enablePagesByHand, exitStatus, httpAnswer, initSteps, offlineProbe, ownerRepo, type Probe } from "./init.ts";
+import { enablePagesByHand, exitStatus, httpAnswer, initSteps, offlineProbe, ownerRepo, pagesWorkflow, type Probe } from "./init.ts";
 
 /** A fake instance `demo` needing `base`, as sibling checkouts. */
 function fixture(opts: { workflow?: boolean; withBase?: boolean } = {}): string {
@@ -55,6 +55,18 @@ describe("init — the steps the declarations name, in four states", () => {
     expect(state(steps, "needs:base")).toBe("not-done");
     expect(state(steps, "readme")).toBe("done");
     expect(state(steps, "site:workflow")).toBe("not-done");
+  });
+
+  test("site:workflow — a publisher in the TOOLSET counts only when it checks out that instance", () => {
+    const root = fixture();
+    const tools = mkdtempSync(join(tmpdir(), "tools-"));
+    mkdirSync(join(tools, ".github", "workflows"), { recursive: true });
+    const wf = (repo: string) => `steps:\n  - uses: actions/checkout@v4\n    with:\n      repository: ${repo}\n  - run: git push origin gh-pages\n`;
+    writeFileSync(join(tools, ".github", "workflows", "other.yml"), wf("someone/other"));
+    expect(pagesWorkflow(root, { owner: "someone", repo: "demo" }, tools)).toBeUndefined();
+    writeFileSync(join(tools, ".github", "workflows", "publish-demo.yml"), wf("someone/demo"));
+    expect(pagesWorkflow(root, { owner: "someone", repo: "demo" }, tools)).toBe("the toolset's .github/workflows/publish-demo.yml, publishing someone/demo");
+    expect(pagesWorkflow(root, undefined, tools)).toBeUndefined();
   });
 
   test("a needed harness's own instructions are STATED, never done", async () => {

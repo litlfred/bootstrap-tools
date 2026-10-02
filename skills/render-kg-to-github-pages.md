@@ -76,7 +76,9 @@ Every command below is run from bootstrap-tools, with the instance as `--root`.
    stops here: the report says `not-pushed` and names the problem, and nothing
    is deployed. A push of a tree known to be broken is not a push to report.
 5. **Deploy.** Commit the staged tree onto `gh-pages` as a full replace — the
-   instance's Pages workflow does it on a push to `main`, or by hand. GitHub
+   instance's Pages workflow does it on a push to `main`, or by hand; an
+   instance that carries no workflow of its own (bootstrap) is published by
+   one in the toolset, on a schedule or by hand. GitHub
    Pages builds the branch (Jekyll, unless `.nojekyll`). A rejected push is
    rebuilt and retried, never rebased. The `gh-pages` commit is the message.
 6. **Check what is served, and report.**

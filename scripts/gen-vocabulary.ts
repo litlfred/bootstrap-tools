@@ -112,7 +112,7 @@ export function vocabulary(r: ReleaseIris): Record<string, unknown> {
     definition:
       "Every term bootstrap defines, in the order they are defined — each uses only terms above it — and every Graph Kind it defines.",
     versionInfo: r.version,
-    comment: generatedNote("scripts/gen-vocabulary.ts", "bootstrap's own terms", "change the terms in bootstrap-tools/schemas/graph.ts"),
+    comment: generatedNote("scripts/gen-vocabulary.ts", "bootstrap's own terms", "change the terms in the toolset's schemas/graph.ts"),
     wasAttributedTo: TOOLS_REPOSITORY,
     "@graph": [...terms, ...kinds],
   };
