@@ -24,6 +24,18 @@
  *    it, as `bootstrap-graph-publication` says and as the harness's own site
  *    build does (`--allow-collision bootstrap.json`). The declaration is still
  *    served, at `<version>/bootstrap.json`, and the skip is reported;
+ * 1a. its NAMED SUBGRAPHS (`subgraph-jsonld.ts`), framed from that same graph:
+ *    `subgraph/index.jsonld` (the repository), `subgraph/<name>/index.jsonld`
+ *    (the instance) and, for each directory of a kind the graph reads,
+ *    `subgraph/<name>/<path>/index.jsonld` and `index.hydrated.jsonld`, with
+ *    the one context they name at `subgraph/context.jsonld`. For bootstrap,
+ *    and for any instance that `needs` bootstrap — whose graph is written in
+ *    bootstrap's classes, so it is built with bootstrap's checkout beside it
+ *    and is a problem, never silently absent, when that checkout is not
+ *    there. Such an instance's graph document is written too, at
+ *    `<name>.jsonld`, because every member's `@id` is a fragment of it. The
+ *    publication root is `--base-url`, else `iriBase`, else the declaration's
+ *    GitHub Pages address;
  * 2. every DOCUMENT the instance publishes at the address it names — each
  *    JSON Schema's `$id` and each JSON-LD document's `@id` under `iriBase`
  *    ({@link publishedDocuments}). An `@id` with no extension (`…/0.1.0/ns`,
@@ -60,7 +72,9 @@
  *
  * Every `@context` bootstrap writes is inline in its document (measured
  * 2026-09-30: no file names an external context), so publishing each document
- * publishes its context; there is no separate context file to serve.
+ * publishes its context. The one exception is built, not authored: every
+ * named-subgraph file names `subgraph/context.jsonld` by URL, and it is
+ * staged with them.
  *
  * `--check` stages into a temporary directory, lists every document address
  * and fails on any problem: an address nothing is staged at, a link on the
@@ -73,7 +87,7 @@
  * the declaration does not list is a problem, never silently an empty site
  * (`processes/render-kg-to-github-pages.bpmn`, the process this is a step of).
  *
- * Usage: bun run bootstrap-tools/scripts/site.ts --root ../bootstrap (--out ../_site-src | --check) [--base-url <url>] [--subgraph <id>]… [--provenance] [--branch <source branch, default main>]
+ * Usage: bun run bootstrap-tools/scripts/site.ts --root ../bootstrap (--out ../_site-src | --check) [--base-url <url>] [--subgraph <id>]… [--provenance] [--branch <source branch, default main>] [--bootstrap <dir>]
  */
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -82,6 +96,7 @@ import { dirname, join, posix, relative } from "node:path";
 import { readKnowledgeGraphDeclaration } from "../schemas/declaration.ts";
 import { TOOLS_REPOSITORY, generatedScripts, wholeFileGenerated } from "./generated-by.ts";
 import { exportGraph } from "./export-graph.ts";
+import { frameSubgraphs, publicationBase } from "./subgraph-jsonld.ts";
 import { publishFiles } from "./publish-files.ts";
 import { gitFiles } from "./git-files.ts";
 import { buildBook, danglingFragments, readReadmes } from "./readme-book.ts";
@@ -265,7 +280,11 @@ export interface SiteReport {
 }
 
 /** Stage `root`'s site in `out`. Throws when there is no declaration to read. */
-export function stageSite(root: string, out: string, opts: { baseUrl?: string; provenance?: boolean; subgraphs?: readonly string[]; branch?: string } = {}): SiteReport {
+export function stageSite(
+  root: string,
+  out: string,
+  opts: { baseUrl?: string; provenance?: boolean; subgraphs?: readonly string[]; branch?: string; bootstrapRoot?: string } = {},
+): SiteReport {
   const decl = readKnowledgeGraphDeclaration(root);
   if (!decl) throw new Error(`${root} carries no Knowledge Graph declaration — there is no instance to publish`);
   mkdirSync(out, { recursive: true });
@@ -287,13 +306,33 @@ export function stageSite(root: string, out: string, opts: { baseUrl?: string; p
   // The graph first: its `.json` copy keeps the address it shares with the
   // declaration (bootstrap-graph-publication), and nothing written after it
   // may take that address.
+  //
+  // ONE graph, built once: the document, and every subgraph file framed from
+  // it. Each `source` is a link under the publication root, which is where
+  // the file sits on the site — the same IRI the relative path resolved to.
   const base = (opts.baseUrl ?? decl.iriBase)?.replace(/\/?$/, "/");
-  if (decl.name === "bootstrap") {
-    if (!base) report.problems.push("no --base-url and no iriBase: bootstrap.jsonld not written, because its @id would be a guess");
+  const needs = Array.isArray(decl["needs"]) ? (decl["needs"] as unknown[]) : [];
+  if (decl.name === "bootstrap" || needs.includes("bootstrap")) {
+    const graphBase = decl.name === "bootstrap" ? base : publicationBase(decl, opts.baseUrl);
+    if (!graphBase) report.problems.push(`no --base-url, no iriBase and no repository: ${decl.name}.jsonld and its subgraphs not written, because their @id would be a guess`);
     else {
-      const doc = `${JSON.stringify(exportGraph(root, { docIri: `${base}bootstrap.jsonld`, provenance: opts.provenance ?? false }), null, 2)}\n`;
-      put("bootstrap.jsonld", doc);
-      put("bootstrap.json", doc);
+      let graph: Record<string, unknown> | undefined;
+      try {
+        graph = exportGraph(root, { docIri: `${graphBase}${decl.name}.jsonld`, provenance: opts.provenance ?? false, sourceBase: graphBase, bootstrapRoot: opts.bootstrapRoot });
+      } catch (e) {
+        report.problems.push(`${decl.name}.jsonld and its subgraphs not written: ${(e as Error).message} (its classes are bootstrap's, so bootstrap's checkout must sit beside it, or be named with --bootstrap)`);
+      }
+      if (graph) {
+        const doc = `${JSON.stringify(graph, null, 2)}\n`;
+        put(`${decl.name}.jsonld`, doc);
+        // The `.json` copy shares bootstrap's declaration's address, and the
+        // graph keeps it (bootstrap-graph-publication); another instance's
+        // declaration has no versioned copy to fall back on, so it keeps its own.
+        if (decl.name === "bootstrap") put("bootstrap.json", doc);
+        const sub = frameSubgraphs(root, graph, graphBase);
+        report.problems.push(...sub.problems.map((p) => `subgraph: ${p}`));
+        if (sub.problems.length === 0) for (const [path, text] of sub.files) put(path, text);
+      }
     }
   }
 
@@ -388,13 +427,15 @@ if (import.meta.main) {
     process.exit(2);
   }
   const subgraphs = args.flatMap((a, i) => (a === "--subgraph" && args[i + 1] ? [args[i + 1]!] : []));
-  const r = stageSite(root, out, { baseUrl: arg("--base-url"), provenance: args.includes("--provenance"), subgraphs, branch: arg("--branch") });
+  const r = stageSite(root, out, { baseUrl: arg("--base-url"), provenance: args.includes("--provenance"), subgraphs, branch: arg("--branch"), bootstrapRoot: arg("--bootstrap") });
   const decl = readKnowledgeGraphDeclaration(root);
   const keep = (decl && subgraphSelection(decl, subgraphs).keep) ?? (() => true);
   const docs = publishedDocuments(root, arg("--base-url")).filter((d) => !d.source || keep(d.source));
   console.log(`Staged ${r.written.length} file(s) from ${root} in ${out}.`);
   console.log(`${docs.length} document(s) at the address each names:`);
   for (const d of docs) console.log(`  ${existsSync(join(out, d.path)) ? "✓" : "✗"} ${d.iri}  ←  ${d.source ?? "built"}`);
+  const subgraphFiles = r.written.filter((f) => f.startsWith("subgraph/"));
+  if (subgraphFiles.length) console.log(`${subgraphFiles.length} named-subgraph file(s), from subgraph/index.jsonld.`);
   for (const s of r.skipped) console.log(`  not written, already there: ${s}`);
   for (const p of r.problems) console.error(`  ✗ ${p}`);
   if (check) rmSync(out, { recursive: true, force: true });

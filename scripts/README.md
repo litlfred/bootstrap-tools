@@ -46,6 +46,8 @@ Part of [Bootstrap tools](../README.md) 0.1.0, declared as `bootstrap-tools-scri
 | [`schema-semver.ts`](schema-semver.ts) | a file |  |
 | [`site.test.ts`](site.test.ts) | a file |  |
 | [`site.ts`](site.ts) | a file |  |
+| [`subgraph-jsonld.test.ts`](subgraph-jsonld.test.ts) | a file |  |
+| [`subgraph-jsonld.ts`](subgraph-jsonld.ts) | a file |  |
 | [`subgraph-readmes.test.ts`](subgraph-readmes.test.ts) | a file |  |
 | [`subgraph-readmes.ts`](subgraph-readmes.ts) | a file |  |
 | [`term-links.test.ts`](term-links.test.ts) | a file |  |

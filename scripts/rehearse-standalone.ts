@@ -48,6 +48,7 @@ export const REHEARSED: ReadonlyArray<readonly [string, string[]]> = [
   ["every link on bootstrap's README page lands", ["run", "scripts/readme-book.ts", "--root", "../bootstrap", "--check"]],
   ["every link on bootstrap-tools' README page lands", ["run", "scripts/readme-book.ts", "--root", ".", "--check"]],
   ["bootstrap's JSON Schemas and JSON-LD stage at their IRIs", ["run", "scripts/site.ts", "--root", "../bootstrap", "--check"]],
+  ["both instances' named subgraphs frame", ["run", "scripts/subgraph-jsonld.ts", "--check", "--root", "../bootstrap", "--root", "."]],
   ["the graph exports", ["run", "scripts/export-graph.ts", "--base-url", "https://example.invalid/bootstrap/", "--out", "/dev/null"]],
   ["unit tests", ["test", "."]],
 ];

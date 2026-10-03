@@ -3,11 +3,12 @@
  * @graphNode none — a test
  */
 import { describe, expect, test } from "bun:test";
-import { readdirSync, readFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { GraphExportSchema } from "../schemas/graph-export.ts";
-import { COLLECTED_KINDS, exportGraph, parseXml } from "./export-graph.ts";
+import { COLLECTED_KINDS, exportGraph, firstSentence, parseXml } from "./export-graph.ts";
 import { GENERATED_BY } from "./generated-by.ts";
 
 const BOOTSTRAP = join(import.meta.dir, "..", "..", "bootstrap");
@@ -48,9 +49,8 @@ describe("bootstrap's graph, from bootstrap's files, in standard terms", () => {
     const ids = new Set([DOC, ...nodes().map((n) => n["@id"])]);
     const dangling: string[] = [];
     for (const n of nodes()) {
-      for (const k of ["isPartOf", "sourceRef", "targetRef", "skill"]) {
-        const v = n[k];
-        if (typeof v === "string" && !ids.has(v)) dangling.push(`${n["@id"]} ${k} → ${v}`);
+      for (const k of ["isPartOf", "sourceRef", "targetRef", "skill", "calledElement", "requires"]) {
+        for (const v of ([] as unknown[]).concat(n[k] ?? [])) if (typeof v === "string" && !ids.has(v)) dangling.push(`${n["@id"]} ${k} → ${v}`);
       }
       for (const v of (n["flowNodeRef"] as string[] | undefined) ?? []) if (!ids.has(v)) dangling.push(`${n["@id"]} flowNodeRef → ${v}`);
     }
@@ -94,6 +94,65 @@ describe("bootstrap's graph, from bootstrap's files, in standard terms", () => {
   test("nodes are sorted by @id, by code unit", () => {
     const ids = (build()["@graph"] as { "@id": string }[]).map((n) => n["@id"]);
     expect(ids).toEqual([...ids].sort());
+  });
+});
+
+describe("a process says what it is for, what it calls, and where it is drawn", () => {
+  const processes = () => nodes().filter((n) => n["@type"] === "bootstrap:Process");
+
+  test("every bootstrap process carries its diagram's documentation: the whole as description, the first sentence as summary", () => {
+    expect(processes().length).toBe(readdirSync(join(BOOTSTRAP, "processes")).filter((f) => f.endsWith(".bpmn")).length);
+    for (const p of processes()) {
+      expect(typeof p["description"], p["@id"]).toBe("string");
+      expect(p["summary"], p["@id"]).toBe(firstSentence(String(p["description"])));
+    }
+  });
+
+  test("the processes a process calls are its call activities' calledElement, each a Process node", () => {
+    const init = processes().find((p) => p["@id"].endsWith("#process/Process_InitializeHarness"))!;
+    expect(init["requires"]).toEqual(
+      ["Process_CompleteInitialization", "Process_Discussion", "Process_LogMessage"].map((x) => `${DOC}#process/${x}`),
+    );
+    const calls = nodes().filter((n) => n["type"] === "bpmn:callActivity");
+    expect(calls.length).toBeGreaterThan(0);
+    for (const c of calls) expect(String(c["calledElement"])).toContain("#process/");
+  });
+
+  test("a process is depicted by the SVG drawn beside its .bpmn", () => {
+    for (const p of processes()) expect(p["depiction"]).toBe(String(p["source"]).replace(/\.bpmn$/, ".svg"));
+  });
+
+  test("the process's own documentation, never a task's; a call to a process no diagram defines is a problem, and no link is written", () => {
+    const root = mkdtempSync(join(tmpdir(), "export-graph-"));
+    mkdirSync(join(root, "processes"));
+    writeFileSync(join(root, "demo.json"), JSON.stringify({ name: "demo", needs: ["bootstrap"], directories: [{ id: "p", path: "processes/", graphKinds: ["processes"] }] }));
+    writeFileSync(
+      join(root, "processes", "a.bpmn"),
+      '<bpmn:definitions xmlns:bpmn="x"><bpmn:process id="P_A" name="A"><bpmn:task id="T"><bpmn:documentation>A task, not the process.</bpmn:documentation></bpmn:task><bpmn:documentation>Does A. Then more.</bpmn:documentation><bpmn:callActivity id="C" calledElement="P_Missing"/></bpmn:process></bpmn:definitions>',
+    );
+    const g = exportGraph(root, { docIri: DOC, bootstrapRoot: BOOTSTRAP });
+    const graph = g["@graph"] as Node[];
+    const a = graph.find((n) => n["@type"] === "bootstrap:Process")!;
+    expect(a["summary"]).toBe("Does A.");
+    expect(a["description"]).toBe("Does A. Then more.");
+    expect("requires" in a).toBe(false);
+    expect("calledElement" in graph.find((n) => n["@id"].endsWith("/node/C"))!).toBe(false);
+    expect(g["problems"]).toEqual(["#process/P_A: calls #process/P_Missing, which no diagram here defines", "#process/P_A/node/C: calls #process/P_Missing, which no diagram here defines"]);
+  });
+
+  test("another instance's graph is written in bootstrap's classes, whatever it declares", () => {
+    const tools = exportGraph(join(import.meta.dir, ".."), { docIri: DOC });
+    const ctx = tools["@context"] as Record<string, unknown>;
+    expect(ctx["bootstrap"]).toBe((build()["@context"] as Record<string, unknown>)["bootstrap"]);
+    expect(tools["problems"]).toEqual([]);
+    expect((tools["@graph"] as Node[]).filter((n) => n["@type"] === "bootstrap:Process").map((n) => n["summary"] !== undefined)).toEqual([true]);
+  });
+
+  test("the first sentence", () => {
+    expect(firstSentence("One.  Two.")).toBe("One.");
+    expect(firstSentence("A file.bpmn is\n read. Then")).toBe("A file.bpmn is read.");
+    expect(firstSentence("No stop")).toBe("No stop");
+    expect(firstSentence("Ends here.")).toBe("Ends here.");
   });
 });
 

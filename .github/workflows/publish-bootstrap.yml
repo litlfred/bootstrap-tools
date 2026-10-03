@@ -1,7 +1,8 @@
 # The site at https://litlfred.github.io/bootstrap/ (landing on README.html) —
 # every README in litlfred/bootstrap as one page with a table of contents,
-# beside every file as it sits, and bootstrap's own graph at the address its
-# @id names.
+# beside every file as it sits, bootstrap's own graph at the address its
+# @id names, and its named subgraphs under subgraph/ (scripts/subgraph-jsonld.ts,
+# staged by site.ts from that same graph).
 #
 # Published FROM HERE, not from bootstrap (owner, 2026-10-01,
 # folio-assistant#1770): bootstrap names nothing above it, so it carries no

@@ -1,5 +1,7 @@
 # The site at https://litlfred.github.io/bootstrap-tools/ (landing on README.html) — every README here
-# as one page with a table of contents, beside every file as it sits.
+# as one page with a table of contents, beside every file as it sits, and this
+# repository's graph (bootstrap-tools.jsonld) with its named subgraphs under
+# subgraph/.
 #
 # Staged by scripts/site.ts and committed onto the gh-pages branch as a full
 # replace; GitHub Pages builds the branch (Jekyll). Pages must be on, serving
@@ -27,6 +29,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: bootstrap-tools
+      # Beside the tools, read-only: this repository's graph and its named
+      # subgraphs are written in bootstrap's classes, so site.ts reads
+      # bootstrap's namespace from its declaration (export-graph.ts). Public,
+      # so no secret.
+      - uses: actions/checkout@v4
+        with:
+          repository: litlfred/bootstrap
+          path: bootstrap
       - uses: oven-sh/setup-bun@v2
       - name: Install
         working-directory: bootstrap-tools
