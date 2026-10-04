@@ -1,0 +1,30 @@
+{
+  "@context": "https://litlfred.github.io/bootstrap-tools/subgraph/v0/context.jsonld",
+  "@id": "https://litlfred.github.io/bootstrap-tools/subgraph/bootstrap-tools/scenarios/",
+  "@type": "bootstrap:Subgraph",
+  "description": "`roles.json`: the Roles the toolset's Processes bind their lanes to. The Site Publisher, who renders, deploys, checks and reports; and GitHub Pages, the host, acted upon.",
+  "hasMember": [
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#directory/bootstrap-tools-scenarios",
+      "@type": "bootstrap:Subgraph",
+      "name": "bootstrap-tools-scenarios",
+      "title": "The toolset's Roles"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#role/github-pages",
+      "@type": "bootstrap:Role",
+      "name": "GitHub Pages"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#role/site-publisher",
+      "@type": "bootstrap:Role",
+      "name": "Site Publisher"
+    }
+  ],
+  "holdsGraph": [
+    "bootstrap:graphKind/scenarios"
+  ],
+  "name": "scenarios",
+  "path": "scenarios/",
+  "title": "The toolset's Roles"
+}

@@ -36,6 +36,7 @@ Which lane runs what — the lanes are the roles of the hosting harness's `kg-se
 | no outside concept in the schemas | `bun run check:concepts` | build pipeline | a forbidden word appears |
 | imports stay inside the toolset | `bun run check:closure` | build pipeline | an import leaves or names a package not allowed |
 | READMEs and diagrams are current | `bun run readmes:check`, `bun run render:check` | build pipeline | a generated region or picture is stale |
+| named subgraphs frame the graph | `bun run subgraphs:check` | build pipeline | a subgraph file does not validate, a child has no file, a node cannot be placed, or a diagram is not a documented Process |
 | unit tests | `bun test .` | build pipeline | any fails |
 | status of a push to GitHub Pages, and its message | `bun run pages:status -- --root <instance> [--url <root>] [--sha <commit>]` | Site Publisher (`processes/render-kg-to-github-pages.bpmn`) | exit 1 not pushed, 3 could not determine |
 

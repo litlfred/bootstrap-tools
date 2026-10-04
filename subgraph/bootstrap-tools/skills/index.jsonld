@@ -1,0 +1,32 @@
+{
+  "@context": "https://litlfred.github.io/bootstrap-tools/subgraph/v0/context.jsonld",
+  "@id": "https://litlfred.github.io/bootstrap-tools/subgraph/bootstrap-tools/skills/",
+  "@type": "bootstrap:Subgraph",
+  "description": "The skills this toolset owns: `bootstrap-contract-semver`, what MAJOR, MINOR and PATCH mean for bootstrap's published schemas and why the bump is computed from a diff; and `render-kg-to-github-pages`, rendering a Knowledge Graph (or a list of its Subgraphs) to GitHub Pages at a publication root URL and reporting the push's status with one message.",
+  "hasMember": [
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#directory/bootstrap-tools-skills",
+      "@type": "bootstrap:Subgraph",
+      "name": "bootstrap-tools-skills",
+      "title": "The toolset's skills"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#skill/bootstrap-contract-semver",
+      "@type": "bootstrap:Skill",
+      "name": "bootstrap-contract-semver",
+      "title": "Bootstrap contract semver"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#skill/render-kg-to-github-pages",
+      "@type": "bootstrap:Skill",
+      "name": "render-kg-to-github-pages",
+      "title": "Render a Knowledge Graph to GitHub Pages"
+    }
+  ],
+  "holdsGraph": [
+    "bootstrap:graphKind/skills"
+  ],
+  "name": "skills",
+  "path": "skills/",
+  "title": "The toolset's skills"
+}

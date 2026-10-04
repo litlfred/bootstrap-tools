@@ -10,6 +10,8 @@
     "vocabulary": "bun run scripts/gen-vocabulary.ts",
     "vocabulary:check": "bun run scripts/gen-vocabulary.ts --check",
     "graph": "bun run scripts/export-graph.ts",
+    "subgraphs": "bun run scripts/subgraph-jsonld.ts",
+    "subgraphs:check": "bun run scripts/subgraph-jsonld.ts --check --root ../bootstrap --root .",
     "publish": "bun run scripts/publish-files.ts",
     "render": "bun run scripts/render-bpmn.ts",
     "render:check": "bun run scripts/render-bpmn.ts --check",

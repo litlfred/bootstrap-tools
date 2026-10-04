@@ -32,12 +32,37 @@
  * | a subgraph's kinds; a process node's BPMN element | `dcterms:type` | DCMI |
  * | the file a node is | `dcterms:source` | DCMI |
  * | a flow's ends | `bpmn:sourceRef`, `bpmn:targetRef` | BPMN 2.0 |
+ * | the process a call activity calls | `bpmn:calledElement` | BPMN 2.0 |
+ * | a process's documentation: whole, and its first sentence | `dcterms:description`, `dcterms:abstract` | DCMI |
+ * | the processes a process calls | `dcterms:requires` | DCMI |
+ * | the drawing of a process | `foaf:depiction` | FOAF |
  * | the nodes a role's lanes hold | `bpmn:flowNodeRef` | BPMN 2.0 |
  * | a task's skill, a lane's role | `processes:skill`, `processes:role` | bootstrap's diagram extensions |
  * | provenance | `prov:wasDerivedFrom`, `prov:generatedAtTime` | PROV-O |
  *
  * Harness-only facts about a node (enforcement, whether a step touches a work
  * plan, …) are the harness's to state, in the harness's export.
+ *
+ * ## A process says what it is for
+ *
+ * A Process node carries its diagram's own `<bpmn:documentation>` (the one
+ * directly inside `<bpmn:process>`, not a task's): the whole text as
+ * `description` and its first sentence as `summary` (`dcterms:abstract`). A
+ * reader listing processes shows the sentence and links the rest, so a
+ * sentence about a process is written once, in the process. Its `requires`
+ * are the processes its call activities call, each also on the call activity
+ * as `calledElement`; a call to a process the graph does not hold is a
+ * problem, never a dangling link. Its `depiction` is the SVG drawn beside the
+ * `.bpmn` (`render-bpmn.ts`), when there is one.
+ *
+ * ## The vocabulary is always bootstrap's
+ *
+ * Every class here is bootstrap's, so the `bootstrap:` prefix is bootstrap's
+ * namespace whatever instance is exported: read from `root` when `root` IS
+ * bootstrap, else from the bootstrap checkout beside it (`--bootstrap`,
+ * default `../bootstrap`), the one an instance that `needs` bootstrap sits
+ * beside. An instance cannot rename bootstrap's terms by declaring an
+ * `iriBase` of its own.
  *
  * ## Identifiers are the ones already linked to
  *
@@ -53,7 +78,7 @@
  * is what the tests rely on.
  *
  * ```sh
- * bun run bootstrap-tools/scripts/export-graph.ts --base-url <url> --out <file> [--provenance]
+ * bun run bootstrap-tools/scripts/export-graph.ts --base-url <url> --out <file> [--root <instance>] [--bootstrap <dir>] [--provenance]
  * ```
  */
 import { TOOLS_REPOSITORY, generatedNote } from "./generated-by.ts";
@@ -65,6 +90,17 @@ import { readKnowledgeGraphDeclaration } from "../schemas/declaration.ts";
 import { releaseIri, bootstrapRelease } from "../schemas/release-iri.ts";
 
 const BPMN_MODEL = "http://www.omg.org/spec/BPMN/20100524/MODEL#";
+
+/**
+ * The first sentence of a text: whitespace collapsed, cut after the first
+ * full stop that ends the text or is followed by a space. The whole text when
+ * it has none. A Process's `summary`.
+ */
+export function firstSentence(text: string): string {
+  const one = text.replace(/\s+/g, " ").trim();
+  const stop = one.search(/\.(\s|$)/);
+  return stop > 0 ? one.slice(0, stop + 1) : one;
+}
 
 /** One XML element, as far as a BPMN reader needs: name, attributes, children, text. */
 export interface El {
@@ -158,6 +194,14 @@ export interface ExportOptions {
   provenance?: boolean;
   /** Where the source files are browsed, for `dcterms:source`; relative paths when absent. */
   sourceBase?: string;
+  /** The bootstrap checkout whose vocabulary names the classes, when `root` is not bootstrap; default `<root>/../bootstrap`. */
+  bootstrapRoot?: string;
+}
+
+/** The bootstrap checkout whose namespace an export of `root` uses: `root` itself when it is bootstrap. */
+export function vocabularyRoot(root: string, bootstrapRoot?: string): string {
+  if (readKnowledgeGraphDeclaration(root)?.name === "bootstrap") return root;
+  return bootstrapRoot ?? join(root, "..", "bootstrap");
 }
 
 /** The Graph Kinds whose Subgraphs' contents this exporter reads. */
@@ -167,7 +211,7 @@ export const COLLECTED_KINDS: readonly string[] = ["skills", "scenarios", "proce
 export function exportGraph(root: string, opts: ExportOptions): Record<string, unknown> {
   const decl = readKnowledgeGraphDeclaration(root);
   if (!decl) throw new Error(`${root} carries no Knowledge Graph declaration`);
-  const r = bootstrapRelease(root);
+  const r = bootstrapRelease(vocabularyRoot(root, opts.bootstrapRoot));
   const ns = releaseIri(r, "ns#", "agent");
   const processesNs = releaseIri(r, "processes/ns#", "agent");
   const doc = opts.docIri;
@@ -242,7 +286,9 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
     }
   }
 
-  // Processes, their nodes and flows.
+  // Processes, their nodes and flows. Process nodes are held apart until every
+  // diagram is read, because a call may name a process in a file read later.
+  const processNodes: Record<string, unknown>[] = [];
   for (const d of dirs.filter((x) => x.graphKinds.includes("processes"))) {
     for (const f of filesIn(join(root, d.path), ".bpmn")) {
       const rel = relative(root, f);
@@ -251,11 +297,23 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
         if (local(p.name) !== "process" || !p.attrs["id"]) return;
         const pid = p.attrs["id"]!;
         const pIri = id("process", pid);
-        nodes.push({
+        // The diagram's OWN documentation — a direct child of the process,
+        // never a task's or a lane's.
+        const documentation = p.children.find((c) => local(c.name) === "documentation")?.text.trim();
+        const calls = [
+          ...new Set(
+            p.children.filter((c) => local(c.name) === "callActivity" && c.attrs["calledElement"]).map((c) => id("process", c.attrs["calledElement"]!)),
+          ),
+        ].sort();
+        const svg = rel.replace(/\.bpmn$/, ".svg");
+        processNodes.push({
           "@id": pIri,
           "@type": "bootstrap:Process",
           label: p.attrs["name"] ?? pid,
+          ...(documentation ? { summary: firstSentence(documentation), description: documentation } : {}),
+          ...(calls.length ? { requires: calls } : {}),
           source: src(rel),
+          ...(existsSync(join(root, svg)) ? { depiction: src(svg) } : {}),
           isPartOf: id("directory", d.id),
         });
         const nodeIri = (nid: string) => `${pIri}/node/${nid}`;
@@ -263,6 +321,7 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
           const kind = local(c.name);
           if (FLOW_NODE.test(kind) && c.attrs["id"]) {
             const skill = extensionRef(c, "skill");
+            const called = kind === "callActivity" ? c.attrs["calledElement"] : undefined;
             nodes.push({
               "@id": nodeIri(c.attrs["id"]),
               "@type": "bootstrap:ProcessNode",
@@ -270,6 +329,7 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
               type: `bpmn:${kind}`,
               isPartOf: pIri,
               ...(skill ? { skill: id("skill", skill) } : {}),
+              ...(called ? { calledElement: id("process", called) } : {}),
             });
           } else if (kind === "sequenceFlow" && c.attrs["id"]) {
             nodes.push({
@@ -306,6 +366,24 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
     }
   }
 
+  // A call to a process no diagram defines is a problem, and the link is not
+  // written: a dangling link is a link minted for a node nobody emitted.
+  const processIris = new Set(processNodes.map((n) => String(n["@id"])));
+  for (const n of [...processNodes, ...nodes]) {
+    for (const k of ["requires", "calledElement"] as const) {
+      const v = n[k];
+      if (v === undefined) continue;
+      const kept = ([] as string[]).concat(v as string | string[]).filter((iri) => {
+        if (processIris.has(iri)) return true;
+        problems.push(`${String(n["@id"]).slice(doc.length)}: calls ${iri.slice(doc.length)}, which no diagram here defines`);
+        return false;
+      });
+      if (kept.length === 0) delete n[k];
+      else n[k] = Array.isArray(v) ? kept : kept[0];
+    }
+  }
+  nodes.push(...processNodes);
+
   // A Subgraph whose kinds none of the collectors above reads is declared (it
   // has its own node) but its contents are not: said, so "holds nothing" and
   // "nobody looked" are never the same empty answer.
@@ -336,11 +414,16 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
       dcterms: "http://purl.org/dc/terms/",
       prov: "http://www.w3.org/ns/prov#",
       owl: "http://www.w3.org/2002/07/owl#",
+      foaf: "http://xmlns.com/foaf/0.1/",
       label: "rdfs:label",
       comment: "rdfs:comment",
       wasAttributedTo: { "@id": "prov:wasAttributedTo", "@type": "@id" },
       title: "dcterms:title",
       description: "dcterms:description",
+      summary: "dcterms:abstract",
+      requires: { "@id": "dcterms:requires", "@type": "@id" },
+      depiction: { "@id": "foaf:depiction", "@type": "@id" },
+      calledElement: { "@id": "bpmn:calledElement", "@type": "@id" },
       isPartOf: { "@id": "dcterms:isPartOf", "@type": "@id" },
       type: { "@id": "dcterms:type", "@type": "@id" },
       source: { "@id": "dcterms:source", "@type": "@id" },
@@ -392,7 +475,7 @@ if (import.meta.main) {
   const out = arg("--out");
   const base = arg("--base-url");
   if (!out || !base) {
-    console.error("usage: export-graph.ts --base-url <site url of bootstrap/> --out <file> [--root <bootstrap>] [--provenance] [--source-base <url>]");
+    console.error("usage: export-graph.ts --base-url <site url of bootstrap/> --out <file> [--root <instance>] [--bootstrap <dir>] [--provenance] [--source-base <url>]");
     process.exit(2);
   }
   const doc = exportGraph(root, {
@@ -401,6 +484,7 @@ if (import.meta.main) {
     docIri: `${base.replace(/\/?$/, "/")}${basename(out)}`,
     provenance: args.includes("--provenance"),
     sourceBase: arg("--source-base"),
+    bootstrapRoot: arg("--bootstrap"),
   });
   mkdirSync(dirname(out), { recursive: true });
   writeFileSync(out, `${JSON.stringify(doc, null, 2)}\n`);

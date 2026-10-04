@@ -1,0 +1,10 @@
+{
+  "@context": "https://litlfred.github.io/bootstrap-tools/subgraph/v0/context.jsonld",
+  "@id": "https://litlfred.github.io/bootstrap-tools/subgraph/",
+  "@type": "bootstrap:Subgraph",
+  "hasSubgraph": [
+    "https://litlfred.github.io/bootstrap-tools/subgraph/bootstrap-tools/"
+  ],
+  "name": "bootstrap-tools",
+  "path": "./"
+}

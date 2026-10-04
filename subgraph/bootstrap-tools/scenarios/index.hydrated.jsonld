@@ -1,0 +1,58 @@
+{
+  "@context": "https://litlfred.github.io/bootstrap-tools/subgraph/v0/context.jsonld",
+  "@id": "https://litlfred.github.io/bootstrap-tools/subgraph/bootstrap-tools/scenarios/",
+  "@type": "bootstrap:Subgraph",
+  "description": "`roles.json`: the Roles the toolset's Processes bind their lanes to. The Site Publisher, who renders, deploys, checks and reports; and GitHub Pages, the host, acted upon.",
+  "hasMember": [
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#directory/bootstrap-tools-scenarios",
+      "@type": "bootstrap:Subgraph",
+      "description": "`roles.json`: the Roles the toolset's Processes bind their lanes to. The Site Publisher, who renders, deploys, checks and reports; and GitHub Pages, the host, acted upon.",
+      "isPartOf": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld",
+      "name": "bootstrap-tools-scenarios",
+      "source": "https://litlfred.github.io/bootstrap-tools/scenarios/",
+      "title": "The toolset's Roles",
+      "type": [
+        "bootstrap:graphKind/scenarios"
+      ]
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#role/github-pages",
+      "@type": "bootstrap:Role",
+      "description": "The host that serves what the Site Publisher deployed, at the publication root URL. `actedUpon`: it receives a deployment — a commit on the `gh-pages` branch — and serves it; it decides nothing, which is why it carries no skills.",
+      "flowNodeRef": [
+        "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/node/A_Deploy",
+        "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/node/A_Provision"
+      ],
+      "isPartOf": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#directory/bootstrap-tools-scenarios",
+      "name": "GitHub Pages",
+      "source": "https://litlfred.github.io/bootstrap-tools/scenarios/roles.json"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#role/site-publisher",
+      "@type": "bootstrap:Role",
+      "description": "Renders a Knowledge Graph — the whole of it, or a list of its Subgraphs — for GitHub Pages at a publication root URL, has it deployed, checks what is served, and reports the push's status with one message. Performed by an agent running these tools, or by a Pages workflow running the same commands; the steps and the report are the same either way. It does not decide WHICH root URL or WHICH Subgraphs: whoever started the process says, and a staging root and a release root are the same process with a different answer.",
+      "flowNodeRef": [
+        "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/node/A_CheckServed",
+        "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/node/A_CheckStaged",
+        "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/node/A_Report",
+        "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/node/A_ResolveInputs",
+        "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/node/A_Stage",
+        "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/node/End_NotPushed",
+        "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/node/End_Pushed",
+        "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/node/GW_Pushed",
+        "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/node/GW_Staged",
+        "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/node/Start_Render"
+      ],
+      "isPartOf": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#directory/bootstrap-tools-scenarios",
+      "name": "Site Publisher",
+      "source": "https://litlfred.github.io/bootstrap-tools/scenarios/roles.json"
+    }
+  ],
+  "holdsGraph": [
+    "bootstrap:graphKind/scenarios"
+  ],
+  "name": "scenarios",
+  "path": "scenarios/",
+  "title": "The toolset's Roles"
+}

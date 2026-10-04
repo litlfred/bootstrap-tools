@@ -21,4 +21,5 @@ Part of [Bootstrap tools](../README.md) 0.1.0, declared as `bootstrap-tools-sche
 | [`release-iri.test.ts`](release-iri.test.ts) | a file |  |
 | [`release-iri.ts`](release-iri.ts) | a file |  |
 | [`requirement.ts`](requirement.ts) | a file |  |
+| [`subgraph-export.ts`](subgraph-export.ts) | a file |  |
 <!-- kg:subgraph:end -->

@@ -1,0 +1,137 @@
+{
+  "@context": "https://litlfred.github.io/bootstrap-tools/subgraph/v0/context.jsonld",
+  "@id": "https://litlfred.github.io/bootstrap-tools/subgraph/bootstrap-tools/processes/",
+  "@type": "bootstrap:Subgraph",
+  "description": "The toolset's own Processes, in bootstrap's diagram vocabulary: `render-kg-to-github-pages.bpmn`, rendering a Knowledge Graph (or a list of its Subgraphs) to GitHub Pages at a publication root URL, with each step one of these tools and the push's status and message as its output. The same process for a staging preview and a release; only the root URL differs.",
+  "hasMember": [
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#directory/bootstrap-tools-processes",
+      "@type": "bootstrap:Subgraph",
+      "name": "bootstrap-tools-processes",
+      "title": "The toolset's Processes"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages",
+      "@type": "bootstrap:Process",
+      "name": "Render a Knowledge Graph to GitHub Pages"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/flow/SF_RG_1",
+      "@type": "bootstrap:SequenceFlow"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/flow/SF_RG_10",
+      "@type": "bootstrap:SequenceFlow",
+      "name": "yes"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/flow/SF_RG_11",
+      "@type": "bootstrap:SequenceFlow",
+      "name": "no"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/flow/SF_RG_2",
+      "@type": "bootstrap:SequenceFlow"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/flow/SF_RG_2b",
+      "@type": "bootstrap:SequenceFlow"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/flow/SF_RG_3",
+      "@type": "bootstrap:SequenceFlow"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/flow/SF_RG_4",
+      "@type": "bootstrap:SequenceFlow"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/flow/SF_RG_5",
+      "@type": "bootstrap:SequenceFlow",
+      "name": "yes"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/flow/SF_RG_6",
+      "@type": "bootstrap:SequenceFlow",
+      "name": "no"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/flow/SF_RG_7",
+      "@type": "bootstrap:SequenceFlow"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/flow/SF_RG_8",
+      "@type": "bootstrap:SequenceFlow"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/flow/SF_RG_9",
+      "@type": "bootstrap:SequenceFlow"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/node/A_CheckServed",
+      "@type": "bootstrap:ProcessNode",
+      "name": "Check what is served"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/node/A_CheckStaged",
+      "@type": "bootstrap:ProcessNode",
+      "name": "Check what was staged"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/node/A_Deploy",
+      "@type": "bootstrap:ProcessNode",
+      "name": "Deploy the rendering"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/node/A_Provision",
+      "@type": "bootstrap:ProcessNode",
+      "name": "Make sure gh-pages exists and Pages serves it"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/node/A_Report",
+      "@type": "bootstrap:ProcessNode",
+      "name": "Report the push: status and message"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/node/A_ResolveInputs",
+      "@type": "bootstrap:ProcessNode",
+      "name": "Resolve the Subgraphs and the root URL"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/node/A_Stage",
+      "@type": "bootstrap:ProcessNode",
+      "name": "Stage the rendering"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/node/End_NotPushed",
+      "@type": "bootstrap:ProcessNode",
+      "name": "Not pushed, or could not tell, and the message says why"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/node/End_Pushed",
+      "@type": "bootstrap:ProcessNode",
+      "name": "Pushed, and the message says what is live"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/node/GW_Pushed",
+      "@type": "bootstrap:ProcessNode",
+      "name": "Status is pushed?"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/node/GW_Staged",
+      "@type": "bootstrap:ProcessNode",
+      "name": "Staged tree passes?"
+    },
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#process/Process_RenderKgToGitHubPages/node/Start_Render",
+      "@type": "bootstrap:ProcessNode",
+      "name": "A Knowledge Graph, a publication root URL, GitHub Pages as the target"
+    }
+  ],
+  "holdsGraph": [
+    "bootstrap:graphKind/processes"
+  ],
+  "name": "processes",
+  "path": "processes/",
+  "title": "The toolset's Processes"
+}

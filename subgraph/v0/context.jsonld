@@ -1,0 +1,78 @@
+{
+  "@context": {
+    "bootstrap": "https://litlfred.github.io/bootstrap/0.1.0/ns#",
+    "processes": "https://litlfred.github.io/bootstrap/0.1.0/processes/ns#",
+    "bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "dcterms": "http://purl.org/dc/terms/",
+    "prov": "http://www.w3.org/ns/prov#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "foaf": "http://xmlns.com/foaf/0.1/",
+    "name": "rdfs:label",
+    "comment": "rdfs:comment",
+    "wasAttributedTo": {
+      "@id": "prov:wasAttributedTo",
+      "@type": "@id"
+    },
+    "title": "dcterms:title",
+    "description": "dcterms:description",
+    "summary": "dcterms:abstract",
+    "requires": {
+      "@id": "dcterms:requires",
+      "@type": "@id"
+    },
+    "depiction": {
+      "@id": "foaf:depiction",
+      "@type": "@id"
+    },
+    "calledElement": {
+      "@id": "bpmn:calledElement",
+      "@type": "@id"
+    },
+    "isPartOf": {
+      "@id": "dcterms:isPartOf",
+      "@type": "@id"
+    },
+    "type": {
+      "@id": "dcterms:type",
+      "@type": "@id"
+    },
+    "source": {
+      "@id": "dcterms:source",
+      "@type": "@id"
+    },
+    "sourceRef": {
+      "@id": "bpmn:sourceRef",
+      "@type": "@id"
+    },
+    "targetRef": {
+      "@id": "bpmn:targetRef",
+      "@type": "@id"
+    },
+    "flowNodeRef": {
+      "@id": "bpmn:flowNodeRef",
+      "@type": "@id"
+    },
+    "skill": {
+      "@id": "processes:skill",
+      "@type": "@id"
+    },
+    "versionInfo": "owl:versionInfo",
+    "path": "dcterms:identifier",
+    "holdsGraph": {
+      "@id": "dcterms:type",
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "hasMember": {
+      "@id": "rdfs:member",
+      "@type": "@id",
+      "@container": "@set"
+    },
+    "hasSubgraph": {
+      "@id": "dcterms:hasPart",
+      "@type": "@id",
+      "@container": "@set"
+    }
+  }
+}
