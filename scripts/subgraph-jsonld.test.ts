@@ -12,7 +12,6 @@ import { SubgraphHydratedSchema, SubgraphIndexSchema } from "../schemas/subgraph
 import { exportGraph } from "./export-graph.ts";
 import { stageSite } from "./site.ts";
 import {
-  CONTEXT_FILE,
   contextPath,
   HYDRATED_FILE,
   INDEX_FILE,
