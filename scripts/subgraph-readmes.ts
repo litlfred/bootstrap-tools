@@ -96,7 +96,7 @@ import {
 import { BOOTSTRAP_TERMS } from "../schemas/graph.ts";
 import { releaseIris } from "../schemas/release-iri.ts";
 import { GENERATED_BY, generatedBanner } from "./generated-by.ts";
-import { gitFiles } from "./git-files.ts";
+import { committedFiles } from "./git-files.ts";
 import { describe as describeFile, linkTarget, usedByIndex } from "./readme-graph-sections.ts";
 import { bootstrapTermTargets, linkTerms } from "./term-links.ts";
 
@@ -232,20 +232,36 @@ export interface Plan {
     | "long-description"
     | "absent-directory"
     | "unmarked-readme"
-    | "unresolved-process",
+    | "unresolved-process"
+    | "untracked-not-counted",
     Finding[]
   >;
+  /**
+   * README path → the counts the README no longer prints (bean `ba9e`): how
+   * many files sit directly in the directory, and how many under each
+   * subdirectory. A count changes on every commit that adds a file, so in a
+   * committed README it conflicted on almost every merge; the README shows a
+   * value invariant under adding a file, and a harness that wants the numbers
+   * publishes them from here — into its Knowledge Graph export, built at
+   * publish time and committed nowhere.
+   */
+  counts: Map<string, { direct: number; subdirs: Record<string, number> }>;
 }
 
 /**
- * Every file under `dir` that git would commit, relative to `dir`: tracked or
- * untracked, never ignored. A bare walk listed `__pycache__/` after a Python
- * test ran, so the README depended on what happened to be on disk. Outside a
- * git work tree (a test's temporary directory) it falls back to the walk.
+ * Every file under `dir` that git has committed or staged, relative to `dir`,
+ * and the untracked files it did not count. A bare walk listed `__pycache__/`
+ * after a Python test ran, and counting untracked files let any transient an
+ * earlier step left behind move a committed README (bean `ba9e`, Train 6), so
+ * the answer is the committed tree's. Outside a git work tree (a test's
+ * temporary directory) it falls back to the walk, which has nothing untracked.
  */
-function filesIn(dir: string): string[] {
-  const corpus = gitFiles(dir);
-  if (corpus !== undefined) return corpus.filter((p) => existsSync(p)).map((p) => relative(dir, p)).sort();
+function filesIn(dir: string): { files: string[]; untracked: string[] } {
+  const corpus = committedFiles(dir);
+  if (corpus !== undefined) {
+    const rel = (ps: string[]) => ps.filter((p) => existsSync(p)).map((p) => relative(dir, p)).sort();
+    return { files: rel(corpus.files), untracked: rel(corpus.untracked) };
+  }
   const out: string[] = [];
   const walk = (d: string): void => {
     for (const e of readdirSync(d, { withFileTypes: true })) {
@@ -255,7 +271,7 @@ function filesIn(dir: string): string[] {
     }
   };
   walk(dir);
-  return out.sort();
+  return { files: out.sort(), untracked: [] };
 }
 
 /** Replace the marked region, or create a file holding only it. `undefined`: no markers, leave it. */
@@ -306,7 +322,9 @@ export async function plan(repo: string, instances: InstanceInput[], templates: 
       "absent-directory": [],
       "unmarked-readme": [],
       "unresolved-process": [],
+      "untracked-not-counted": [],
     },
+    counts: new Map(),
   };
   const seen = new Set<string>();
 
@@ -355,7 +373,13 @@ export async function plan(repo: string, instances: InstanceInput[], templates: 
       const terms = bootstrapTermTargets(repo, abs, Object.keys(BOOTSTRAP_TERMS));
       const linked = (text: string) => linkTerms(text, terms).text;
 
-      const all = filesIn(abs).filter((f) => !f.split("/").some((seg) => seg.startsWith(".")));
+      const scanned = filesIn(abs);
+      const hidden = (f: string) => f.split("/").some((seg) => seg.startsWith("."));
+      const all = scanned.files.filter((f) => !hidden(f));
+      const untracked = scanned.untracked.filter((f) => !hidden(f));
+      if (untracked.length > 0) {
+        out.findings["untracked-not-counted"].push({ ...at, path: untracked.map((f) => relative(repo, join(abs, f))).join(", ") });
+      }
       const direct = all.filter((f) => !f.includes("/") && f !== "README.md");
       const counts = new Map<string, number>();
       for (const f of all) if (f.includes("/")) counts.set(f.split("/")[0]!, (counts.get(f.split("/")[0]!) ?? 0) + 1);
@@ -385,10 +409,12 @@ export async function plan(repo: string, instances: InstanceInput[], templates: 
         : [];
       const byExt = new Map<string, number>();
       for (const f of direct) byExt.set(f.includes(".") ? f.slice(f.lastIndexOf(".")) : "(none)", (byExt.get(f.includes(".") ? f.slice(f.lastIndexOf(".")) : "(none)") ?? 0) + 1);
+      // Invariant under adding a file (bean `ba9e`): the kinds present, in
+      // name order, never how many — the numbers are in `Plan.counts`.
       const summary = listed
         ? ""
-        : `${direct.length} files directly here, too many to list: ` +
-          [...byExt].sort((a, b) => b[1] - a[1]).map(([e, n]) => `${n} ${e}`).join(", ") + ".";
+        : `More than ${LIST_LIMIT} files directly here, too many to list, of these kinds: ` +
+          [...byExt.keys()].sort().join(", ") + ".";
 
       // A view with no `bpmn` resolved to nothing: the template still prints
       // the section saying so, and the finding sends its owner to the
@@ -429,6 +455,7 @@ export async function plan(repo: string, instances: InstanceInput[], templates: 
         continue;
       }
       out.writes.set(readme, next);
+      out.counts.set(readme, { direct: direct.length, subdirs: Object.fromEntries(subdirs.map((x) => [x.name, x.count])) });
     }
   }
   return out;

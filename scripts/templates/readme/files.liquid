@@ -3,11 +3,12 @@
   Included by subgraph.liquid; reads `files`, `subdirs` and `summary`.
 
   A subdirectory row says WHAT IT IS when the caller resolved a description
-  for it, and falls back to a file count when nothing declares one. The
-  description is preferred because a count drifts on every commit that adds a
-  file: one line of `beans/README.md` conflicted three times in a single day
-  (2026-10-01), each branch computing a different total from the same
-  generator and none of them right for the merge.
+  for it. Otherwise it points at the subdirectory's own README, or says that
+  nothing describes it — and never prints a file count (bean `ba9e`). A count
+  drifts on every commit that adds a file: one line of `beans/README.md`
+  conflicted three times in a single day (2026-10-01), and 207 such counts in
+  54 READMEs made almost every merge conflict. The numbers are in the
+  writer's `Plan.counts`, for a harness to publish where they cannot conflict.
 {%- endcomment -%}
 {%- if summary != "" -%}
 _{{ summary }}_
@@ -22,6 +23,6 @@ _This directory holds no files yet._
 | [`{{ f.path }}`]({{ f.href }}) | {{ f.what }} | {{ f.usedBy }} |
 {% endfor -%}
 {% for d in subdirs -%}
-| [`{{ d.name }}/`]({% if d.readme != "" %}{{ d.readme }}{% else %}{{ d.href }}/{% endif %}) | {% if d.description != "" %}{{ d.description }}{% else %}{{ d.count }} file{% if d.count != 1 %}s{% endif %}{% endif %} | |
+| [`{{ d.name }}/`]({% if d.readme != "" %}{{ d.readme }}{% else %}{{ d.href }}/{% endif %}) | {% if d.description != "" %}{{ d.description }}{% elsif d.readme != "" %}described in its own README{% else %}_nothing declares what this holds_{% endif %} | |
 {% endfor -%}
 {%- endif %}

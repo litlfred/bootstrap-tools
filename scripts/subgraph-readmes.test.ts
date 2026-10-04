@@ -74,9 +74,13 @@ describe("plan, on a fixture", async () => {
     expect(skills).not.toContain("\nold\n");
   });
 
-  test("files are described from themselves; a subdirectory is one row with its count", () => {
+  test("files are described from themselves; a subdirectory is one row, with no count", () => {
     expect(skills).toContain("| [`a.md`](a.md) | Does A. |");
-    expect(skills).toContain("| [`pack/`](pack/) | 1 file | |");
+    expect(skills).toContain("| [`pack/`](pack/) | _nothing declares what this holds_ | |");
+  });
+
+  test("the counts the README no longer prints are in the plan — bean ba9e", () => {
+    expect(p.counts.get(join(inst, "skills", "README.md"))).toEqual({ direct: 1, subdirs: { pack: 1 } });
   });
 
   test("a missing README is created; the heading falls back to the id", () => {
@@ -135,7 +139,7 @@ describe("a subdirectory row says what it IS when the caller resolved one", asyn
     expect(skills).not.toContain("1 file");
   });
 
-  test("a name with no description still gets its count", () => {
+  test("a name with no description falls back to a value that does not count", () => {
     // Partial resolution is the normal case: a directory may declare some of
     // its children and not others. The unnamed ones must not go blank.
     const partial = instancesIn(r).map((i) => ({
@@ -143,7 +147,7 @@ describe("a subdirectory row says what it IS when the caller resolved one", asyn
       dirs: i.dirs.map((d) => (d.id === "skills" ? { ...d, subdirs: { nothing: "unrelated" } } : d)),
     }));
     return plan(r, partial).then((q) => {
-      expect(q.writes.get(join(r, "demo", "skills", "README.md"))!).toContain("| [`pack/`](pack/) | 1 file | |");
+      expect(q.writes.get(join(r, "demo", "skills", "README.md"))!).toContain("| [`pack/`](pack/) | _nothing declares what this holds_ | |");
     });
   });
 
@@ -156,7 +160,72 @@ describe("a subdirectory row says what it IS when the caller resolved one", asyn
       dirs: i.dirs.map((d) => (d.id === "skills" ? { ...d, subdirs: { pack: "" } } : d)),
     }));
     return plan(r, blank).then((q) => {
-      expect(q.writes.get(join(r, "demo", "skills", "README.md"))!).toContain("| [`pack/`](pack/) | 1 file | |");
+      expect(q.writes.get(join(r, "demo", "skills", "README.md"))!).toContain("| [`pack/`](pack/) | _nothing declares what this holds_ | |");
+    });
+  });
+});
+
+describe("a README is invariant under adding a file — bean ba9e", async () => {
+  // 207 file counts across 54 committed READMEs changed on almost every
+  // commit, so every merge conflicted on them. The README now carries nothing
+  // that moves when a file is added below a subdirectory; the numbers are in
+  // `Plan.counts` for a harness to publish where they cannot conflict.
+  const r = repo();
+  const before = (await plan(r, instancesIn(r))).writes.get(join(r, "demo", "skills", "README.md"));
+  writeFileSync(join(r, "demo", "skills", "pack", "c.md"), "---\nname: c\ndescription: C.\n---\n");
+  const after = await plan(r, instancesIn(r));
+
+  test("adding a file under a subdirectory changes no README", () => {
+    expect(after.writes.get(join(r, "demo", "skills", "README.md"))).toBe(before);
+  });
+  test("but the count in the plan moves", () => {
+    expect(after.counts.get(join(r, "demo", "skills", "README.md"))!.subdirs.pack).toBe(2);
+    rmSync(r, { recursive: true, force: true });
+  });
+});
+
+describe("over the list limit, the summary names kinds, never numbers — bean ba9e", async () => {
+  const r = repo();
+  for (let i = 0; i < 151; i++) writeFileSync(join(r, "demo", "notes", `n${i}.${i % 2 ? "md" : "txt"}`), "x\n");
+  const notes = (await plan(r, instancesIn(r))).writes.get(join(r, "demo", "notes", "README.md"))!;
+  test("the kinds, in name order, and no count", () => {
+    expect(notes).toContain("More than 150 files directly here, too many to list, of these kinds: .md, .txt.");
+    expect(notes).not.toMatch(/\b151\b|\b7[56] \.(md|txt)\b/); // 151 files: 76 .txt, 75 .md
+    rmSync(r, { recursive: true, force: true });
+  });
+});
+
+describe("in a git work tree, only the committed tree is counted — bean ba9e, Train 6", async () => {
+  // A transient an earlier step left in the worktree, untracked and not
+  // ignored, moved a committed README and reddened its check for nobody's
+  // fault. The answer is now the commit's; the untracked file is NAMED as a
+  // finding, because a file the change under way just wrote is untracked
+  // until staged and must not silently vanish either.
+  const r = repo();
+  const git = (...a: string[]) => Bun.spawnSync(["git", ...a], { cwd: r, env: { ...process.env, GIT_AUTHOR_NAME: "t", GIT_AUTHOR_EMAIL: "t@t", GIT_COMMITTER_NAME: "t", GIT_COMMITTER_EMAIL: "t@t" } });
+  git("init", "-q");
+  git("add", "-A");
+  git("commit", "-qm", "fixture");
+  const clean = await plan(r, instancesIn(r));
+  writeFileSync(join(r, "demo", "skills", "pack", "transient.md"), "left behind\n");
+  writeFileSync(join(r, "demo", "skills", "stray.md"), "left behind\n");
+  const dirty = await plan(r, instancesIn(r));
+  const readme = join(r, "demo", "skills", "README.md");
+
+  test("an untracked file changes neither the README nor the counts", () => {
+    expect(dirty.writes.get(readme)).toBe(clean.writes.get(readme));
+    expect(dirty.counts.get(readme)).toEqual(clean.counts.get(readme));
+  });
+  test("it is reported, by path", () => {
+    const f = dirty.findings["untracked-not-counted"].find((x) => x.directory === "skills")!;
+    expect(f.path).toContain("demo/skills/pack/transient.md");
+    expect(f.path).toContain("demo/skills/stray.md");
+  });
+  test("staging it is what makes it count", () => {
+    git("add", "demo/skills/pack/transient.md");
+    return plan(r, instancesIn(r)).then((q) => {
+      expect(q.counts.get(readme)!.subdirs.pack).toBe(2);
+      rmSync(r, { recursive: true, force: true });
     });
   });
 });
