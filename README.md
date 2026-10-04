@@ -33,7 +33,8 @@ It is **one** toolset over swappable content. Someone who wants a different gene
 | `schemas/declared-order.ts` | checks that an authored order keeps its promise: each item uses only items above it |
 | `scripts/gen-bootstrap-schemas.ts` | writes `bootstrap/schemas/*.schema.json` and the drawn page `bootstrap/schemas/README.md` |
 | `scripts/gen-vocabulary.ts` | writes `bootstrap/ns.jsonld`, bootstrap's vocabulary: every defined term and graph kind, as RDF and SKOS, at the address its IRIs name |
-| `scripts/export-graph.ts`, `schemas/graph-export.ts` | writes `bootstrap.jsonld`, bootstrap's own graph, in bootstrap's classes and standard properties (Dublin Core, BPMN, PROV); the site publishes it, nothing commits it |
+| `scripts/export-graph.ts`, `schemas/graph-export.ts` | writes `<name>.jsonld`, an instance's own graph — bootstrap's, and this repository's — in bootstrap's classes and standard properties (Dublin Core, BPMN, PROV, FOAF); a Process carries its diagram's documentation, the processes it calls and its drawing. The site publishes it, nothing commits it |
+| `scripts/subgraph-jsonld.ts`, `schemas/subgraph-export.ts` | an instance's named subgraphs, projected from that same graph: under `<root>subgraph/<name>/<path>/`, `index.jsonld` (each direct member a pointer, each child subgraph by IRI) and `index.hydrated.jsonld` (every node of the transitive membership inline); the instance root and the repository level (`<root>subgraph/`) have the index only, and every file names `<root>subgraph/v<major>/context.jsonld`. A Process carries its diagram's documentation (`summary`, `description`), the processes it calls, its `.bpmn` and its SVG. `site.ts` stages them for bootstrap and for this repository; `--check` validates a build |
 | `scripts/publish-files.ts` | publishes bootstrap's files as they sit at its site address, never overwriting; GitHub Pages renders the `.md` |
 | `scripts/rehearse-standalone.ts` | runs these tools' checks and tests with bootstrap and bootstrap-tools copied alone as sibling clones — the split, rehearsed |
 | `scripts/iri-sync.ts` | keeps every literal release IRI at the declared version |
@@ -43,7 +44,8 @@ It is **one** toolset over swappable content. Someone who wants a different gene
 | `scripts/readme-toc.ts` | the `kg:toc` README section: a README's own level-2 and level-3 headings, linked by GitHub's anchors, outside code and outside its own region |
 | `scripts/readme-sections.ts` | writes (or with `--check`, verifies) every section a README opts into by its marker pair; `--root` names the instance |
 | `scripts/readme-book.ts` | every README in a repository as one page: the root's first, then each directory's by path, with a table of contents, headings demoted per section and relative links rewritten; `--check` fails on any link on the page that would not land |
-| `scripts/site.ts` | stages an instance's GitHub Pages site. First every JSON Schema and JSON-LD document at the IRI it names (`$id` / `@id` under `iriBase`, an extensionless one included, with a `.json` copy beside each JSON-LD), and for bootstrap its graph. The README page as `README.md` (served at `README.html`), ending in a "Published documents" list; then its files as they sit, also under `<version>/`; `index.html`, a redirect to `README.html` unless the instance brings its own landing page; and `_config.yml` with `_layouts/default.html`, whose footer links a generated page's generator and source rather than an edit page. `--check` stages into a temporary directory and lists every address |
+| `scripts/site.ts` | stages an instance's GitHub Pages site. First every JSON Schema and JSON-LD document at the IRI it names (`$id` / `@id` under `iriBase`, an extensionless one included, with a `.json` copy beside each JSON-LD), and for bootstrap, and any instance that needs it, its graph and named subgraphs. The README page as `README.md` (served at `README.html`), ending in a "Published documents" list; then its files as they sit, also under `<version>/`; `index.html`, a redirect to `README.html` unless the instance brings its own landing page; and `_config.yml` with `_layouts/default.html`, whose footer links a generated page's generator and source rather than an edit page. `--check` stages into a temporary directory and lists every address |
+| `scripts/publish-site.ts` | publishes a staged site onto a branch (default `gh-pages`) of any git remote as a full replace: clone fresh, replace every file, commit, push; a lost race retries from a fresh clone, an empty site is refused. Not tied to a CI system: an agent or a person runs `site.ts --out <dir>` then `publish-site.ts --site <dir> --remote <url>` with their own git credentials, which is all `pages.yml` and `publish-bootstrap.yml` do |
 | `scripts/pages-status.ts` | the OUTPUT of rendering a Knowledge Graph to GitHub Pages: stages the site to check it, asks the publication root URL and every document address, and prints the push's status (`pushed`, `not-pushed`, `could-not-determine`) with one message naming the deployed commit and the QA result; `--json` for the whole record |
 | `processes/render-kg-to-github-pages.bpmn`, `skills/render-kg-to-github-pages.md`, `scenarios/roles.json` | the toolset's own small content graph: the Process that renders a Knowledge Graph (or a list of its Subgraphs) to GitHub Pages at a publication root URL, the Skill with each step's command, and the two Roles its lanes bind |
 | `scripts/init.ts` | walks an instance's initialization steps as its declarations name them. PRIMARY and first: `schemas:staged` and `schemas:published`, the JSON Schemas and JSON-LD at their IRIs. Then directories, assets, the README and its sections, needed harnesses' instructions and the Pages site. It performs what a tool can (switching Pages on needs an authenticated `gh`) and reports each as done, not done, could not determine, or stated. A 404 is not done; a 403, 407, 5xx or no answer could not be determined |
@@ -63,6 +65,8 @@ bun run --cwd bootstrap-tools readmes          # regenerate bootstrap's director
 bun run --cwd bootstrap-tools render           # redraw each Process beside its .bpmn
 bun run --cwd bootstrap-tools vocabulary       # regenerate bootstrap/ns.jsonld
 bun run --cwd bootstrap-tools graph -- --root ../bootstrap --base-url <site>/bootstrap/ --out bootstrap.jsonld
+bun run --cwd bootstrap-tools subgraphs -- --root ../bootstrap --out ../_site-src   # named subgraphs, under subgraph/
+bun run --cwd bootstrap-tools subgraphs:check  # both instances' subgraphs validate, and every diagram is a documented Process
 bun run --cwd bootstrap-tools schemas:check    # fail if they are stale
 bun run --cwd bootstrap-tools check:closure    # nothing here imports above bootstrap
 bun run --cwd bootstrap-tools check:node-iris  # every published identifier is its file's path
@@ -79,7 +83,16 @@ The site is how a harness's JSON Schemas and JSON-LD reach the IRIs they
 name, which is the primary initialization step; the README page rides along.
 bootstrap-tools itself declares no `iriBase` and publishes no JSON Schema of
 its own (its schemas are the Zod that bootstrap's are generated from), so its
-site carries only its README page and files.
+site carries its README page and files, and its own graph,
+`bootstrap-tools.jsonld`, with its named subgraphs under `subgraph/` — at its
+GitHub Pages address, since it declares no other. That graph is written in
+bootstrap's classes, so `pages.yml` checks bootstrap out beside the tools.
+
+Every site's named subgraphs start at one file, `<root>subgraph/index.jsonld`:
+<https://litlfred.github.io/bootstrap/subgraph/index.jsonld> and
+<https://litlfred.github.io/bootstrap-tools/subgraph/index.jsonld>. Each lists
+its instance's root, whose index lists its top-level subgraphs; a `processes`
+subgraph's `index.hydrated.jsonld` holds every Process node inline.
 
 Both sites are published from this repository. `.github/workflows/pages.yml`
 publishes this one's on each push to `main`;

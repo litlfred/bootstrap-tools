@@ -1,5 +1,7 @@
 # The site at https://litlfred.github.io/bootstrap-tools/ (landing on README.html) — every README here
-# as one page with a table of contents, beside every file as it sits.
+# as one page with a table of contents, beside every file as it sits, and this
+# repository's graph (bootstrap-tools.jsonld) with its named subgraphs under
+# subgraph/.
 #
 # Staged by scripts/site.ts and committed onto the gh-pages branch as a full
 # replace; GitHub Pages builds the branch (Jekyll). Pages must be on, serving
@@ -27,6 +29,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: bootstrap-tools
+      # Beside the tools, read-only: this repository's graph and its named
+      # subgraphs are written in bootstrap's classes, so site.ts reads
+      # bootstrap's namespace from its declaration (export-graph.ts). Public,
+      # so no secret.
+      - uses: actions/checkout@v4
+        with:
+          repository: litlfred/bootstrap
+          path: bootstrap
       - uses: oven-sh/setup-bun@v2
       - name: Install
         working-directory: bootstrap-tools
@@ -37,24 +47,14 @@ jobs:
       - name: Stage the site
         working-directory: bootstrap-tools
         run: bun run scripts/site.ts --root . --out ../_site-src
-      - name: Commit the staged site onto gh-pages (full replace; rebuild, never rebase)
+      # The publish step is a plain script, not workflow shell, so an agent or a
+      # person runs the same two commands (site.ts, then publish-site.ts) with
+      # their own git credentials (owner, 2026-10-04, bootstrap-tools#7).
+      - name: Publish the staged site onto gh-pages (full replace; rebuild, never rebase)
+        working-directory: bootstrap-tools
         env:
-          REPO: ${{ github.repository }}
-          SRC: ${{ github.sha }}
-        run: |
-          set -euo pipefail
-          for attempt in 1 2 3; do
-            rm -rf _gh && git clone --quiet --branch gh-pages --single-branch \
-              "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${REPO}.git" _gh
-            find _gh -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
-            cp -a _site-src/. _gh/
-            cd _gh
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add -A
-            if git diff --cached --quiet; then echo "gh-pages already current"; exit 0; fi
-            git commit --quiet -m "Publish ${SRC}"
-            if git push --quiet origin gh-pages; then echo "gh-pages $(git rev-parse HEAD)"; exit 0; fi
-            cd ..; sleep $((attempt * 5))
-          done
-          echo "push to gh-pages failed after 3 attempts" >&2; exit 1
+          REMOTE: https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+        run: >-
+          bun run scripts/publish-site.ts --site ../_site-src --remote "$REMOTE"
+          --message "Publish ${{ github.sha }}"
+          --name "github-actions[bot]" --email "41898282+github-actions[bot]@users.noreply.github.com"

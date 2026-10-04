@@ -1,7 +1,8 @@
 # The site at https://litlfred.github.io/bootstrap/ (landing on README.html) —
 # every README in litlfred/bootstrap as one page with a table of contents,
-# beside every file as it sits, and bootstrap's own graph at the address its
-# @id names.
+# beside every file as it sits, bootstrap's own graph at the address its
+# @id names, and its named subgraphs under subgraph/ (scripts/subgraph-jsonld.ts,
+# staged by site.ts from that same graph).
 #
 # Published FROM HERE, not from bootstrap (owner, 2026-10-01,
 # folio-assistant#1770): bootstrap names nothing above it, so it carries no
@@ -65,25 +66,12 @@ jobs:
       - name: Stage bootstrap's site
         working-directory: bootstrap-tools
         run: bun run scripts/site.ts --root ../bootstrap --out ../_site-src
-      - name: Commit the staged site onto bootstrap's gh-pages (full replace; rebuild, never rebase)
+      # Same script an agent or a person runs (bootstrap-tools#7).
+      - name: Publish the staged site onto bootstrap's gh-pages (full replace; rebuild, never rebase)
+        working-directory: bootstrap-tools
         env:
-          REPO: litlfred/bootstrap
-          TOKEN: ${{ secrets.BOOTSTRAP_PAGES_TOKEN }}
-        run: |
-          set -euo pipefail
-          SRC="$(git -C bootstrap rev-parse HEAD)"
-          for attempt in 1 2 3; do
-            rm -rf _gh && git clone --quiet --branch gh-pages --single-branch \
-              "https://x-access-token:${TOKEN}@github.com/${REPO}.git" _gh
-            find _gh -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
-            cp -a _site-src/. _gh/
-            cd _gh
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add -A
-            if git diff --cached --quiet; then echo "gh-pages already current"; exit 0; fi
-            git commit --quiet -m "Publish ${SRC}"
-            if git push --quiet origin gh-pages; then echo "gh-pages $(git rev-parse HEAD)"; exit 0; fi
-            cd ..; sleep $((attempt * 5))
-          done
-          echo "push to gh-pages failed after 3 attempts" >&2; exit 1
+          REMOTE: https://x-access-token:${{ secrets.BOOTSTRAP_PAGES_TOKEN }}@github.com/litlfred/bootstrap.git
+        run: >-
+          bun run scripts/publish-site.ts --site ../_site-src --remote "$REMOTE"
+          --message "Publish $(git -C ../bootstrap rev-parse HEAD)"
+          --name "github-actions[bot]" --email "41898282+github-actions[bot]@users.noreply.github.com"

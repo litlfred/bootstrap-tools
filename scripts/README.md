@@ -32,6 +32,8 @@ Part of [Bootstrap tools](../README.md) 0.1.0, declared as `bootstrap-tools-scri
 | [`pages-status.ts`](pages-status.ts) | a file |  |
 | [`publish-files.test.ts`](publish-files.test.ts) | a file |  |
 | [`publish-files.ts`](publish-files.ts) | a file |  |
+| [`publish-site.test.ts`](publish-site.test.ts) | a file |  |
+| [`publish-site.ts`](publish-site.ts) | a file |  |
 | [`readme-book.test.ts`](readme-book.test.ts) | a file |  |
 | [`readme-book.ts`](readme-book.ts) | a file |  |
 | [`readme-graph-sections.test.ts`](readme-graph-sections.test.ts) | a file |  |
@@ -46,6 +48,8 @@ Part of [Bootstrap tools](../README.md) 0.1.0, declared as `bootstrap-tools-scri
 | [`schema-semver.ts`](schema-semver.ts) | a file |  |
 | [`site.test.ts`](site.test.ts) | a file |  |
 | [`site.ts`](site.ts) | a file |  |
+| [`subgraph-jsonld.test.ts`](subgraph-jsonld.test.ts) | a file |  |
+| [`subgraph-jsonld.ts`](subgraph-jsonld.ts) | a file |  |
 | [`subgraph-readmes.test.ts`](subgraph-readmes.test.ts) | a file |  |
 | [`subgraph-readmes.ts`](subgraph-readmes.ts) | a file |  |
 | [`term-links.test.ts`](term-links.test.ts) | a file |  |
