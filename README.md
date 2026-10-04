@@ -317,7 +317,7 @@ Part of [Bootstrap tools](#readme) 0.1.0, declared as `bootstrap-tools-scripts`,
 | [`term-links.ts`](scripts/term-links.ts) | a file |  |
 | [`validate-bootstrap.test.ts`](scripts/validate-bootstrap.test.ts) | a file |  |
 | [`validate-bootstrap.ts`](scripts/validate-bootstrap.ts) | a file |  |
-| [`templates/`](scripts/templates/) | 4 files | |
+| [`templates/`](scripts/templates/) | _nothing declares what this holds_ | |
 <!-- kg:subgraph:end -->
 
 ---
