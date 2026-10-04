@@ -23,7 +23,7 @@
  * | `<BASE>subgraph/<HARNESS>/` — the instance | its direct members as pointers, its top-level subgraphs by IRI | — (the root is never hydrated: that would be the whole graph in one file) |
  * | `<BASE>subgraph/<HARNESS>/<PATH>/` — each directory | its direct members as pointers (`@id`, `@type`, `name`, `title`), its child subgraphs by IRI | every node of its transitive membership, inline, child subgraphs nested |
  *
- * Every file names one shared context by URL, `<BASE>subgraph/context.jsonld`,
+ * Every file names one shared context by URL, `<BASE>subgraph/v<major>/context.jsonld`,
  * which this writes too; no file inlines one. `<BASE>` is the publication
  * root: `--base-url`, else the declaration's `iriBase`, else its GitHub Pages
  * address (`processes/render-kg-to-github-pages.bpmn`, step one).
@@ -77,8 +77,22 @@ import { gitFiles } from "./git-files.ts";
 export const SUBGRAPH_DIR = "subgraph";
 export const INDEX_FILE = "index.jsonld";
 export const HYDRATED_FILE = "index.hydrated.jsonld";
-/** The shared context, at `<BASE>subgraph/context.jsonld`. */
+/** The shared context's file name, under the MAJOR version's directory: `<BASE>subgraph/v<major>/context.jsonld`. */
 export const CONTEXT_FILE = "context.jsonld";
+
+/**
+ * The context's path below `subgraph/`, from the instance's declared semver
+ * (owner, 2026-10-03: "major version from SEMVER"). The same rule as
+ * `bootstrap.json`'s `iriBase`: `v<major>/` for what is stable across minor
+ * and patch releases. A term change that is not backward compatible is a
+ * major bump, so a reader pinned to `v0/` never sees it change under it.
+ * `undefined` when the version is absent or not semver — a problem, never a
+ * guessed `v0`.
+ */
+export function contextPath(version: string | undefined): string | undefined {
+  const m = /^(\d+)\.\d+\.\d+(?:[-+].*)?$/.exec(version ?? "");
+  return m ? `v${m[1]}/${CONTEXT_FILE}` : undefined;
+}
 
 /** Terms the projection spells differently from `export-graph.ts`: same IRI, the subgraph reader's term. */
 export const RENAMED: Readonly<Record<string, string>> = { label: "name" };
@@ -146,6 +160,8 @@ export interface SubgraphBuild {
   /** `<BASE>subgraph/<HARNESS>/`. */
   rootIri: string;
   contextUrl: string;
+  /** The context's path under the site root (`subgraph/v<major>/context.jsonld`). */
+  contextFile: string;
   /** Declared directories of a kind the graph does not read, so not framed. */
   omitted: string[];
   /** Nodes that could not be placed, or a directory git could not list. A build with any is not to be published. */
@@ -166,8 +182,11 @@ export function frameSubgraphs(root: string, graph: Record<string, unknown>, bas
   base = base.replace(/\/?$/, "/");
   const repoIri = `${base}${SUBGRAPH_DIR}/`;
   const rootIri = `${repoIri}${decl.name}/`;
-  const contextUrl = `${repoIri}${CONTEXT_FILE}`;
   const problems: string[] = [];
+  const ctxRel = contextPath(decl.version);
+  if (!ctxRel) problems.push(`${root}: declared version ${JSON.stringify(decl.version)} is not semver, so the context has no major-version path`);
+  const contextFile = `${SUBGRAPH_DIR}/${ctxRel ?? `v0/${CONTEXT_FILE}`}`;
+  const contextUrl = `${base}${contextFile}`;
   const dirs = decl.directories ?? [];
   const framed = dirs.filter((d) => d.graphKinds.some((k) => COLLECTED_KINDS.includes(k)));
   const omitted = dirs.filter((d) => !framed.includes(d)).map((d) => d.id).sort();
@@ -263,7 +282,7 @@ export function frameSubgraphs(root: string, graph: Record<string, unknown>, bas
   const json = (o: unknown) => `${JSON.stringify(o, null, 2)}\n`;
   const out = new Map<string, string>();
   const at = (iri: string, file: string) => `${SUBGRAPH_DIR}/${iri.slice(repoIri.length)}${file}`;
-  out.set(`${SUBGRAPH_DIR}/${CONTEXT_FILE}`, json({ "@context": subgraphContext((graph["@context"] as Record<string, unknown>) ?? {}) }));
+  out.set(contextFile, json({ "@context": subgraphContext((graph["@context"] as Record<string, unknown>) ?? {}) }));
   const repoName = String(decl.repository ?? decl.name).replace(/\.git$/, "").replace(/\/$/, "").replace(/^.*\//, "");
   out.set(at(repoIri, INDEX_FILE), json(sortKeys({ "@context": contextUrl, "@id": repoIri, "@type": "bootstrap:Subgraph", name: repoName, path: "./", hasSubgraph: [rootIri] })));
   for (const e of byRel.values()) {
@@ -275,6 +294,7 @@ export function frameSubgraphs(root: string, graph: Record<string, unknown>, bas
     repoIri,
     rootIri,
     contextUrl,
+    contextFile,
     omitted,
     problems,
     subgraphs: byRel.size,
@@ -303,7 +323,7 @@ export function auditSubgraphs(root: string, b: SubgraphBuild): string[] {
   for (const [path, text] of b.files) {
     const doc = JSON.parse(text) as Record<string, unknown>;
     parsed.set(path, doc);
-    if (path === `${SUBGRAPH_DIR}/${CONTEXT_FILE}`) continue;
+    if (path === b.contextFile) continue;
     const r = (path.endsWith(HYDRATED_FILE) ? SubgraphHydratedSchema : SubgraphIndexSchema).safeParse(doc);
     if (!r.success) problems.push(`${path}: ${r.error.issues.map((i) => `${i.path.join(".")} ${i.message}`).join("; ")}`);
     if (doc["@context"] !== b.contextUrl) problems.push(`${path}: its @context is not ${b.contextUrl}`);

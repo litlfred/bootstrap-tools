@@ -13,6 +13,7 @@ import { exportGraph } from "./export-graph.ts";
 import { stageSite } from "./site.ts";
 import {
   CONTEXT_FILE,
+  contextPath,
   HYDRATED_FILE,
   INDEX_FILE,
   auditSubgraphs,
@@ -55,10 +56,10 @@ describe("named subgraphs — one IRI, two files, projected from one graph", () 
 
       test("@context is the one shared URL in every file, never inline; the context file defines the subgraph terms", () => {
         for (const [p, d] of files(root)) {
-          if (p === `subgraph/${CONTEXT_FILE}`) continue;
+          if (p === b.contextFile) continue;
           expect(d["@context"], p).toBe(b.contextUrl);
         }
-        const ctx = (JSON.parse(b.files.get(`subgraph/${CONTEXT_FILE}`)!) as Doc)["@context"] as Doc;
+        const ctx = (JSON.parse(b.files.get(b.contextFile)!) as Doc)["@context"] as Doc;
         for (const k of ["name", "summary", "description", "depiction", "requires", "calledElement", "holdsGraph", "hasMember", "hasSubgraph", "path"]) expect(k in ctx, k).toBe(true);
         expect("label" in ctx).toBe(false);
       });
@@ -123,7 +124,7 @@ describe("named subgraphs — one IRI, two files, projected from one graph", () 
     const root = mkdtempSync(join(tmpdir(), "subgraphs-"));
     mkdirSync(join(root, "skills", "deep", "er"), { recursive: true });
     mkdirSync(join(root, "code"));
-    writeFileSync(join(root, "demo.json"), JSON.stringify({ name: "demo", repository: "Owner/demo", needs: ["bootstrap"], directories: [
+    writeFileSync(join(root, "demo.json"), JSON.stringify({ name: "demo", version: "0.1.0", repository: "Owner/demo", needs: ["bootstrap"], directories: [
       { id: "skills", path: "skills/", graphKinds: ["skills"] },
       { id: "code", path: "code/", graphKinds: ["code"] },
     ] }));
@@ -140,7 +141,6 @@ describe("named subgraphs — one IRI, two files, projected from one graph", () 
     expect(b.repoIri).toBe("https://owner.github.io/demo/subgraph/");
     expect(auditSubgraphs(root, b)).toEqual([]);
     expect([...b.files.keys()]).toEqual([
-      "subgraph/context.jsonld",
       "subgraph/demo/index.jsonld",
       "subgraph/demo/skills/deep/er/index.hydrated.jsonld",
       "subgraph/demo/skills/deep/er/index.jsonld",
@@ -149,6 +149,7 @@ describe("named subgraphs — one IRI, two files, projected from one graph", () 
       "subgraph/demo/skills/index.hydrated.jsonld",
       "subgraph/demo/skills/index.jsonld",
       "subgraph/index.jsonld",
+      "subgraph/v0/context.jsonld",
     ]);
     const skills = JSON.parse(b.files.get("subgraph/demo/skills/index.jsonld")!) as Doc;
     expect((skills["hasMember"] as Doc[]).map((m) => m["name"])).toEqual(["skills", "top"]);
@@ -170,6 +171,22 @@ describe("named subgraphs — one IRI, two files, projected from one graph", () 
     (g["@graph"] as Doc[]).push({ "@id": `${base}demo.jsonld#stray`, "@type": "bootstrap:Node", isPartOf: `${base}demo.jsonld#nowhere` });
     const b = frameSubgraphs(root, g, base);
     expect(b.problems).toEqual([`${base}demo.jsonld#stray: no source path, and its isPartOf (${base}demo.jsonld#nowhere) is not a node of the graph — its subgraph cannot be determined`]);
+  });
+
+  test("the context sits under the MAJOR version, and a missing version is a problem, never a guessed v0", () => {
+    expect(contextPath("0.1.0")).toBe("v0/context.jsonld");
+    expect(contextPath("2.3.4-rc.1")).toBe("v2/context.jsonld");
+    expect(contextPath(undefined)).toBeUndefined();
+    expect(contextPath("latest")).toBeUndefined();
+    const root = fixture();
+    const b = buildSubgraphs(root, { bootstrapRoot: BOOTSTRAP });
+    expect(b.contextFile).toBe("subgraph/v0/context.jsonld");
+    expect(b.contextUrl).toBe("https://owner.github.io/demo/subgraph/v0/context.jsonld");
+    const decl = JSON.parse(readFileSync(join(root, "demo.json"), "utf-8")) as Doc;
+    // The declaration schema already refuses a non-semver version, so the case left is an ABSENT one.
+    delete decl["version"];
+    writeFileSync(join(root, "demo.json"), JSON.stringify(decl));
+    expect(buildSubgraphs(root, { bootstrapRoot: BOOTSTRAP }).problems.some((p) => p.includes("is not semver"))).toBe(true);
   });
 
   test("--check's twin: a written tree is current, and an edited file is stale", () => {

@@ -28,7 +28,7 @@
  *    `subgraph/index.jsonld` (the repository), `subgraph/<name>/index.jsonld`
  *    (the instance) and, for each directory of a kind the graph reads,
  *    `subgraph/<name>/<path>/index.jsonld` and `index.hydrated.jsonld`, with
- *    the one context they name at `subgraph/context.jsonld`. For bootstrap,
+ *    the one context they name at `subgraph/v<major>/context.jsonld`. For bootstrap,
  *    and for any instance that `needs` bootstrap — whose graph is written in
  *    bootstrap's classes, so it is built with bootstrap's checkout beside it
  *    and is a problem, never silently absent, when that checkout is not
@@ -73,7 +73,7 @@
  * Every `@context` bootstrap writes is inline in its document (measured
  * 2026-09-30: no file names an external context), so publishing each document
  * publishes its context. The one exception is built, not authored: every
- * named-subgraph file names `subgraph/context.jsonld` by URL, and it is
+ * named-subgraph file names `subgraph/v<major>/context.jsonld` by URL, and it is
  * staged with them.
  *
  * `--check` stages into a temporary directory, lists every document address
