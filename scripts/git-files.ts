@@ -30,3 +30,27 @@ export function gitFiles(dir: string): string[] | undefined {
   if (r.error !== undefined || r.status !== 0) return undefined;
   return r.stdout.split("\0").filter(Boolean).map((p) => join(dir, p));
 }
+
+/**
+ * The files git has COMMITTED or STAGED under a directory (`--cached`), as
+ * absolute paths, with the untracked-and-not-ignored files it left out named
+ * beside them; `undefined` when git cannot answer.
+ *
+ * For a value that must be a function of the commit (bean `ba9e`): what
+ * {@link gitFiles} returns also depends on whatever an earlier step left in
+ * the worktree, so a transient nobody ignored moved a committed README and
+ * reddened its check for nobody's fault. The untracked files are returned
+ * rather than dropped silently: a file just written by the change under way
+ * is untracked until staged, and a caller should say so rather than act as
+ * though it were not there.
+ */
+export function committedFiles(dir: string): { files: string[]; untracked: string[] } | undefined {
+  if (!existsSync(dir)) return undefined;
+  const run = (args: string[]) =>
+    spawnSync("git", ["ls-files", "-z", ...args], { cwd: dir, encoding: "utf-8", maxBuffer: 64 * 1024 * 1024 });
+  const cached = run(["--cached"]);
+  const others = run(["--others", "--exclude-standard"]);
+  if (cached.error !== undefined || cached.status !== 0 || others.error !== undefined || others.status !== 0) return undefined;
+  const abs = (out: string) => out.split("\0").filter(Boolean).map((p) => join(dir, p));
+  return { files: abs(cached.stdout), untracked: abs(others.stdout) };
+}
