@@ -54,8 +54,8 @@
  * node that cannot be placed is a problem, never left out.
  *
  * ```sh
- * bun run scripts/subgraph-jsonld.ts --root <instance> --out <site dir> [--base-url <url>] [--bootstrap <dir>]
- * bun run scripts/subgraph-jsonld.ts --check --root <instance>… [--out <site dir>]
+ * bun run bootstrap-tools/scripts/subgraph-jsonld.ts --root <instance> --out <site dir> [--base-url <url>] [--bootstrap <dir>]
+ * bun run bootstrap-tools/scripts/subgraph-jsonld.ts --check --root <instance>… [--out <site dir>]
  * ```
  *
  * `--check` builds in memory, validates every file against

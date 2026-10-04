@@ -10,8 +10,8 @@
  * runner could publish. It is now the same command for every runner — an
  * agent, a person at a terminal, or a CI job:
  *
- *   bun run scripts/site.ts --root . --out _site-src
- *   bun run scripts/publish-site.ts --site _site-src --remote <git url>
+ *   bun run bootstrap-tools/scripts/site.ts --root . --out _site-src
+ *   bun run bootstrap-tools/scripts/publish-site.ts --site _site-src --remote <git url>
  *
  * Nothing here is GitHub-specific: `--remote` is any git URL the caller can
  * push to, with whatever credentials that caller already has (a token in the
@@ -92,7 +92,7 @@ if (import.meta.main) {
   const site = opt("--site");
   const remote = opt("--remote");
   if (!site || !remote) {
-    console.error("usage: bun run scripts/publish-site.ts --site <staged dir> --remote <git url> [--branch gh-pages] [--message <msg>]");
+    console.error("usage: bun run bootstrap-tools/scripts/publish-site.ts --site <staged dir> --remote <git url> [--branch gh-pages] [--message <msg>]");
     process.exit(2);
   }
   const r = publishSite({ site, remote, branch: opt("--branch"), message: opt("--message"), name: opt("--name"), email: opt("--email") });
