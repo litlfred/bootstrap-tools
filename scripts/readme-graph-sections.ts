@@ -408,7 +408,7 @@ interface RoleNames {
  * it; `formerNames`), so this section reads them rather than the harness's
  * glossary ledger: the README of a Knowledge Graph shows what the graph says.
  * Read from `roles.json` in each directory declared with the `scenarios`
- * graph kind.
+ * graph typology.
  */
 export const rolesSection: GraphSection = {
   marker: "kg:roles",
@@ -423,7 +423,7 @@ export const rolesSection: GraphSection = {
     }
     if (!decl) return skip("no readable declaration at this root");
     const files = (decl.directories ?? [])
-      .filter((d) => d.graphKinds.includes("scenarios"))
+      .filter((d) => d.graphTypologies.includes("scenarios"))
       .map((d) => join(ctx.root, d.path, "roles.json"))
       .filter((f) => existsSync(f));
     if (files.length === 0) return { markdown: "_This instance declares no Roles._\n", notes: ["no scenarios/roles.json"] };

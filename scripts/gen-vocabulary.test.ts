@@ -6,7 +6,7 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { BOOTSTRAP_GRAPH_KINDS, BOOTSTRAP_TERMS } from "../schemas/graph.ts";
+import { BOOTSTRAP_GRAPH_TYPOLOGIES, BOOTSTRAP_TERMS } from "../schemas/graph.ts";
 import { bootstrapRelease } from "../schemas/release-iri.ts";
 import { termLabel, vocabulary } from "./gen-vocabulary.ts";
 
@@ -14,10 +14,10 @@ describe("bootstrap's vocabulary is exactly its terms (owner, 2026-09-30)", () =
   const doc = vocabulary(bootstrapRelease()) as { "@id": string; "@context": Record<string, unknown>; "@graph": { "@id": string }[] };
   const ids = doc["@graph"].map((n) => n["@id"]);
 
-  test("every defined term, in order, then every graph kind — and nothing else", () => {
+  test("every defined term, in order, then every graph typology — and nothing else", () => {
     expect(ids).toEqual([
       ...Object.keys(BOOTSTRAP_TERMS).map((t) => `bootstrap:${t}`),
-      ...Object.keys(BOOTSTRAP_GRAPH_KINDS).map((k) => `bootstrap:graphKind/${k}`),
+      ...Object.keys(BOOTSTRAP_GRAPH_TYPOLOGIES).map((k) => `bootstrap:graphTypology/${k}`),
     ]);
   });
 

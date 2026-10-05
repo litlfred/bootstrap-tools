@@ -273,7 +273,7 @@ export function render(t: (typeof TARGETS)[number]): string {
   // definition only, which JSON Schema expresses as a title and a description.
   const terms = Object.entries(t.terms);
   if (terms.length) {
-    // A term with a shape of its own (GraphKind: bootstrap's kinds, open to a
+    // A term with a shape of its own (GraphTypology: bootstrap's kinds, open to a
     // Harness's) carries it beside the definition, so the list is published
     // where the term is, not only inline in the field that uses it.
     const shapes = t.terms === BOOTSTRAP_TERMS ? (BOOTSTRAP_TERM_SHAPES as Record<string, z.ZodType>) : {};

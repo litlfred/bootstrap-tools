@@ -215,7 +215,7 @@ if (import.meta.main) {
   const graphs = knowledgeGraphsIn(repo).filter(({ decl }) => tools !== undefined && supportsContent(tools, decl.name, decl.version));
   const sources = graphs.flatMap(({ root, decl }) =>
     (decl.directories ?? [])
-      .filter((d) => d.graphKinds.includes("processes"))
+      .filter((d) => d.graphTypologies.includes("processes"))
       .flatMap((d) => {
         const dir = resolve(root, d.path);
         return existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith(".bpmn")).map((f) => join(dir, f)) : [];

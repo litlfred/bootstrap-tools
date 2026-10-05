@@ -28,10 +28,10 @@ function repo(): string {
       name: "demo",
       title: "Demo",
       directories: [
-        { id: "skills", path: "skills/", graphKinds: ["skills"], dependents: "skip", title: "Skills", description: "What to do." },
-        { id: "notes", path: "notes/", graphKinds: ["skills"], dependents: "skip" },
-        { id: "kept", path: "kept/", graphKinds: ["skills"], dependents: "skip", description: "Hand written." },
-        { id: "gone", path: "gone/", graphKinds: ["skills"], dependents: "skip", description: "Not here." },
+        { id: "skills", path: "skills/", graphTypologies: ["skills"], dependents: "skip", title: "Skills", description: "What to do." },
+        { id: "notes", path: "notes/", graphTypologies: ["skills"], dependents: "skip" },
+        { id: "kept", path: "kept/", graphTypologies: ["skills"], dependents: "skip", description: "Hand written." },
+        { id: "gone", path: "gone/", graphTypologies: ["skills"], dependents: "skip", description: "Not here." },
       ],
     }),
   );

@@ -57,10 +57,10 @@ describe("bootstrap's graph, from bootstrap's files, in standard terms", () => {
     expect(dangling).toEqual([]);
   });
 
-  test("a subgraph says what it holds with bootstrap's own graph-kind individuals", () => {
-    const declared = new Set((JSON.parse(readFileSync(join(BOOTSTRAP, "bootstrap.json"), "utf-8")) as { directories: { graphKinds: string[] }[] }).directories.flatMap((d) => d.graphKinds));
+  test("a subgraph says what it holds with bootstrap's own graph-typology individuals", () => {
+    const declared = new Set((JSON.parse(readFileSync(join(BOOTSTRAP, "bootstrap.json"), "utf-8")) as { directories: { graphTypologies: string[] }[] }).directories.flatMap((d) => d.graphTypologies));
     for (const n of nodes().filter((x) => x["@type"] === "bootstrap:Subgraph")) {
-      for (const t of n["type"] as string[]) expect(declared.has(t.replace("bootstrap:graphKind/", ""))).toBe(true);
+      for (const t of n["type"] as string[]) expect(declared.has(t.replace("bootstrap:graphTypology/", ""))).toBe(true);
     }
   });
 
@@ -125,7 +125,7 @@ describe("a process says what it is for, what it calls, and where it is drawn", 
   test("the process's own documentation, never a task's; a call to a process no diagram defines is a problem, and no link is written", () => {
     const root = mkdtempSync(join(tmpdir(), "export-graph-"));
     mkdirSync(join(root, "processes"));
-    writeFileSync(join(root, "demo.json"), JSON.stringify({ name: "demo", needs: ["bootstrap"], directories: [{ id: "p", path: "processes/", graphKinds: ["processes"] }] }));
+    writeFileSync(join(root, "demo.json"), JSON.stringify({ name: "demo", needs: ["bootstrap"], directories: [{ id: "p", path: "processes/", graphTypologies: ["processes"] }] }));
     writeFileSync(
       join(root, "processes", "a.bpmn"),
       '<bpmn:definitions xmlns:bpmn="x"><bpmn:process id="P_A" name="A"><bpmn:task id="T"><bpmn:documentation>A task, not the process.</bpmn:documentation></bpmn:task><bpmn:documentation>Does A. Then more.</bpmn:documentation><bpmn:callActivity id="C" calledElement="P_Missing"/></bpmn:process></bpmn:definitions>',

@@ -188,10 +188,10 @@ export function frameSubgraphs(root: string, graph: Record<string, unknown>, bas
   const contextFile = `${SUBGRAPH_DIR}/${ctxRel ?? `v0/${CONTEXT_FILE}`}`;
   const contextUrl = `${base}${contextFile}`;
   const dirs = decl.directories ?? [];
-  const framed = dirs.filter((d) => d.graphKinds.some((k) => COLLECTED_KINDS.includes(k)));
+  const framed = dirs.filter((d) => d.graphTypologies.some((k) => COLLECTED_KINDS.includes(k)));
   const omitted = dirs.filter((d) => !framed.includes(d)).map((d) => d.id).sort();
 
-  const harness: Entry = { iri: rootIri, rel: "", kinds: [...new Set(framed.flatMap((d) => d.graphKinds))].sort(), title: decl.title, description: decl.description, members: [], children: [] };
+  const harness: Entry = { iri: rootIri, rel: "", kinds: [...new Set(framed.flatMap((d) => d.graphTypologies))].sort(), title: decl.title, description: decl.description, members: [], children: [] };
   const byRel = new Map<string, Entry>([["", harness]]);
   const files = gitFiles(root);
   for (const d of framed) {
@@ -210,7 +210,7 @@ export function frameSubgraphs(root: string, graph: Record<string, unknown>, bas
     }
     for (const rel of [...rels].sort()) {
       if (byRel.has(rel)) continue;
-      const e: Entry = { iri: `${rootIri}${rel}`, rel, kinds: [...d.graphKinds].sort(), ...(rel === top ? { title: d.title, description: d.description } : {}), members: [], children: [] };
+      const e: Entry = { iri: `${rootIri}${rel}`, rel, kinds: [...d.graphTypologies].sort(), ...(rel === top ? { title: d.title, description: d.description } : {}), members: [], children: [] };
       byRel.set(rel, e);
       const parent = rel === top ? harness : byRel.get(rel.replace(/[^/]+\/$/, ""));
       if (parent) parent.children.push(e);
@@ -263,7 +263,7 @@ export function frameSubgraphs(root: string, graph: Record<string, unknown>, bas
     path: e.rel === "" ? "./" : e.rel,
     ...(e.title ? { title: e.title } : {}),
     ...(e.description ? { description: e.description } : {}),
-    ...(e.kinds.length ? { holdsGraph: e.kinds.map((k) => `bootstrap:graphKind/${k}`) } : {}),
+    ...(e.kinds.length ? { holdsGraph: e.kinds.map((k) => `bootstrap:graphTypology/${k}`) } : {}),
   });
   const indexOf = (e: Entry) =>
     sortKeys({
@@ -337,7 +337,7 @@ export function auditSubgraphs(root: string, b: SubgraphBuild): string[] {
   // Every diagram declared is a documented Process node in some hydrated file.
   const decl = readKnowledgeGraphDeclaration(root);
   const diagrams = new Set<string>();
-  for (const d of (decl?.directories ?? []).filter((x) => x.graphKinds.includes("processes"))) {
+  for (const d of (decl?.directories ?? []).filter((x) => x.graphTypologies.includes("processes"))) {
     const top = d.path.replace(/^\.\//, "").replace(/\/?$/, "/");
     for (const f of gitFiles(root) ?? []) {
       const r = relative(root, f).split("\\").join("/");

@@ -9,14 +9,14 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 import {
-  BOOTSTRAP_GRAPH_KINDS,
+  BOOTSTRAP_GRAPH_TYPOLOGIES,
   BOOTSTRAP_TERM_DEFINED_BY,
   BOOTSTRAP_TERM_USES,
   BOOTSTRAP_TERMS,
   KnowledgeGraphDeclarationSchema,
 } from "./graph.ts";
 import { checkDeclaredOrder } from "./declared-order.ts";
-import { unlinkedTerms } from "../scripts/term-links.ts";
+import { pluralised, unlinkedTerms } from "../scripts/term-links.ts";
 
 const REPO_ROOT = join(import.meta.dir, "..", "..");
 const BOOTSTRAP = join(REPO_ROOT, "bootstrap");
@@ -49,7 +49,7 @@ describe("the terms are ordered: each definition uses only terms above it", () =
     let rest = text;
     const found: string[] = [];
     for (const { key, label } of byLength) {
-      const re = new RegExp(`\\b${label}(s|es)?\\b`, "g");
+      const re = new RegExp(`\\b${pluralised(label)}\\b`, "g");
       if (re.test(rest)) {
         found.push(key);
         rest = rest.replace(re, " ");
@@ -252,19 +252,19 @@ describe("nothing in bootstrap/ names anything above it (bean iwtn)", () => {
   });
 });
 
-describe("bootstrap's graph kinds are its own (bean r3gy, D1)", () => {
+describe("bootstrap's graph typologies are its own (bean r3gy, D1)", () => {
   const decl = JSON.parse(readFileSync(join(BOOTSTRAP, "bootstrap.json"), "utf-8")) as {
-    directories: { id: string; graphKinds: string[] }[];
+    directories: { id: string; graphTypologies: string[] }[];
   };
-  const own = Object.keys(BOOTSTRAP_GRAPH_KINDS);
+  const own = Object.keys(BOOTSTRAP_GRAPH_TYPOLOGIES);
 
   test("every kind bootstrap's declaration uses is defined in bootstrap", () => {
-    const used = new Set(decl.directories.flatMap((d) => d.graphKinds));
+    const used = new Set(decl.directories.flatMap((d) => d.graphTypologies));
     expect([...used].filter((k) => !own.includes(k))).toEqual([]);
   });
 
   test("every kind bootstrap defines, it uses — no definition for a kind it does not hold", () => {
-    const used = new Set(decl.directories.flatMap((d) => d.graphKinds));
+    const used = new Set(decl.directories.flatMap((d) => d.graphTypologies));
     expect(own.filter((k) => !used.has(k))).toEqual([]);
   });
 

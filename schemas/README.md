@@ -4,7 +4,7 @@
 
 # Bootstrap's shapes, in Zod
 
-The Zod source of every schema bootstrap publishes, bootstrap's defined terms and graph kinds, and the small readers the tools share: a declaration reader over bootstrap's own shape, release addresses, and the declared-order check.
+The Zod source of every schema bootstrap publishes, bootstrap's defined terms and graph typologies, and the small readers the tools share: a declaration reader over bootstrap's own shape, release addresses, and the declared-order check.
 
 Part of [Bootstrap tools](../README.md) 0.1.0, declared as `bootstrap-tools-schemas`, holding `schemas`.
 
