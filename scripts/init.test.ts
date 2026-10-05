@@ -21,8 +21,8 @@ function fixture(opts: { workflow?: boolean; withBase?: boolean } = {}): string 
       repository: "someone/demo",
       needs: ["base"],
       directories: [
-        { id: "skills", path: "skills/", graphKinds: ["skills"] },
-        { id: "gone", path: "gone/", graphKinds: ["skills"] },
+        { id: "skills", path: "skills/", graphTypologies: ["skills"] },
+        { id: "gone", path: "gone/", graphTypologies: ["skills"] },
       ],
     }),
   );
@@ -164,7 +164,7 @@ describe("init — the steps the declarations name, in four states", () => {
     const top = mkdtempSync(join(tmpdir(), "init-docs-"));
     const root = join(top, "kg");
     mkdirSync(join(root, "schemas"), { recursive: true });
-    writeFileSync(join(root, "kg.json"), JSON.stringify({ name: "kg", version: "0.1.0", iriBase: "https://o.github.io/kg/", repository: "o/kg", directories: [{ id: "schemas", path: "schemas/", graphKinds: ["schemas"] }] }));
+    writeFileSync(join(root, "kg.json"), JSON.stringify({ name: "kg", version: "0.1.0", iriBase: "https://o.github.io/kg/", repository: "o/kg", directories: [{ id: "schemas", path: "schemas/", graphTypologies: ["schemas"] }] }));
     writeFileSync(join(root, "README.md"), "# kg\n");
     writeFileSync(join(root, "schemas", "a.schema.json"), JSON.stringify({ $id: "https://o.github.io/kg/0.1.0/schemas/a.schema.json" }));
     spawnSync("git", ["init", "-q"], { cwd: root });

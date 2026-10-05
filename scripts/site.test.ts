@@ -11,7 +11,7 @@ describe("site — what a Pages workflow publishes", () => {
   const top = mkdtempSync(join(tmpdir(), "site-"));
   const root = join(top, "demo");
   mkdirSync(join(root, "skills"), { recursive: true });
-  writeFileSync(join(root, "demo.json"), JSON.stringify({ name: "demo", title: "Demo", directories: [{ id: "skills", path: "skills/", graphKinds: ["skills"] }] }));
+  writeFileSync(join(root, "demo.json"), JSON.stringify({ name: "demo", title: "Demo", directories: [{ id: "skills", path: "skills/", graphTypologies: ["skills"] }] }));
   writeFileSync(join(root, "README.md"), "# Demo\n\n## Start\n\nSee [skills](skills/README.md).\n");
   writeFileSync(join(root, "skills", "README.md"), "# skills\n\n## Every file\n");
   spawnSync("git", ["init", "-q"], { cwd: root });
@@ -95,7 +95,7 @@ describe("site — what a Pages workflow publishes", () => {
     const out = join(top, "_footer");
     const r4 = join(top, "footer");
     mkdirSync(join(r4, "skills"), { recursive: true });
-    writeFileSync(join(r4, "footer.json"), JSON.stringify({ name: "footer", repository: "o/r", directories: [{ id: "skills", path: "skills/", graphKinds: ["skills"] }] }));
+    writeFileSync(join(r4, "footer.json"), JSON.stringify({ name: "footer", repository: "o/r", directories: [{ id: "skills", path: "skills/", graphTypologies: ["skills"] }] }));
     writeFileSync(join(r4, "README.md"), "# footer\n");
     writeFileSync(join(r4, "skills", "a.md"), "# a\n");
     spawnSync("git", ["init", "-q"], { cwd: r4 });

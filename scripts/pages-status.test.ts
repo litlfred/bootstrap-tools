@@ -22,8 +22,8 @@ describe("pages-status — the push's status and its message", () => {
       version: "1.0.0",
       iriBase: "https://x.example/demo/",
       directories: [
-        { id: "schemas", path: "schemas/", graphKinds: ["schemas"] },
-        { id: "skills", path: "skills/", graphKinds: ["skills"] },
+        { id: "schemas", path: "schemas/", graphTypologies: ["schemas"] },
+        { id: "skills", path: "skills/", graphTypologies: ["skills"] },
       ],
     }),
   );

@@ -422,8 +422,8 @@ export async function initSteps(root: string, opts: { probe?: Probe; dryRun?: bo
       namedBy: name,
       what: `declared directory ${d.path} exists`,
       state: ok ? "done" : "not-done",
-      detail: ok ? `holds ${d.graphKinds.join(", ")}` : `${d.path} is declared and absent — a consumer would scan nothing and call it clean`,
-      action: ok ? undefined : `create ${d.path} with its first ${d.graphKinds.join("/")} file (an empty directory is not tracked by git), or remove the entry from ${name}.json`,
+      detail: ok ? `holds ${d.graphTypologies.join(", ")}` : `${d.path} is declared and absent — a consumer would scan nothing and call it clean`,
+      action: ok ? undefined : `create ${d.path} with its first ${d.graphTypologies.join("/")} file (an empty directory is not tracked by git), or remove the entry from ${name}.json`,
     });
   }
   for (const a of decl.assets ?? []) {

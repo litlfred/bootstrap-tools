@@ -26,13 +26,13 @@ It is **one** toolset over swappable content. Someone who wants a different gene
 
 | path | what it is |
 |---|---|
-| `schemas/graph.ts` | bootstrap's defined terms, in order, with what each uses and the schema that defines it; its graph kinds; the declaration shape |
+| `schemas/graph.ts` | bootstrap's defined terms, in order, with what each uses and the schema that defines it; its graph typologies; the declaration shape |
 | `schemas/discussion.ts`, `requirement.ts`, `model-registry.ts`, `glossary-ledger.ts` | the Zod source of the other schemas bootstrap publishes |
 | `schemas/declaration.ts` | reads a Knowledge Graph declaration with bootstrap's own shape |
 | `schemas/release-iri.ts` | an instance's release addresses: `<iriBase><version>/` for programs, `<iriBase>v<major>/` for people |
 | `schemas/declared-order.ts` | checks that an authored order keeps its promise: each item uses only items above it |
 | `scripts/gen-bootstrap-schemas.ts` | writes `bootstrap/schemas/*.schema.json` and the drawn page `bootstrap/schemas/README.md` |
-| `scripts/gen-vocabulary.ts` | writes `bootstrap/ns.jsonld`, bootstrap's vocabulary: every defined term and graph kind, as RDF and SKOS, at the address its IRIs name |
+| `scripts/gen-vocabulary.ts` | writes `bootstrap/ns.jsonld`, bootstrap's vocabulary: every defined term and graph typology, as RDF and SKOS, at the address its IRIs name |
 | `scripts/export-graph.ts`, `schemas/graph-export.ts` | writes `<name>.jsonld`, an instance's own graph — bootstrap's, and this repository's — in bootstrap's classes and standard properties (Dublin Core, BPMN, PROV, FOAF); a Process carries its diagram's documentation, the processes it calls and its drawing. The site publishes it, nothing commits it |
 | `scripts/subgraph-jsonld.ts`, `schemas/subgraph-export.ts` | an instance's named subgraphs, projected from that same graph: under `<root>subgraph/<name>/<path>/`, `index.jsonld` (each direct member a pointer, each child subgraph by IRI) and `index.hydrated.jsonld` (every node of the transitive membership inline); the instance root and the repository level (`<root>subgraph/`) have the index only, and every file names `<root>subgraph/v<major>/context.jsonld`. A Process carries its diagram's documentation (`summary`, `description`), the processes it calls, its `.bpmn` and its SVG. `site.ts` stages them for bootstrap and for this repository; `--check` validates a build |
 | `scripts/publish-files.ts` | publishes bootstrap's files as they sit at its site address, never overwriting; GitHub Pages renders the `.md` |

@@ -55,11 +55,11 @@ export const BOOTSTRAP_TERMS = {
   Subkind:
     "A Node Kind whose Node Schema requires everything another Node Kind's does, so every Node that satisfies it satisfies the other too.",
   NodeInstance: "A Node that names its Node Kind, in `$schema` or front matter, and satisfies that kind's Node Schema.",
-  GraphKind: "A named set of Node Kinds.",
+  GraphTypology: "A named set of Node Kinds.",
   Declaration: "A JSON document, `<name>.json`, that gives a name and lists directory entries and file entries.",
   Extension:
     "A field of a Declaration, or of one of its entries, that is not defined here. A reader that does not recognise the field ignores it, and the rest of the Declaration keeps its meaning.",
-  Subgraph: "A directory entry of a Declaration: an id, a directory, and the Graph Kinds its Node Instances' kinds belong to.",
+  Subgraph: "A directory entry of a Declaration: an id, a directory, and the Graph Typologies its Node Instances' kinds belong to.",
   Asset: "A file entry of a Declaration: one file about the repository itself, whose `role` field says what it is for.",
   KnowledgeGraph:
     "The Node Schemas, Node Instances and Assets one Declaration lists, as of one version of the repository. Published as JSON-LD, the statements of each Subgraph's Node Instances form one named graph.",
@@ -98,10 +98,10 @@ export const BOOTSTRAP_TERM_USES: Readonly<Record<BootstrapTerm, readonly Bootst
   NodeKind: ["NodeSchema"],
   Subkind: ["NodeKind", "NodeSchema", "Node"],
   NodeInstance: ["Node", "NodeKind", "NodeSchema"],
-  GraphKind: ["NodeKind"],
+  GraphTypology: ["NodeKind"],
   Declaration: [],
   Extension: ["Declaration"],
-  Subgraph: ["Declaration", "GraphKind", "NodeInstance"],
+  Subgraph: ["Declaration", "GraphTypology", "NodeInstance"],
   Asset: ["Declaration"],
   KnowledgeGraph: ["NodeSchema", "NodeInstance", "Asset", "Declaration", "Subgraph"],
   Dependency: ["Declaration", "KnowledgeGraph", "Reference", "NodeInstance"],
@@ -135,7 +135,7 @@ export const BOOTSTRAP_TERM_DEFINED_BY: Readonly<Record<BootstrapTerm, string>> 
   NodeKind: "#/properties/nodeSchemas",
   Subkind: "#/$defs/Subkind",
   NodeInstance: "#/$defs/NodeInstance",
-  GraphKind: "#/$defs/GraphKind",
+  GraphTypology: "#/$defs/GraphTypology",
   Declaration: "#",
   Extension: "#/$defs/Extension",
   Subgraph: "#/$defs/Subgraph",
@@ -154,16 +154,16 @@ export const BOOTSTRAP_TERM_DEFINED_BY: Readonly<Record<BootstrapTerm, string>> 
 };
 
 /**
- * The Graph Kinds bootstrap's own Declaration uses, one plain sentence each.
+ * The Graph Typologies bootstrap's own Declaration uses, one plain sentence each.
  *
  * Defined HERE so bootstrap can say what its own Subgraphs hold without a
  * Harness present. They were defined only in a harness's registry
- * (`graph-kind-registry.ts`), which now reads these sentences as its
+ * (`graph-typology-registry.ts`), which now reads these sentences as its
  * summaries rather than holding its own (bean `r3gy`, D1). A Harness adds
  * kinds of its own; to a reader that knows only bootstrap, those are
  * Extensions.
  */
-export const BOOTSTRAP_GRAPH_KINDS = {
+export const BOOTSTRAP_GRAPH_TYPOLOGIES = {
   skills: "A Subgraph of Skills: the instructions an Actor follows to carry out a Task.",
   schemas: "A Subgraph of Node Schemas: files that state the shape other files must have.",
   scenarios: "A Subgraph of Roles: the responsibilities an Actor takes on, and who takes them on.",
@@ -173,25 +173,25 @@ export const BOOTSTRAP_GRAPH_KINDS = {
     "A Subgraph describing the language models an Actor may be: which languages each is good at, and whether a person checked.",
 } as const;
 
-export type BootstrapGraphKind = keyof typeof BOOTSTRAP_GRAPH_KINDS;
+export type BootstrapGraphTypology = keyof typeof BOOTSTRAP_GRAPH_TYPOLOGIES;
 
-/** One entry of a Subgraph's `graphKinds`: one of bootstrap's, or an Extension. */
-export const GraphKindSchema = z
+/** One entry of a Subgraph's `graphTypologies`: one of bootstrap's, or an Extension. */
+export const GraphTypologySchema = z
   .union([
-    ...(Object.entries(BOOTSTRAP_GRAPH_KINDS) as [string, string][]).map(([k, d]) => z.literal(k).describe(d)),
+    ...(Object.entries(BOOTSTRAP_GRAPH_TYPOLOGIES) as [string, string][]).map(([k, d]) => z.literal(k).describe(d)),
     z
       .string()
       .min(1)
-      .describe(`A Graph Kind a Harness defines. To a reader that knows only bootstrap it is an Extension: ${BOOTSTRAP_TERMS.Extension}`),
+      .describe(`A Graph Typology a Harness defines. To a reader that knows only bootstrap it is an Extension: ${BOOTSTRAP_TERMS.Extension}`),
   ])
-  .describe(BOOTSTRAP_TERMS.GraphKind);
+  .describe(BOOTSTRAP_TERMS.GraphTypology);
 
 
 export const SubgraphSchema = z
   .object({
     id: z.string().min(1).describe("The Subgraph's name, unique within its Knowledge Graph."),
     path: z.string().min(1).describe("The directory, relative to the declaration."),
-    graphKinds: z.array(GraphKindSchema).min(1).describe("The Graph Kinds it holds."),
+    graphTypologies: z.array(GraphTypologySchema).min(1).describe("The Graph Typologies it holds."),
     title: z.string().optional().describe("A short name for people, shown as its README's heading."),
     description: z.string().optional().describe("What it holds, in a sentence or two, shown under that heading."),
   })
@@ -250,7 +250,7 @@ export const KnowledgeGraphDeclarationSchema = z
  * against — not a description of it beside the real thing.
  */
 export const BOOTSTRAP_TERM_SHAPES: Readonly<Partial<Record<BootstrapTerm, z.ZodType>>> = {
-  GraphKind: GraphKindSchema,
+  GraphTypology: GraphTypologySchema,
   Subgraph: SubgraphSchema,
   Asset: AssetSchema,
   Dependency: DependencySchema,

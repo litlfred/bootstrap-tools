@@ -36,8 +36,8 @@ const SubgraphNodeBase = z.object({
   path: z.string().min(1),
   title: z.string().optional(),
   description: z.string().optional(),
-  /** The graph kinds it holds, as bootstrap's graph-kind individuals. */
-  holdsGraph: z.array(z.string().regex(/^bootstrap:graphKind\/[a-z][a-z0-9-]*$/)).optional(),
+  /** The graph typologies it holds, as bootstrap's graph-typology individuals. */
+  holdsGraph: z.array(z.string().regex(/^bootstrap:graphTypology\/[a-z][a-z0-9-]*$/)).optional(),
 });
 
 /** A member as the index carries it: enough to find it, type it and label it. */

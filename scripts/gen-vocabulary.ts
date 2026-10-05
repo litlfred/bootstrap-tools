@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  * gen-vocabulary.ts — bootstrap's vocabulary, `bootstrap/ns.jsonld`: every term
- * bootstrap defines and every Graph Kind it defines, as RDF/SKOS, at the
+ * bootstrap defines and every Graph Typology it defines, as RDF/SKOS, at the
  * address its IRIs already name.
  *
  * @module bootstrap-tools/scripts/gen-vocabulary
@@ -29,8 +29,8 @@
  *   its definition, what it uses (`dcterms:requires`, from
  *   `BOOTSTRAP_TERM_USES`), and the schema that defines it
  *   (`rdfs:isDefinedBy`, from `BOOTSTRAP_TERM_DEFINED_BY`).
- * - Each of `BOOTSTRAP_GRAPH_KINDS` as a named `bootstrap:GraphKind`,
- *   `bootstrap:graphKind/<kind>` — the individual a Subgraph's `holdsGraph`
+ * - Each of `BOOTSTRAP_GRAPH_TYPOLOGIES` as a named `bootstrap:GraphTypology`,
+ *   `bootstrap:graphTypology/<kind>` — the individual a Subgraph's `holdsGraph`
  *   points at.
  *
  * It names nothing above bootstrap: no harness prefix in its context, no
@@ -45,7 +45,7 @@ import { TOOLS_REPOSITORY, generatedNote } from "./generated-by.ts";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { BOOTSTRAP_GRAPH_KINDS, BOOTSTRAP_TERM_DEFINED_BY, BOOTSTRAP_TERM_USES, BOOTSTRAP_TERMS } from "../schemas/graph.ts";
+import { BOOTSTRAP_GRAPH_TYPOLOGIES, BOOTSTRAP_TERM_DEFINED_BY, BOOTSTRAP_TERM_USES, BOOTSTRAP_TERMS } from "../schemas/graph.ts";
 import { type ReleaseIris, releaseIri, bootstrapRelease } from "../schemas/release-iri.ts";
 
 const W3 = {
@@ -80,16 +80,16 @@ export function vocabulary(r: ReleaseIris): Record<string, unknown> {
     isDefinedBy: definedBy(BOOTSTRAP_TERM_DEFINED_BY[key]),
     ...(BOOTSTRAP_TERM_USES[key].length > 0 ? { requires: BOOTSTRAP_TERM_USES[key].map((u) => `bootstrap:${u}`) } : {}),
   }));
-  const kinds = (Object.entries(BOOTSTRAP_GRAPH_KINDS) as [string, string][]).map(([kind, definition]) => ({
-    "@id": `bootstrap:graphKind/${kind}`,
-    "@type": ["bootstrap:GraphKind", "skos:Concept"],
+  const kinds = (Object.entries(BOOTSTRAP_GRAPH_TYPOLOGIES) as [string, string][]).map(([kind, definition]) => ({
+    "@id": `bootstrap:graphTypology/${kind}`,
+    "@type": ["bootstrap:GraphTypology", "skos:Concept"],
     label: kind,
     comment: definition,
     prefLabel: kind,
     definition,
     notation: kind,
     inScheme: docIri,
-    isDefinedBy: `${graphSchema}#/$defs/GraphKind`,
+    isDefinedBy: `${graphSchema}#/$defs/GraphTypology`,
   }));
   return {
     "@context": {
@@ -110,7 +110,7 @@ export function vocabulary(r: ReleaseIris): Record<string, unknown> {
     "@type": ["owl:Ontology", "skos:ConceptScheme"],
     label: "bootstrap vocabulary",
     definition:
-      "Every term bootstrap defines, in the order they are defined — each uses only terms above it — and every Graph Kind it defines.",
+      "Every term bootstrap defines, in the order they are defined — each uses only terms above it — and every Graph Typology it defines.",
     versionInfo: r.version,
     comment: generatedNote("scripts/gen-vocabulary.ts", "bootstrap's own terms", "change the terms in the toolset's schemas/graph.ts"),
     wasAttributedTo: TOOLS_REPOSITORY,
@@ -133,15 +133,15 @@ if (import.meta.main) {
   const text = `${JSON.stringify(vocabulary(r), null, 2)}\n`;
   const prev = existsSync(out) ? readFileSync(out, "utf-8") : undefined;
   const n = Object.keys(BOOTSTRAP_TERMS).length;
-  const k = Object.keys(BOOTSTRAP_GRAPH_KINDS).length;
+  const k = Object.keys(BOOTSTRAP_GRAPH_TYPOLOGIES).length;
   if (check) {
     if (prev !== text) {
       console.error(`✗ ${out} is stale — run bun run bootstrap-tools/scripts/gen-vocabulary.ts`);
       process.exit(1);
     }
-    console.log(`✓ bootstrap/ns.jsonld is current: ${n} terms, ${k} graph kinds, at ${releaseIri(r, "ns", "agent")}`);
+    console.log(`✓ bootstrap/ns.jsonld is current: ${n} terms, ${k} graph typologies, at ${releaseIri(r, "ns", "agent")}`);
   } else {
     writeFileSync(out, text);
-    console.log(`${prev === text ? "=" : "✓"} bootstrap/ns.jsonld — ${n} terms, ${k} graph kinds`);
+    console.log(`${prev === text ? "=" : "✓"} bootstrap/ns.jsonld — ${n} terms, ${k} graph typologies`);
   }
 }
