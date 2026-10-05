@@ -13,7 +13,7 @@
       "source": "https://litlfred.github.io/bootstrap-tools/processes/",
       "title": "The toolset's Processes",
       "type": [
-        "bootstrap:graphKind/processes"
+        "bootstrap:graphTypology/processes"
       ]
     },
     {
@@ -207,7 +207,7 @@
     }
   ],
   "holdsGraph": [
-    "bootstrap:graphKind/processes"
+    "bootstrap:graphTypology/processes"
   ],
   "name": "processes",
   "path": "processes/",

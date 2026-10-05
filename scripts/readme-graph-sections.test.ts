@@ -27,9 +27,9 @@ function instance(withPictures: boolean): string {
       name: "demo",
       title: "Demo",
       directories: [
-        { id: "processes", path: "processes/", graphKinds: ["processes"], dependents: "skip", description: "The diagrams. More text." },
-        { id: "skills", path: "skills/", graphKinds: ["skills"], dependents: "skip" },
-        { id: "qa", path: "test/results/", graphKinds: ["qa"], dependents: "skip" },
+        { id: "processes", path: "processes/", graphTypologies: ["processes"], dependents: "skip", description: "The diagrams. More text." },
+        { id: "skills", path: "skills/", graphTypologies: ["skills"], dependents: "skip" },
+        { id: "qa", path: "test/results/", graphTypologies: ["qa"], dependents: "skip" },
       ],
       assets: [{ id: "readme", src: "README.md", role: "instance-readme", description: "Start here. Then read on." }],
     }),

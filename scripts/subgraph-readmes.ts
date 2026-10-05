@@ -41,7 +41,7 @@
  * ## Where the words come from
  *
  * The heading is the directory's declared `title`, the paragraph its declared
- * `description`, the kinds its `graphKinds`; each file row is described from
+ * `description`, the kinds its `graphTypologies`; each file row is described from
  * the file itself and "used by" only where a diagram records it (the helpers
  * of the `kg:files` README section). The layout is Liquid, in
  * `templates/readme/` beside this file; templates may `{% include %}` each
@@ -170,7 +170,7 @@ export interface SubgraphInput {
   abs: string;
   title?: string;
   description?: string;
-  graphKinds: string[];
+  graphTypologies: string[];
   /** The caller's declaration says it may be missing; its absence is not a finding. */
   mayBeAbsent?: boolean;
   /**
@@ -194,7 +194,7 @@ export interface SubgraphInput {
    *
    * Some declarations legitimately do NOT match that rule. `beans/beans.json`
    * carries `name: "folio-assistant"`, because there `name` answers *whose*
-   * work plan this is, and the filename comes from the graph kind — the
+   * work plan this is, and the filename comes from the graph typology — the
    * owner's rule, 2026-09-20: each type declares its own filename, so that
    * relocating `beans/` to `work/` renames nothing inside it. Both
    * conventions are right for what they guard, and reconciling them is a
@@ -303,7 +303,7 @@ export function instancesIn(repo: string): InstanceInput[] {
         abs: resolve(root, d.path),
         title: d.title,
         description: d.description,
-        graphKinds: d.graphKinds,
+        graphTypologies: d.graphTypologies,
       })),
     });
   }
@@ -440,7 +440,7 @@ export async function plan(repo: string, instances: InstanceInput[], templates: 
       );
       const region = await liquid.renderFile("subgraph", {
         banner,
-        subgraph: { id: d.id, path: d.path, title, description: description ? linked(description) : description, kinds: d.graphKinds },
+        subgraph: { id: d.id, path: d.path, title, description: description ? linked(description) : description, kinds: d.graphTypologies },
         process: d.process,
         instance: { name, title: decl.title, readme: relative(abs, instLink) },
         release,

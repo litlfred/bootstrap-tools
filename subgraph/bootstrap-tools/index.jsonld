@@ -35,9 +35,9 @@
     "https://litlfred.github.io/bootstrap-tools/subgraph/bootstrap-tools/skills/"
   ],
   "holdsGraph": [
-    "bootstrap:graphKind/processes",
-    "bootstrap:graphKind/scenarios",
-    "bootstrap:graphKind/skills"
+    "bootstrap:graphTypology/processes",
+    "bootstrap:graphTypology/scenarios",
+    "bootstrap:graphTypology/skills"
   ],
   "name": "bootstrap-tools",
   "path": "./",

@@ -22,7 +22,7 @@
     }
   ],
   "holdsGraph": [
-    "bootstrap:graphKind/scenarios"
+    "bootstrap:graphTypology/scenarios"
   ],
   "name": "scenarios",
   "path": "scenarios/",

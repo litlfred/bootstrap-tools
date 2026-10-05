@@ -204,7 +204,7 @@ export function vocabularyRoot(root: string, bootstrapRoot?: string): string {
   return bootstrapRoot ?? join(root, "..", "bootstrap");
 }
 
-/** The Graph Kinds whose Subgraphs' contents this exporter reads. */
+/** The Graph Typologies whose Subgraphs' contents this exporter reads. */
 export const COLLECTED_KINDS: readonly string[] = ["skills", "scenarios", "processes"];
 
 /** bootstrap's graph. `root` is a bootstrap checkout. */
@@ -229,7 +229,7 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
       label: d.id,
       ...(d.title ? { title: d.title } : {}),
       ...(d.description ? { description: d.description } : {}),
-      type: d.graphKinds.map((k) => `bootstrap:graphKind/${k}`),
+      type: d.graphTypologies.map((k) => `bootstrap:graphTypology/${k}`),
       source: src(d.path),
       isPartOf: doc,
     });
@@ -247,7 +247,7 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
   }
 
   // Skills: every markdown file in a `skills` subgraph.
-  for (const d of dirs.filter((x) => x.graphKinds.includes("skills"))) {
+  for (const d of dirs.filter((x) => x.graphTypologies.includes("skills"))) {
     for (const f of filesIn(join(root, d.path), ".md")) {
       const rel = relative(root, f);
       const m = markdownFacts(readFileSync(f, "utf-8"));
@@ -267,7 +267,7 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
   // Roles: `roles.json` in each `scenarios` subgraph.
   const roleIds = new Set<string>();
   const roleNodes = new Map<string, Record<string, unknown>>();
-  for (const d of dirs.filter((x) => x.graphKinds.includes("scenarios"))) {
+  for (const d of dirs.filter((x) => x.graphTypologies.includes("scenarios"))) {
     const f = join(root, d.path, "roles.json");
     if (!existsSync(f)) continue;
     const roles = (JSON.parse(readFileSync(f, "utf-8")) as { roles?: { id: string; title: string; description?: string }[] }).roles ?? [];
@@ -289,7 +289,7 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
   // Processes, their nodes and flows. Process nodes are held apart until every
   // diagram is read, because a call may name a process in a file read later.
   const processNodes: Record<string, unknown>[] = [];
-  for (const d of dirs.filter((x) => x.graphKinds.includes("processes"))) {
+  for (const d of dirs.filter((x) => x.graphTypologies.includes("processes"))) {
     for (const f of filesIn(join(root, d.path), ".bpmn")) {
       const rel = relative(root, f);
       const xml = parseXml(readFileSync(f, "utf-8"));
@@ -388,7 +388,7 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
   // has its own node) but its contents are not: said, so "holds nothing" and
   // "nobody looked" are never the same empty answer.
   const omitted = dirs
-    .filter((d) => !d.graphKinds.some((k) => COLLECTED_KINDS.includes(k)))
+    .filter((d) => !d.graphTypologies.some((k) => COLLECTED_KINDS.includes(k)))
     .map((d) => d.id)
     .sort();
 

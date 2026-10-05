@@ -13,7 +13,7 @@
       "source": "https://litlfred.github.io/bootstrap-tools/skills/",
       "title": "The toolset's skills",
       "type": [
-        "bootstrap:graphKind/skills"
+        "bootstrap:graphTypology/skills"
       ]
     },
     {
@@ -36,7 +36,7 @@
     }
   ],
   "holdsGraph": [
-    "bootstrap:graphKind/skills"
+    "bootstrap:graphTypology/skills"
   ],
   "name": "skills",
   "path": "skills/",

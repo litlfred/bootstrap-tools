@@ -129,7 +129,7 @@
     }
   ],
   "holdsGraph": [
-    "bootstrap:graphKind/processes"
+    "bootstrap:graphTypology/processes"
   ],
   "name": "processes",
   "path": "processes/",

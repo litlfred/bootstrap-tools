@@ -13,7 +13,7 @@
       "source": "https://litlfred.github.io/bootstrap-tools/scenarios/",
       "title": "The toolset's Roles",
       "type": [
-        "bootstrap:graphKind/scenarios"
+        "bootstrap:graphTypology/scenarios"
       ]
     },
     {
@@ -50,7 +50,7 @@
     }
   ],
   "holdsGraph": [
-    "bootstrap:graphKind/scenarios"
+    "bootstrap:graphTypology/scenarios"
   ],
   "name": "scenarios",
   "path": "scenarios/",

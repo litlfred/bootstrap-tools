@@ -44,6 +44,21 @@ const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
  */
 const PROTECTED = /`[^`]*`|\[[^\]]*\]\([^)]*\)|<[^>]+>|\*\*[^*]+\*\*|https?:\/\/\S+/g;
 
+/**
+ * A term and its plurals, as a regular expression: `Node Kinds`, `Classes`,
+ * and `Graph Typologies` for a term ending in a consonant and `y`.
+ */
+export function pluralised(term: string): string {
+  const e = esc(term);
+  return /[^aeiou]y$/i.test(term) ? `${e.slice(0, -1)}(?:y|ies)` : `${e}(?:s|es)?`;
+}
+
+/** The term a matched occurrence is a form of. */
+export function singular(match: string, known: { has(k: string): boolean }): string {
+  for (const c of [match, match.replace(/ies$/, "y"), match.replace(/es$/, ""), match.replace(/s$/, "")]) if (known.has(c)) return c;
+  return match;
+}
+
 /** Link every term occurrence in `markdown`, returning the text and how many links were added. */
 export function linkTerms(markdown: string, targets: readonly TermTarget[]): { text: string; added: number } {
   // No terms, no links: an empty alternation would match the empty string at
@@ -51,7 +66,7 @@ export function linkTerms(markdown: string, targets: readonly TermTarget[]): { t
   // around every word).
   if (targets.length === 0) return { text: markdown, added: 0 };
   const byLength = [...targets].sort((a, b) => spacedTerm(b.key).length - spacedTerm(a.key).length);
-  const pattern = new RegExp(`\\b(${byLength.map((t) => esc(spacedTerm(t.key))).join("|")})(s|es)?\\b`, "g");
+  const pattern = new RegExp(`\\b(?:${byLength.map((t) => pluralised(spacedTerm(t.key))).join("|")})\\b`, "g");
   const hrefOf = new Map(targets.map((t) => [spacedTerm(t.key), t.href]));
   let added = 0;
   let fenced = false;
@@ -70,9 +85,9 @@ export function linkTerms(markdown: string, targets: readonly TermTarget[]): { t
     let result = "";
     let last = 0;
     const linkProse = (prose: string) =>
-      prose.replace(pattern, (m, name: string) => {
+      prose.replace(pattern, (m: string) => {
         added++;
-        return `[${m}](${hrefOf.get(name)!})`;
+        return `[${m}](${hrefOf.get(singular(m, hrefOf))!})`;
       });
     for (const m of line.matchAll(PROTECTED)) {
       result += linkProse(line.slice(last, m.index)) + m[0];

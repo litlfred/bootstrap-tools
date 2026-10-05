@@ -31,7 +31,7 @@
  * Both halves are DERIVED, not listed:
  *
  * - every directory the `bootstrap` instance declares with the `schemas`
- *   graph kind, where the published `*.schema.json` live; and
+ *   graph typology, where the published `*.schema.json` live; and
  * - every `../schemas/*.ts` module `gen-bootstrap-schemas.ts` imports, which
  *   are the sources those documents are generated from.
  *
@@ -86,10 +86,10 @@ export function bootstrapSchemaDirs(repo: string): string[] {
   for (const inst of BOOTSTRAP_INSTANCES) {
     const decl = join(repo, inst, `${inst}.json`);
     const d = JSON.parse(readFileSync(decl, "utf8")) as {
-      directories?: { path: string; graphKinds?: string[] }[];
+      directories?: { path: string; graphTypologies?: string[] }[];
     };
     for (const e of d.directories ?? []) {
-      if ((e.graphKinds ?? []).includes("schemas")) dirs.push(join(repo, inst, e.path));
+      if ((e.graphTypologies ?? []).includes("schemas")) dirs.push(join(repo, inst, e.path));
     }
   }
   return dirs;

@@ -39,8 +39,8 @@
       "id": "bootstrap-tools-schemas",
       "path": "schemas/",
       "title": "Bootstrap's shapes, in Zod",
-      "description": "The Zod source of every schema bootstrap publishes, bootstrap's defined terms and graph kinds, and the small readers the tools share: a declaration reader over bootstrap's own shape, release addresses, and the declared-order check.",
-      "graphKinds": [
+      "description": "The Zod source of every schema bootstrap publishes, bootstrap's defined terms and graph typologies, and the small readers the tools share: a declaration reader over bootstrap's own shape, release addresses, and the declared-order check.",
+      "graphTypologies": [
         "schemas"
       ]
     },
@@ -49,7 +49,7 @@
       "path": "scripts/",
       "title": "The tools",
       "description": "The schema generator and drawn schema page, the README writers (each directory's README, and the `kg:processes` and `kg:files` sections) with their Liquid templates, the Process renderer, the release-IRI sync, the term linker, and the checks: import closure, node identifiers, bootstrap's concepts, bootstrap's documents parsed against their Zod (`bootstrap:validate`), and the semver bump the published schemas require, computed from a diff (`bootstrap:semver`).",
-      "graphKinds": [
+      "graphTypologies": [
         "code"
       ]
     },
@@ -58,7 +58,7 @@
       "path": "skills/",
       "title": "The toolset's skills",
       "description": "The skills this toolset owns: `bootstrap-contract-semver`, what MAJOR, MINOR and PATCH mean for bootstrap's published schemas and why the bump is computed from a diff; and `render-kg-to-github-pages`, rendering a Knowledge Graph (or a list of its Subgraphs) to GitHub Pages at a publication root URL and reporting the push's status with one message.",
-      "graphKinds": [
+      "graphTypologies": [
         "skills"
       ]
     },
@@ -67,7 +67,7 @@
       "path": "processes/",
       "title": "The toolset's Processes",
       "description": "The toolset's own Processes, in bootstrap's diagram vocabulary: `render-kg-to-github-pages.bpmn`, rendering a Knowledge Graph (or a list of its Subgraphs) to GitHub Pages at a publication root URL, with each step one of these tools and the push's status and message as its output. The same process for a staging preview and a release; only the root URL differs.",
-      "graphKinds": [
+      "graphTypologies": [
         "processes"
       ]
     },
@@ -76,7 +76,7 @@
       "path": "scenarios/",
       "title": "The toolset's Roles",
       "description": "`roles.json`: the Roles the toolset's Processes bind their lanes to. The Site Publisher, who renders, deploys, checks and reports; and GitHub Pages, the host, acted upon.",
-      "graphKinds": [
+      "graphTypologies": [
         "scenarios"
       ]
     }

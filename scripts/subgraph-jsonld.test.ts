@@ -109,7 +109,7 @@ describe("named subgraphs — one IRI, two files, projected from one graph", () 
           expect(existsSync(join(root, String(p["depiction"]).slice(b.repoIri.length - "subgraph/".length)))).toBe(true);
           for (const r of (p["requires"] as string[] | undefined) ?? []) expect(ids.has(r)).toBe(true);
         }
-        expect(hyd["holdsGraph"]).toContain("bootstrap:graphKind/processes");
+        expect(hyd["holdsGraph"]).toContain("bootstrap:graphTypology/processes");
       });
     });
   }
@@ -124,8 +124,8 @@ describe("named subgraphs — one IRI, two files, projected from one graph", () 
     mkdirSync(join(root, "skills", "deep", "er"), { recursive: true });
     mkdirSync(join(root, "code"));
     writeFileSync(join(root, "demo.json"), JSON.stringify({ name: "demo", version: "0.1.0", repository: "Owner/demo", needs: ["bootstrap"], directories: [
-      { id: "skills", path: "skills/", graphKinds: ["skills"] },
-      { id: "code", path: "code/", graphKinds: ["code"] },
+      { id: "skills", path: "skills/", graphTypologies: ["skills"] },
+      { id: "code", path: "code/", graphTypologies: ["code"] },
     ] }));
     writeFileSync(join(root, "skills", "top.md"), "---\nname: top\n---\n# Top\n");
     writeFileSync(join(root, "skills", "deep", "er", "low.md"), "---\nname: low\n---\n# Low\n");
