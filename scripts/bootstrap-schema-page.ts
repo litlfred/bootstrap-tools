@@ -203,11 +203,13 @@ function drawTree(box: Box): string[] {
 function condition(ifNode: unknown): string {
   const props = (ifNode as SchemaNode)?.properties;
   const entries = Object.entries(props ?? {});
-  if (entries.length !== 1 || entries[0]![1].const === undefined) {
+  const one = entries[0]?.[1] as { const?: unknown; enum?: unknown[] } | undefined;
+  if (entries.length !== 1 || (one?.const === undefined && !Array.isArray(one?.enum))) {
     throw new Error(`bootstrap-schema-page: cannot state this condition in words: ${JSON.stringify(ifNode)}`);
   }
-  const [field, n] = entries[0]!;
-  return `if \`${field}\` is ${literal(n.const)}`;
+  const [field] = entries[0]!;
+  if (one!.const !== undefined) return `if \`${field}\` is ${literal(one!.const)}`;
+  return `if \`${field}\` is one of ${one!.enum!.map((v) => literal(v)).join(", ")}`;
 }
 
 const listed = (fields: string[]) =>
@@ -217,8 +219,27 @@ const listed = (fields: string[]) =>
 
 /** The consequence half: fields that must be present, or must be absent. */
 function consequence(thenNode: unknown): string {
-  const t = thenNode as { required?: string[]; not?: { required?: string[]; anyOf?: { required?: string[] }[] } };
-  if (t.required?.length) return `${listed(t.required)} must be present`;
+  const t = thenNode as {
+    required?: string[];
+    not?: { required?: string[]; anyOf?: { required?: string[] }[] };
+    properties?: Record<string, { minItems?: number; contains?: { properties?: Record<string, { const?: unknown; enum?: unknown[] }>; required?: string[] } }>;
+  };
+  if (t.required?.length) {
+    // A field that must be present, and what of it: at least n items, or one
+    // item whose fields have the stated values (\`contains\`).
+    const more = Object.entries(t.properties ?? {}).map(([f, n]) => {
+      if (n.minItems !== undefined) return `\`${f}\` with at least ${n.minItems} item(s)`;
+      if (n.contains?.properties) {
+        const parts = Object.entries(n.contains.properties).map(([k, v]) =>
+          v.const !== undefined ? `\`${k}\` ${literal(v.const)}` : `\`${k}\` one of ${(v.enum ?? []).map((x) => literal(x)).join(", ")}`);
+        const props = n.contains.properties;
+        for (const r of n.contains.required ?? []) if (!(r in props)) parts.push(`a \`${r}\``);
+        return `\`${f}\` including one item with ${parts.join(", ")}`;
+      }
+      throw new Error(`bootstrap-schema-page: cannot state this consequence in words: ${JSON.stringify(thenNode)}`);
+    });
+    return `${listed(t.required)} must be present${more.length ? ` — ${more.join("; ")}` : ""}`;
+  }
   if (t.not?.required?.length) return `${listed(t.not.required)} must be absent`;
   const any = t.not?.anyOf?.map((a) => a.required ?? []);
   if (any?.every((r) => r.length === 1)) return `${listed(any.map((r) => r[0]!))} must be absent`;

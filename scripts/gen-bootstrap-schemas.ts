@@ -78,6 +78,10 @@ import {
   REQUIREMENT_JSON_SCHEMA_CONDITIONALS,
   RequirementSchema,
 } from "../schemas/requirement.ts";
+import {
+  REQUIREMENT_SET_JSON_SCHEMA_CONDITIONALS,
+  RequirementSetSchema,
+} from "../schemas/requirement-set.ts";
 
 const ROOT = join(import.meta.dir, "..", "..");
 const check = process.argv.includes("--check");
@@ -188,6 +192,19 @@ const TARGETS = [
       "What a harness, or something built with one, must do, said so it can be checked: a titled set of numbered statements, each with a level (SHALL, SHOULD, MAY, SHALL NOT), one sentence, and — optional for now, required once existing statements are migrated — at least one success criterion saying how it is judged met (test, inspection, review or analysis). A test run points at a statement as `req:<slug>#<key>`, or at one criterion as `req:<slug>#<key>/<criterion>`; the requirement does not list its tests. Statement keys are unique within a requirement, criterion keys within a statement.",
     schema: RequirementSchema,
     conditionals: REQUIREMENT_JSON_SCHEMA_CONDITIONALS as readonly unknown[],
+    terms: {} as Readonly<Record<string, string>>,
+  },
+  {
+    // The requirements DOCUMENT: a set of requirement statements at one stage,
+    // with the sign-offs that moved it there (litlfred/folio-assistant#2405,
+    // FR-010 to FR-012). Beside the Requirement it gathers, for the same reason.
+    file: "schemas/requirement-set.schema.json",
+    id: releaseIri(RELEASE, "schemas/requirement-set.schema.json", "agent"),
+    title: "Requirement Set",
+    description:
+      "A requirements document: a set of requirement statements (by `req:` reference, each with its own decision) at one stage of its life — draft, proposed, approved, planned, in-progress, delivered, accepted, or rejected, cancelled, superseded — with its work plan and the sign-offs that moved it there. A sign-off is a recorded decision: who (kind, id, actor), when, about what, the outcome (approve, amend, reject, defer, cancel), the stage it moves the set to, why, and a link to where it was made. `approved` and `accepted` need a human sign-off; from `planned` on, the set names its work plan; `cancelled` needs a reason. The set's stage and each member's own status are independent.",
+    schema: RequirementSetSchema,
+    conditionals: REQUIREMENT_SET_JSON_SCHEMA_CONDITIONALS as readonly unknown[],
     terms: {} as Readonly<Record<string, string>>,
   },
 ] as const;
