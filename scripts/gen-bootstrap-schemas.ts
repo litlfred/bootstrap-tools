@@ -185,7 +185,7 @@ const TARGETS = [
     id: releaseIri(RELEASE, "schemas/requirement.schema.json", "agent"),
     title: "Requirement",
     description:
-      "What a harness, or something built with one, must do, said so it can be checked: a titled set of numbered statements, each with a level (SHALL, SHOULD, MAY, SHALL NOT) and one sentence. A test run points at a statement as `req:<slug>#<key>`; the requirement does not list its tests. Statement keys are unique within a requirement.",
+      "What a harness, or something built with one, must do, said so it can be checked: a titled set of numbered statements, each with a level (SHALL, SHOULD, MAY, SHALL NOT), one sentence, and — optional for now, required once existing statements are migrated — at least one success criterion saying how it is judged met (test, inspection, review or analysis). A test run points at a statement as `req:<slug>#<key>`, or at one criterion as `req:<slug>#<key>/<criterion>`; the requirement does not list its tests. Statement keys are unique within a requirement, criterion keys within a statement.",
     schema: RequirementSchema,
     conditionals: REQUIREMENT_JSON_SCHEMA_CONDITIONALS as readonly unknown[],
     terms: {} as Readonly<Record<string, string>>,
