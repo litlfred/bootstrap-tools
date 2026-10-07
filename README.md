@@ -250,6 +250,7 @@ Part of [Bootstrap tools](#readme) 0.1.0, declared as `bootstrap-tools-schemas`,
 | [`model-registry.ts`](schemas/model-registry.ts) | a file |  |
 | [`release-iri.test.ts`](schemas/release-iri.test.ts) | a file |  |
 | [`release-iri.ts`](schemas/release-iri.ts) | a file |  |
+| [`requirement-set.ts`](schemas/requirement-set.ts) | a file |  |
 | [`requirement.ts`](schemas/requirement.ts) | a file |  |
 | [`subgraph-export.ts`](schemas/subgraph-export.ts) | a file |  |
 <!-- kg:subgraph:end -->
