@@ -75,6 +75,34 @@ export const RequirementStatusSchema = z.enum(["proposed", "in-force", "supersed
 export type RequirementStatus = z.infer<typeof RequirementStatusSchema>;
 
 /**
+ * HOW a success criterion is judged met. Four ways, because they are four
+ * different pieces of evidence: a `test` is run and passes or fails; an
+ * `inspection` reads the artefact and finds the thing there; a `review` is a
+ * person's judgement, recorded; an `analysis` derives the answer from a model
+ * or a measurement rather than observing it directly.
+ */
+export const VerificationMethodSchema = z.enum(["test", "inspection", "review", "analysis"]);
+export type VerificationMethod = z.infer<typeof VerificationMethodSchema>;
+
+/**
+ * ONE WAY OF TELLING THAT A STATEMENT IS MET — said before the work starts, so
+ * that "done" is a check somebody can run rather than a feeling the author has.
+ *
+ * A statement says what must be true; a criterion says what would SHOW it. They
+ * are separate fields because they are written by different questions: the
+ * statement by "what do we need", the criterion by "how would we know". A
+ * statement with no criterion can be filed and never judged.
+ */
+export const SuccessCriterionSchema = z.object({
+  /** Unique within its statement; `req:<id>#<statement>/<key>` is its address. */
+  key: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9_.-]*$/, "a criterion key is letters, digits, `_`, `.` or `-`"),
+  /** One sentence a reviewer can say yes or no to, without asking what it means. */
+  criterion: z.string().min(1),
+  verification: VerificationMethodSchema,
+});
+export type SuccessCriterion = z.infer<typeof SuccessCriterionSchema>;
+
+/**
  * The statement's FIELDS, before the kind-consistency refinement — exported so
  * a harness can extend it and re-apply {@link refineStatement}. Zod cannot
  * `.extend()` a refined schema.
@@ -109,13 +137,34 @@ export const RequirementStatementFields = z.object({
     actors: z.array(z.string().min(1)).optional(),
     /** Other statements this one presupposes, by {@link requirementRef}. */
     dependsOn: z.array(z.string().min(1)).optional(),
+    /**
+     * How it will be judged met — at least one {@link SuccessCriterionSchema}
+     * when present. OPTIONAL FOR NOW, and deliberately so: statements filed
+     * before this field existed carry none, and they gain criteria by
+     * migration rather than by a grandfather date. A harness's own checker
+     * warns on a statement without it; once every filed statement carries
+     * one, the field becomes required.
+     */
+    successCriteria: z.array(SuccessCriterionSchema).min(1).optional(),
   });
 
 /** A kind is a promise about the fields. Applied by every statement schema built on these fields. */
 export function refineStatement(
-  s: { kind?: StatementKind; activity?: string; capability?: string; benefit?: string; category?: string },
+  s: {
+    kind?: StatementKind; activity?: string; capability?: string; benefit?: string; category?: string;
+    successCriteria?: { key: string }[];
+  },
   ctx: z.RefinementCtx,
 ): void {
+    // A criterion key is its criterion's address, so it appears once.
+    const seen = new Set<string>();
+    (s.successCriteria ?? []).forEach((c, i) => {
+      if (seen.has(c.key)) {
+        ctx.addIssue({ code: "custom", path: ["successCriteria", i, "key"],
+          message: `criterion key \`${c.key}\` appears twice; a key is its criterion's address` });
+      }
+      seen.add(c.key);
+    });
     // A KIND IS A PROMISE ABOUT THE FIELDS. A functional statement with a
     // `category`, or a non-functional one with a `capability`, is a statement
     // filed under the wrong question — refused rather than quietly carried.
@@ -181,24 +230,27 @@ export const RequirementSchema = RequirementFields.superRefine(refineRequirement
 export type Requirement = z.infer<typeof RequirementSchema>;
 
 /**
- * The address of a requirement or one of its statements: `req:<slug>` or
- * `req:<slug>#<key>`. What a test run lists in its `requirements`.
+ * The address of a requirement, one of its statements, or one success
+ * criterion of a statement: `req:<slug>`, `req:<slug>#<key>` or
+ * `req:<slug>#<key>/<criterion>`. What a test run lists in its
+ * `requirements` — a run that checks one criterion says which.
  */
 export const RequirementRefSchema = z
   .string()
-  .regex(/^req:[a-z0-9][a-z0-9-]*(#[A-Za-z0-9][A-Za-z0-9_.-]*)?$/,
-    "a requirement reference is `req:<slug>` or `req:<slug>#<statement-key>`");
+  .regex(/^req:[a-z0-9][a-z0-9-]*(#[A-Za-z0-9][A-Za-z0-9_.-]*(\/[A-Za-z0-9][A-Za-z0-9_.-]*)?)?$/,
+    "a requirement reference is `req:<slug>`, `req:<slug>#<statement-key>` or `req:<slug>#<statement-key>/<criterion-key>`");
 export type RequirementRef = z.infer<typeof RequirementRefSchema>;
 
-export function requirementRef(id: string, key?: string): RequirementRef {
-  return key ? `${id}#${key}` : id;
+export function requirementRef(id: string, key?: string, criterion?: string): RequirementRef {
+  if (!key) return id;
+  return criterion ? `${id}#${key}/${criterion}` : `${id}#${key}`;
 }
 
 /**
  * THE PART THE CONVERTER DROPS — {@link refineStatement} and
  * {@link refineRequirement}, restated as JSON Schema for the published
- * document. Only what JSON Schema can say: a statement key appearing twice
- * cannot be expressed, and is checked by `check:requirements` through this
+ * document. Only what JSON Schema can say: a statement key (or a criterion
+ * key) appearing twice cannot be expressed, and is checked by `check:requirements` through this
  * module instead.
  */
 export const REQUIREMENT_JSON_SCHEMA_CONDITIONALS = [
