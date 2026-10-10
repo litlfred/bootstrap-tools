@@ -20,6 +20,8 @@ import { pluralised, unlinkedTerms } from "../scripts/term-links.ts";
 
 const REPO_ROOT = join(import.meta.dir, "..", "..");
 const BOOTSTRAP = join(REPO_ROOT, "bootstrap");
+/** A standalone clone's own index (bootstrap 7d7d754): checkout metadata, like `.git`. */
+const INDEX_CONFIG = join(BOOTSTRAP, "index.config.json");
 /** Names of things above bootstrap, and outside standards named by acronym alone. */
 const LEAKS = [/\bWHO\b/, /\bDAK\b/, /\bSMART\b/i, /cat-harness/, /folio/i, /smart-base/, /\bL[123]\b/];
 
@@ -233,6 +235,10 @@ describe("nothing in bootstrap/ names anything above it (bean iwtn)", () => {
       // `.git` is version-control metadata, not bootstrap's content — and a
       // standalone clone has one (found by `rehearse-standalone`, bean xsqm).
       if (f === ".git") continue;
+      // The same holds for the root `index.config.json` (bootstrap 7d7d754): it
+      // is what lets a standalone clone mount itself, read by the platform that
+      // owns the filename, and not one of bootstrap's own files.
+      if (p === INDEX_CONFIG) continue;
       if (statSync(p).isDirectory()) walk(p);
       else files.push(p);
     }
@@ -281,6 +287,7 @@ describe("every $schema a bootstrap file carries is a Node Kind its declaration 
     const walk = (d: string) => {
       for (const f of readdirSync(d)) {
         const p = join(d, f);
+        if (f === ".git" || p === INDEX_CONFIG) continue; // checkout metadata, not a node (see above)
         if (statSync(p).isDirectory()) walk(p);
         else if (f.endsWith(".json")) {
           const tag = (JSON.parse(readFileSync(p, "utf-8")) as { $schema?: unknown }).$schema;
