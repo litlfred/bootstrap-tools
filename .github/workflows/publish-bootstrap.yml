@@ -20,9 +20,15 @@
 # on a schedule and by hand. A run with nothing new to publish is a no-op
 # ("gh-pages already current").
 #
-# Needs the secret BOOTSTRAP_PAGES_TOKEN in THIS repository: a fine-grained
-# personal access token scoped to litlfred/bootstrap only, with Contents:
-# read and write. GITHUB_TOKEN cannot push to another repository.
+# Needs a token that can push to litlfred/bootstrap, under its capability
+# name PUBLISH_SITE_BOOTSTRAP (naming rule, cat-harness
+# docs/proposals/credentials-needs-and-supply.md §4.3; bean 8mlt).
+# GITHUB_TOKEN cannot push to another repository. It comes from, in order:
+# the harness GitHub App (variable HARNESS_BOT_ID + secret
+# HARNESS_BOT_PRIVATE_KEY, installed on litlfred/bootstrap; owner ruling
+# D1=A, steps in cat-harness's `secrets` skill), or a repository secret
+# PUBLISH_SITE_BOOTSTRAP (a fine-grained token for litlfred/bootstrap only,
+# Contents: read and write).
 name: Publish bootstrap's site
 
 on:
@@ -41,12 +47,20 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
+      - id: bot
+        if: vars.HARNESS_BOT_ID != ''
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
+        with:
+          app-id: ${{ vars.HARNESS_BOT_ID }}
+          private-key: ${{ secrets.HARNESS_BOT_PRIVATE_KEY }}
+          owner: litlfred
+          repositories: bootstrap
       - name: The token that pushes to bootstrap's gh-pages is set
         env:
-          TOKEN: ${{ secrets.BOOTSTRAP_PAGES_TOKEN }}
+          PUBLISH_SITE_BOOTSTRAP: ${{ steps.bot.outputs.token || secrets.PUBLISH_SITE_BOOTSTRAP }}
         run: |
-          if [ -z "${TOKEN}" ]; then
-            echo "::error::Set the repository secret BOOTSTRAP_PAGES_TOKEN in litlfred/bootstrap-tools: a fine-grained token for litlfred/bootstrap with Contents read and write. Without it this workflow cannot push bootstrap's gh-pages." >&2
+          if [ -z "${PUBLISH_SITE_BOOTSTRAP}" ]; then
+            echo "::error::No PUBLISH_SITE_BOOTSTRAP: install the harness GitHub App on litlfred/bootstrap and set HARNESS_BOT_ID (variable) and HARNESS_BOT_PRIVATE_KEY (secret) here, or set the repository secret PUBLISH_SITE_BOOTSTRAP in litlfred/bootstrap-tools to a fine-grained token for litlfred/bootstrap with Contents read and write. Steps: cat-harness skill 'secrets'. Without it this workflow cannot push bootstrap's gh-pages." >&2
             exit 1
           fi
       - uses: actions/checkout@v4
@@ -70,7 +84,7 @@ jobs:
       - name: Publish the staged site onto bootstrap's gh-pages (full replace; rebuild, never rebase)
         working-directory: bootstrap-tools
         env:
-          REMOTE: https://x-access-token:${{ secrets.BOOTSTRAP_PAGES_TOKEN }}@github.com/litlfred/bootstrap.git
+          REMOTE: https://x-access-token:${{ steps.bot.outputs.token || secrets.PUBLISH_SITE_BOOTSTRAP }}@github.com/litlfred/bootstrap.git
         run: >-
           bun run scripts/publish-site.ts --site ../_site-src --remote "$REMOTE"
           --message "Publish $(git -C ../bootstrap rev-parse HEAD)"
