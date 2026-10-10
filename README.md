@@ -101,7 +101,7 @@ and by hand, because bootstrap carries no workflow that names these tools
 (owner, 2026-10-01) and a push there cannot trigger one here. Each checks out
 the instance and these tools side by side, runs `site.ts`, and commits the
 staged directory onto that instance's `gh-pages` branch as a full replace —
-bootstrap's through the `BOOTSTRAP_PAGES_TOKEN` secret, since this
+bootstrap's with the `PUBLISH_SITE_BOOTSTRAP` token (the harness GitHub App, or a secret of that name), since this
 repository's own token cannot push to another. GitHub Pages builds that
 branch with Jekyll. The `gh-pages` branch has to exist before Pages can be
 switched on to serve it (`init.ts` step `site:branch`); then Pages has to be on, serving `gh-pages` at `/`:
