@@ -61,4 +61,34 @@ describe("publish-site — any runner, any git remote (bootstrap-tools#7)", () =
     const res = publishSite({ site: staged({ "a.html": "x\n" }), remote: "/nonexistent/remote.git", attempts: 1, backoff: 0 });
     expect(res.state).toBe("failed");
   });
+
+  test("--into replaces only that subtree: the root and other previews stay", () => {
+    const r = remote();
+    expect(publishSite({ site: staged({ "index.html": "a\n" }), remote: r, into: "STAGING/a", backoff: 0 }).state).toBe("published");
+    expect(publishSite({ site: staged({ "index.html": "b\n" }), remote: r, into: "STAGING/b", backoff: 0 }).state).toBe("published");
+    expect(publishSite({ site: staged({ "fresh.html": "a2\n" }), remote: r, into: "STAGING/a", backoff: 0 }).state).toBe("published");
+    expect(read(r, "stale.html")).toBe("old\n");
+    expect(read(r, "STAGING/b/index.html")).toBe("b\n");
+    expect(read(r, "STAGING/a/fresh.html")).toBe("a2\n");
+    expect(read(r, "STAGING/a/index.html")).toBeUndefined();
+  });
+
+  test("--keep: a full replace keeps the named top-level paths, and the staged site cannot overwrite them", () => {
+    const r = remote();
+    publishSite({ site: staged({ "index.html": "p\n" }), remote: r, into: "STAGING/p", backoff: 0 });
+    const res = publishSite({ site: staged({ "index.html": "root\n", "STAGING/p/index.html": "clobber\n" }), remote: r, keep: ["STAGING"], backoff: 0 });
+    expect(res.state).toBe("published");
+    expect(read(r, "index.html")).toBe("root\n");
+    expect(read(r, "stale.html")).toBeUndefined();
+    expect(read(r, "STAGING/p/index.html")).toBe("p\n");
+  });
+
+  test("an --into or --keep outside the branch, or both at once, is refused", () => {
+    const r = remote();
+    const site = staged({ "a.html": "x\n" });
+    for (const into of ["../x", "/abs", ".", "a/../../b", ".git"]) expect(publishSite({ site, remote: r, into, backoff: 0 }).state).toBe("failed");
+    expect(publishSite({ site, remote: r, keep: ["a/b"], backoff: 0 }).state).toBe("failed");
+    expect(publishSite({ site, remote: r, into: "S/x", keep: ["S"], backoff: 0 }).state).toBe("failed");
+    expect(read(r, "stale.html")).toBe("old\n");
+  });
 });

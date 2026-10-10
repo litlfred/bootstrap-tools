@@ -19,7 +19,16 @@
  * GitHub Pages, or any static host that reads a branch — is the host's job.
  *
  * Rebuild, never rebase: each attempt clones the branch fresh, replaces every
- * tracked file with the staged site, and pushes. A push that loses a race is
+ * tracked file with the staged site, and pushes.
+ *
+ * Two narrower replaces, for a branch that holds more than one site (owner,
+ * 2026-10-10: staging previews are agent-run, bean n3h9):
+ *
+ *   --into STAGING/<branch>   replace ONLY that subtree; everything else on the
+ *                             branch stays (a preview never touches the root)
+ *   --keep STAGING --keep branches
+ *                             a full replace that keeps these top-level paths
+ *                             (the root publish never deletes the previews) A push that loses a race is
  * retried from a fresh clone (3 attempts), so a concurrent publisher's commit
  * is never merged into ours or overwritten by a force push.
  */
@@ -41,6 +50,16 @@ export interface PublishOptions {
   email?: string;
   /** Seconds between attempts, times the attempt number. */
   backoff?: number;
+  /** Replace only this subtree of the branch (a relative path); the rest stays. */
+  into?: string;
+  /** On a full replace, top-level paths of the branch to keep as they are. */
+  keep?: string[];
+}
+
+/** A relative path inside the branch, never `.`, absolute, or climbing out. */
+function safeRelative(p: string): boolean {
+  const parts = p.split("/").filter((x) => x !== "");
+  return parts.length > 0 && !p.startsWith("/") && parts.every((x) => x !== "." && x !== ".." && x !== ".git");
 }
 
 export type PublishResult =
@@ -58,6 +77,9 @@ export function publishSite(o: PublishOptions): PublishResult {
   const site = resolve(o.site);
   if (!existsSync(site) || !statSync(site).isDirectory()) return { state: "failed", reason: `${site} is not a directory` };
   if (readdirSync(site).length === 0) return { state: "failed", reason: `${site} is empty — refusing to publish an empty site over the branch` };
+  if (o.into !== undefined && !safeRelative(o.into)) return { state: "failed", reason: `--into ${o.into} is not a relative path inside the branch` };
+  for (const k of o.keep ?? []) if (!safeRelative(k) || k.includes("/")) return { state: "failed", reason: `--keep ${k} is not a top-level path of the branch` };
+  if (o.into !== undefined && (o.keep ?? []).length > 0) return { state: "failed", reason: "--into and --keep are exclusive: --into already keeps everything outside its subtree" };
   const branch = o.branch ?? "gh-pages";
   const attempts = o.attempts ?? 3;
   let last = "";
@@ -67,8 +89,19 @@ export function publishSite(o: PublishOptions): PublishResult {
       const clone = git(work, "clone", "--quiet", "--branch", branch, "--single-branch", o.remote, "repo");
       if (!clone.ok) return { state: "failed", reason: `could not clone ${branch}: ${clone.out}` };
       const repo = join(work, "repo");
-      for (const f of readdirSync(repo)) if (f !== ".git") rmSync(join(repo, f), { recursive: true, force: true });
-      cpSync(site, repo, { recursive: true });
+      if (o.into !== undefined) {
+        const dest = join(repo, o.into);
+        rmSync(dest, { recursive: true, force: true });
+        cpSync(site, dest, { recursive: true });
+      } else {
+        const keep = new Set([".git", ...(o.keep ?? [])]);
+        for (const f of readdirSync(repo)) if (!keep.has(f)) rmSync(join(repo, f), { recursive: true, force: true });
+        for (const f of readdirSync(site)) {
+          // A kept path is the branch's, not the staged site's: never overwrite it.
+          if (keep.has(f)) continue;
+          cpSync(join(site, f), join(repo, f), { recursive: true });
+        }
+      }
       git(repo, "config", "user.name", o.name ?? "site publisher");
       git(repo, "config", "user.email", o.email ?? "site-publisher@users.noreply.github.com");
       git(repo, "add", "-A");
@@ -92,10 +125,11 @@ if (import.meta.main) {
   const site = opt("--site");
   const remote = opt("--remote");
   if (!site || !remote) {
-    console.error("usage: bun run bootstrap-tools/scripts/publish-site.ts --site <staged dir> --remote <git url> [--branch gh-pages] [--message <msg>]");
+    console.error("usage: bun run bootstrap-tools/scripts/publish-site.ts --site <staged dir> --remote <git url> [--branch gh-pages] [--message <msg>] [--into <subdir> | --keep <top-level path>...]");
     process.exit(2);
   }
-  const r = publishSite({ site, remote, branch: opt("--branch"), message: opt("--message"), name: opt("--name"), email: opt("--email") });
+  const keep = args.flatMap((a, i) => (a === "--keep" && args[i + 1] ? [args[i + 1]] : []));
+  const r = publishSite({ site, remote, branch: opt("--branch"), message: opt("--message"), name: opt("--name"), email: opt("--email"), into: opt("--into"), keep });
   if (r.state === "published") console.log(`published ${r.commit} (attempt ${r.attempt})`);
   else if (r.state === "current") console.log("branch already current");
   else { console.error(r.reason); process.exit(1); }
