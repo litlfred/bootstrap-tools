@@ -274,9 +274,23 @@ function filesIn(dir: string): { files: string[]; untracked: string[] } {
   return { files: out.sort(), untracked: [] };
 }
 
-/** Replace the marked region, or create a file holding only it. `undefined`: no markers, leave it. */
+/**
+ * Replace the marked region, or create a file holding only it. `undefined`: no markers, leave it.
+ *
+ * A BLANK LINE always stands before {@link END}. The region usually ends in
+ * the file table, and kramdown — the converter of every Jekyll site that
+ * serves these READMEs, including the github-pages build — does not read a
+ * table as one when an HTML line follows its last row with no blank line
+ * between: it prints the whole table as a paragraph of pipes. GitHub's own
+ * renderer does not care, which is why the README looked right on GitHub and
+ * broke on the site (folio-assistant#2529: `concepts/`, `fhir/`, `guides/`,
+ * `process/` and `start/` failed `check:escaped-markup`; two READMEs had
+ * already been excluded from the site for the same reason). The blank line
+ * is harmless after any other block, so it is unconditional.
+ */
 export function splice(existing: string | undefined, region: string): string | undefined {
-  const block = `${BEGIN}\n${region.trimEnd()}\n${END}`;
+  const body = region.trimEnd();
+  const block = body === "" ? `${BEGIN}\n\n${END}` : `${BEGIN}\n${body}\n\n${END}`;
   if (existing === undefined) return `${block}\n`;
   const i = existing.indexOf(BEGIN);
   const j = existing.indexOf(END);
