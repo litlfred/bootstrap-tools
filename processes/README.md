@@ -12,4 +12,5 @@ Part of [Bootstrap tools](../README.md) 0.1.0, declared as `bootstrap-tools-proc
 |---|---|---|
 | [`render-kg-to-github-pages.bpmn`](render-kg-to-github-pages.bpmn) | a [Process](https://litlfred.github.io/bootstrap/schemas/#process): Render a [Knowledge Graph](https://litlfred.github.io/bootstrap/schemas/#knowledge-graph) to GitHub Pages |  |
 | [`render-kg-to-github-pages.svg`](render-kg-to-github-pages.svg) | the picture of `render-kg-to-github-pages.bpmn`, generated from it |  |
+
 <!-- kg:subgraph:end -->

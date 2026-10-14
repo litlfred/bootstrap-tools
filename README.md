@@ -201,6 +201,7 @@ Part of [Bootstrap tools](#readme) 0.1.0, declared as `bootstrap-tools-processes
 |---|---|---|
 | [`render-kg-to-github-pages.bpmn`](processes/render-kg-to-github-pages.bpmn) | a [Process](https://litlfred.github.io/bootstrap/schemas/#process): Render a [Knowledge Graph](https://litlfred.github.io/bootstrap/schemas/#knowledge-graph) to GitHub Pages |  |
 | [`render-kg-to-github-pages.svg`](processes/render-kg-to-github-pages.svg) | the picture of `render-kg-to-github-pages.bpmn`, generated from it |  |
+
 <!-- kg:subgraph:end -->
 
 ---
@@ -221,6 +222,7 @@ Part of [Bootstrap tools](#readme) 0.1.0, declared as `bootstrap-tools-scenarios
 | file | what it is | used by |
 |---|---|---|
 | [`roles.json`](scenarios/roles.json) | data |  |
+
 <!-- kg:subgraph:end -->
 
 ---
@@ -253,6 +255,7 @@ Part of [Bootstrap tools](#readme) 0.1.0, declared as `bootstrap-tools-schemas`,
 | [`requirement-set.ts`](schemas/requirement-set.ts) | a file |  |
 | [`requirement.ts`](schemas/requirement.ts) | a file |  |
 | [`subgraph-export.ts`](schemas/subgraph-export.ts) | a file |  |
+
 <!-- kg:subgraph:end -->
 
 ---
@@ -319,6 +322,7 @@ Part of [Bootstrap tools](#readme) 0.1.0, declared as `bootstrap-tools-scripts`,
 | [`validate-bootstrap.test.ts`](scripts/validate-bootstrap.test.ts) | a file |  |
 | [`validate-bootstrap.ts`](scripts/validate-bootstrap.ts) | a file |  |
 | [`templates/`](scripts/templates/) | _nothing declares what this holds_ | |
+
 <!-- kg:subgraph:end -->
 
 ---
@@ -341,6 +345,7 @@ Part of [Bootstrap tools](#readme) 0.1.0, declared as `bootstrap-tools-skills`, 
 | [`bootstrap-contract-semver.md`](skills/bootstrap-contract-semver.md) | What MAJOR, MINOR and PATCH mean for bootstrap's PUBLISHED schemas and graph, and why the bump is computed from a diff of the generated documents rather than… |  |
 | [`package-manifest.json`](skills/package-manifest.json) | The toolset's skills: how bootstrap's published contract is versioned (what MAJOR, MINOR and PATCH mean for its generated schemas, and how the bump is comput… |  |
 | [`render-kg-to-github-pages.md`](skills/render-kg-to-github-pages.md) | Render a [Knowledge Graph](https://litlfred.github.io/bootstrap/schemas/#knowledge-graph), or a list of its [Subgraphs](https://litlfred.github.io/bootstrap/schemas/#subgraph), to GitHub Pages at a publication root URL, and report the push: a status (pushed, not pushed, could not… | "Render a Knowledge Graph to GitHub Pages" |
+
 <!-- kg:subgraph:end -->
 
 {% endraw %}
