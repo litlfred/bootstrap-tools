@@ -23,4 +23,5 @@ Part of [Bootstrap tools](../README.md) 0.1.0, declared as `bootstrap-tools-sche
 | [`requirement-set.ts`](requirement-set.ts) | a file |  |
 | [`requirement.ts`](requirement.ts) | a file |  |
 | [`subgraph-export.ts`](subgraph-export.ts) | a file |  |
+
 <!-- kg:subgraph:end -->

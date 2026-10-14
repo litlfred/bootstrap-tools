@@ -46,13 +46,27 @@ function repo(): string {
 
 describe("splice", () => {
   test("no README: a file holding only the region", () => {
-    expect(splice(undefined, "x")).toBe(`${BEGIN}\nx\n${END}\n`);
+    expect(splice(undefined, "x")).toBe(`${BEGIN}\nx\n\n${END}\n`);
   });
   test("markers: the region is replaced and the rest kept", () => {
-    expect(splice(`a\n${BEGIN}\nold\n${END}\nb`, "new")).toBe(`a\n${BEGIN}\nnew\n${END}\nb`);
+    expect(splice(`a\n${BEGIN}\nold\n${END}\nb`, "new")).toBe(`a\n${BEGIN}\nnew\n\n${END}\nb`);
   });
   test("no markers: undefined, meaning leave it alone", () => {
     expect(splice("# written by a person\n", "x")).toBeUndefined();
+  });
+  test("a blank line stands before the end marker, so kramdown reads a closing table as a table", () => {
+    // folio-assistant#2529: kramdown (Jekyll, github-pages) prints a table as
+    // a paragraph of pipes when an HTML line follows its last row directly.
+    const table = "| file | what it is |\n|---|---|\n| [`a.md`](a.md) | A |\n";
+    expect(splice(undefined, table)).toContain(`| A |\n\n${END}`);
+    expect(splice(`${BEGIN}\nold\n${END}\n`, table)).toContain(`| A |\n\n${END}`);
+  });
+  test("re-splicing is stable: the blank line is not doubled", () => {
+    const once = splice(undefined, "| a |\n|---|\n| x |\n")!;
+    expect(splice(once, "| a |\n|---|\n| x |\n")).toBe(once);
+  });
+  test("an empty region is the two markers around one blank line", () => {
+    expect(splice(undefined, "")).toBe(`${BEGIN}\n\n${END}\n`);
   });
 });
 
@@ -72,6 +86,14 @@ describe("plan, on a fixture", async () => {
     expect(skills.startsWith("Intro above.")).toBe(true);
     expect(skills).toContain("Outro below.");
     expect(skills).not.toContain("\nold\n");
+  });
+
+  test("the generated table ends in a blank line before the end marker — folio-assistant#2529", () => {
+    const lines = skills.split("\n");
+    const end = lines.indexOf(END);
+    expect(end).toBeGreaterThan(1);
+    expect(lines[end - 1]).toBe("");
+    expect(lines[end - 2].startsWith("|")).toBe(true);
   });
 
   test("files are described from themselves; a subdirectory is one row, with no count", () => {
