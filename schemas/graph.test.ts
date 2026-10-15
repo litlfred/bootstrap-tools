@@ -215,6 +215,7 @@ describe("nothing in bootstrap/ names anything above it (bean iwtn)", () => {
     new RegExp(TOOLS_REPOSITORY.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&") + "[^\\s)\"`]*", "g"),
     /\[bootstrap-tools\]\(/g, // a README notice's link text (generatedBanner)
   ];
+  const WORKFLOW_USES = /^[ \t]*(?:-[ \t]+)?uses:[ \t]*["']?[A-Za-z0-9][A-Za-z0-9-]*\/[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)*@[A-Za-z0-9_.\/-]+["']?[ \t]*(?:#.*)?$/gm;
   /** Above bootstrap: LEAKS, plus the toolset directly above it. */
   const ABOVE = [...LEAKS, /bootstrap-tools/];
   /** Structural, awaiting the owner's ruling (bean iwtn). Each entry is `file: the leaking text`. */
@@ -250,6 +251,14 @@ describe("nothing in bootstrap/ names anything above it (bean iwtn)", () => {
     for (const p of files) {
       let text = readFileSync(p, "utf-8");
       for (const a of ALLOW) text = text.replace(a, "");
+      // A workflow's `uses:` ADDRESS (owner, 2026-10-15, ruling 3a of the
+      // folio-assistant#2529 reference-direction review): bootstrap's PR CI
+      // calls the one reusable workflow a higher layer keeps, and the owner
+      // ruled that line names where GitHub fetches the workflow from, not a
+      // dependency. Narrow as the harness's `WORKFLOW_USES_ADDRESS` is: only in
+      // `.github/workflows/*.yml`, only the `uses:` key, only a whole remote
+      // `<owner>/<repo>[/<path>]@<ref>` value.
+      if (/(^|\/)\.github\/workflows\/[^/]+\.ya?ml$/.test(p)) text = text.replace(WORKFLOW_USES, "");
       for (const line of text.split("\n")) {
         if (ABOVE.some((re) => re.test(line))) found.push(`${p.slice(BOOTSTRAP.length + 1)}: ${line.trim()}`);
       }
