@@ -47,7 +47,7 @@
  *   bun run bootstrap:schemas          # write
  *   bun run bootstrap:schemas:check    # fail if stale
  */
-import { generatedNote } from "./generated-by.ts";
+import { generatedNote, leadingFrontMatter } from "./generated-by.ts";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 
@@ -361,7 +361,8 @@ let wrote = 0;
 /**
  * The drawn page shares its file with the directory README `subgraph-readmes`
  * writes (`schemas/README.md` IS that directory's README). This generator owns
- * everything but the `kg:subgraph` region, which it carries over unchanged:
+ * everything but the `kg:subgraph` region and the page's leading front matter
+ * (`subgraph-readmes` writes a `generated:` key there), which it carries over unchanged:
  * two generators, one file, neither overwriting the other.
  */
 const SUBGRAPH_BEGIN = "<!-- kg:subgraph:begin -->";
@@ -372,7 +373,10 @@ function keepSubgraphRegion(file: string, text: string): string {
   const i = prev.indexOf(SUBGRAPH_BEGIN);
   const j = prev.indexOf(SUBGRAPH_END);
   const region = i !== -1 && j > i ? prev.slice(i, j + SUBGRAPH_END.length) : `${SUBGRAPH_BEGIN}\n${SUBGRAPH_END}`;
-  return `${region}\n\n${text}`;
+  // And the front matter that writer puts above it when the page is wholly
+  // generated, which is also its to keep or drop.
+  const fm = leadingFrontMatter(prev)?.block ?? "";
+  return `${fm}${region}\n\n${text}`;
 }
 
 for (const t of outputs) {
