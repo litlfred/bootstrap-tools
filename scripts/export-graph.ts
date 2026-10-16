@@ -34,10 +34,10 @@
  * | a flow's ends | `bpmn:sourceRef`, `bpmn:targetRef` | BPMN 2.0 |
  * | the process a call activity calls | `bpmn:calledElement` | BPMN 2.0 |
  * | a process's documentation: whole, and its first sentence | `dcterms:description`, `dcterms:abstract` | DCMI |
- * | the processes a process calls | `dcterms:requires` | DCMI |
+ * | the processes a process calls; the Skills a task requires | `dcterms:requires` | DCMI |
  * | the drawing of a process | `foaf:depiction` | FOAF |
  * | the nodes a role's lanes hold | `bpmn:flowNodeRef` | BPMN 2.0 |
- * | a task's skill, a lane's role | `processes:skill`, `processes:role` | bootstrap's diagram extensions |
+ * | the Role a lane names | `bpmn:partitionElementRef` → a `bpmn:resource` whose id is the Role's | BPMN 2.0 |
  * | provenance | `prov:wasDerivedFrom`, `prov:generatedAtTime` | PROV-O |
  *
  * Harness-only facts about a node (enforcement, whether a step touches a work
@@ -293,6 +293,11 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
     for (const f of filesIn(join(root, d.path), ".bpmn")) {
       const rel = relative(root, f);
       const xml = parseXml(readFileSync(f, "utf-8"));
+      // The `<bpmn:resource>`s a lane's `partitionElementRef` may name.
+      const resourceIds = new Set<string>();
+      walk(xml, (e) => {
+        if (local(e.name) === "resource" && e.name.startsWith("bpmn") && e.attrs["id"]) resourceIds.add(e.attrs["id"]);
+      });
       walk(xml, (p) => {
         if (local(p.name) !== "process" || !p.attrs["id"]) return;
         const pid = p.attrs["id"]!;
@@ -320,6 +325,9 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
         for (const c of p.children) {
           const kind = local(c.name);
           if (FLOW_NODE.test(kind) && c.attrs["id"]) {
+            // The task names the Skill it requires; the Skill names no task
+            // (owner, 2026-10-16: "Skills are defined independent of
+            // Tasks/Processes. Skills used to complete Tasks").
             const skill = extensionRef(c, "skill");
             const called = kind === "callActivity" ? c.attrs["calledElement"] : undefined;
             nodes.push({
@@ -328,7 +336,7 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
               ...(c.attrs["name"] ? { label: c.attrs["name"] } : {}),
               type: `bpmn:${kind}`,
               isPartOf: pIri,
-              ...(skill ? { skill: id("skill", skill) } : {}),
+              ...(skill ? { requires: id("skill", skill) } : {}),
               ...(called ? { calledElement: id("process", called) } : {}),
             });
           } else if (kind === "sequenceFlow" && c.attrs["id"]) {
@@ -342,18 +350,28 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
             });
           }
         }
-        // Lanes: a lane binds a Role; the Role holds the lane's nodes.
+        // Lanes: a lane NAMES a Role — it is not one (owner, 2026-10-16:
+        // "Lane names Role") — and the Role holds the lane's nodes. The name
+        // is standard BPMN: `partitionElementRef` on the lane, pointing at a
+        // top-level `<bpmn:resource>` whose id is the Role's id.
         walk(p, (lane) => {
           if (local(lane.name) !== "lane") return;
           const role = extension(lane, "role");
           // `variable="true"`: the lane DECLARES that its performer is whoever
           // invoked the process — bootstrap's own diagram term, so not a gap.
           if (role?.attrs["variable"] === "true") return;
-          const ref = role?.attrs["ref"];
+          const partition = lane.attrs["partitionElementRef"];
+          const legacy = role?.attrs["ref"];
+          const ref = partition ?? legacy;
           const held = lane.children.filter((c) => local(c.name) === "flowNodeRef").map((c) => nodeIri(c.text.trim()));
           if (!ref) {
-            problems.push(`${rel}#${lane.attrs["id"] ?? "?"}: a lane that binds no Role`);
+            problems.push(`${rel}#${lane.attrs["id"] ?? "?"}: a lane that names no Role`);
             return;
+          }
+          if (partition === undefined) {
+            problems.push(`${rel}#${lane.attrs["id"] ?? "?"}: names Role "${legacy}" with the retired <processes:role ref>; use partitionElementRef`);
+          } else if (!resourceIds.has(partition)) {
+            problems.push(`${rel}#${lane.attrs["id"] ?? "?"}: partitionElementRef "${partition}" names no <bpmn:resource> in this file`);
           }
           const n = roleNodes.get(ref);
           if (!n) {
@@ -369,13 +387,19 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
   // A call to a process no diagram defines is a problem, and the link is not
   // written: a dangling link is a link minted for a node nobody emitted.
   const processIris = new Set(processNodes.map((n) => String(n["@id"])));
+  const skillIris = new Set(nodes.filter((n) => n["@type"] === "bootstrap:Skill").map((n) => String(n["@id"])));
   for (const n of [...processNodes, ...nodes]) {
     for (const k of ["requires", "calledElement"] as const) {
       const v = n[k];
       if (v === undefined) continue;
       const kept = ([] as string[]).concat(v as string | string[]).filter((iri) => {
-        if (processIris.has(iri)) return true;
-        problems.push(`${String(n["@id"]).slice(doc.length)}: calls ${iri.slice(doc.length)}, which no diagram here defines`);
+        if (processIris.has(iri) || skillIris.has(iri)) return true;
+        const isSkill = iri.startsWith(`${doc}#skill/`);
+        problems.push(
+          isSkill
+            ? `${String(n["@id"]).slice(doc.length)}: requires ${iri.slice(doc.length)}, which no skills Subgraph here holds`
+            : `${String(n["@id"]).slice(doc.length)}: calls ${iri.slice(doc.length)}, which no diagram here defines`,
+        );
         return false;
       });
       if (kept.length === 0) delete n[k];
@@ -430,7 +454,6 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
       sourceRef: { "@id": "bpmn:sourceRef", "@type": "@id" },
       targetRef: { "@id": "bpmn:targetRef", "@type": "@id" },
       flowNodeRef: { "@id": "bpmn:flowNodeRef", "@type": "@id" },
-      skill: { "@id": "processes:skill", "@type": "@id" },
       versionInfo: "owl:versionInfo",
       generatedAtTime: { "@id": "prov:generatedAtTime", "@type": "http://www.w3.org/2001/XMLSchema#dateTime" },
       wasDerivedFrom: { "@id": "prov:wasDerivedFrom", "@type": "@id" },

@@ -69,7 +69,8 @@ export const BOOTSTRAP_TERMS = {
     "Node Instances that describe the subject matter of a Knowledge Graph, such as records, documents, catalogues and their terms, rather than how to work with it.",
   Task: "A unit of work, stated by what it needs to begin and what it produces.",
   Actor: "A person, an agent or a program that can carry out Tasks.",
-  Skill: "A Node Instance holding natural-language instructions an Actor follows to carry out a Task.",
+  Skill:
+    "A Node Instance stating a responsibility an Actor carries out to complete a Task: as natural-language instructions to follow, as a contract to be tested against, or both.",
   Role: "A Node Instance naming a part an Actor takes on to carry out Tasks, and listing the Skills that part needs.",
   ProcessNode: "A BPMN flow node: an activity (a task or call activity), a gateway, or an event.",
   SequenceFlow: "A directed connection in a BPMN process from one Process Node to the next.",
