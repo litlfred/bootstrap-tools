@@ -45,7 +45,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, posix, relative } from "node:path";
 
 import { readKnowledgeGraphDeclaration } from "../schemas/declaration.ts";
-import { generatedBanner } from "./generated-by.ts";
+import { generatedBanner, leadingFrontMatter } from "./generated-by.ts";
 import { gitFiles } from "./git-files.ts";
 
 /** One README, as it will appear on the page. */
@@ -199,7 +199,11 @@ export function rewriteTarget(target: string, from: string, ctx: Ctx): string {
 /** The README's text, rewritten for its place on the page; its title and TOC headings. */
 function sectionOf(path: string, md: string, ctx: Ctx): BookSection {
   const { id } = ctx.byPath.get(path)!;
-  const lines = md.split("\n");
+  // A README's front matter (a wholly generated one opens with `generated:`)
+  // describes that file, not the book; left in, `---` and the key would print
+  // as a rule and a heading.
+  const fm = leadingFrontMatter(md);
+  const lines = (fm ? md.slice(fm.block.length) : md).split("\n");
   const seen = new Map<string, number>();
   const headings: { text: string; anchor: string }[] = [];
   let title: string | undefined;

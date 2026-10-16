@@ -38,6 +38,13 @@
  * - a README without them → **left alone**, and reported. Somebody wrote it,
  *   and the tool owns markers, never the file.
  *
+ * A README whose every line outside the region is this tool's or another
+ * generator's — a page wholly generated — also opens with YAML front matter
+ * holding one `generated:` key (owner, 2026-10-16, decision 4a), so the page
+ * declares itself generated where a checker looks for that. A partly authored
+ * README never gets it, and a README that already opens with front matter
+ * keeps that block untouched rather than gaining a second.
+ *
  * ## Where the words come from
  *
  * The heading is the directory's declared `title`, the paragraph its declared
@@ -95,7 +102,7 @@ import {
 } from "../schemas/declaration.ts";
 import { BOOTSTRAP_TERMS } from "../schemas/graph.ts";
 import { releaseIris } from "../schemas/release-iri.ts";
-import { GENERATED_BY, generatedBanner } from "./generated-by.ts";
+import { GENERATED_BY, generatedBanner, generatedFrontMatter, leadingFrontMatter, ownGeneratedFrontMatter } from "./generated-by.ts";
 import { committedFiles } from "./git-files.ts";
 import { describe as describeFile, linkTarget, usedByIndex } from "./readme-graph-sections.ts";
 import { bootstrapTermTargets, linkTerms } from "./term-links.ts";
@@ -109,6 +116,9 @@ export { linkTarget };
 
 /** The Liquid templates this writer renders: `subgraph.liquid`, which includes `files.liquid`. */
 export const TEMPLATES = join(import.meta.dir, "templates", "readme");
+
+/** The script, as its notes and its front matter name it. */
+export const SCRIPT = "scripts/subgraph-readmes.ts";
 
 export const BEGIN = "<!-- kg:subgraph:begin -->";
 export const END = "<!-- kg:subgraph:end -->";
@@ -438,7 +448,11 @@ export async function plan(repo: string, instances: InstanceInput[], templates: 
       if (d.process !== undefined && d.process.bpmn === "") out.findings["unresolved-process"].push(at);
 
       const readme = join(abs, "README.md");
-      const existing = existsSync(readme) ? readFileSync(readme, "utf-8") : undefined;
+      const onDisk = existsSync(readme) ? readFileSync(readme, "utf-8") : undefined;
+      // Our own front matter from an earlier run is taken off first: it is
+      // not authored, and it is written again below when it still holds.
+      const own = onDisk === undefined ? undefined : ownGeneratedFrontMatter(onDisk, SCRIPT);
+      const existing = onDisk === undefined || own === undefined ? onDisk : onDisk.slice(own.length);
       // The notice at the top of the region (owner, 2026-10-01). It speaks
       // for the PAGE when nothing outside the region was written by a person
       // — the file is ours, or what is outside is another generator's — and
@@ -447,7 +461,7 @@ export async function plan(repo: string, instances: InstanceInput[], templates: 
       const unit = outside === "" || outside.includes(GENERATED_BY) ? "page" : "section";
       const declName = declFile ? basename(declFile) : `${name}.json`;
       const banner = generatedBanner(
-        "scripts/subgraph-readmes.ts",
+        SCRIPT,
         `the \`${d.id}\` entry of \`${declName}\` and the files in this directory`,
         `change that entry or the files, and regenerate`,
         unit,
@@ -463,7 +477,18 @@ export async function plan(repo: string, instances: InstanceInput[], templates: 
         subdirs,
         summary,
       });
-      const next = splice(existing, region.replace(/\n{3,}/g, "\n\n"));
+      const spliced = splice(existing, region.replace(/\n{3,}/g, "\n\n"));
+      // A page this writes WHOLLY also says so in front matter (owner,
+      // 2026-10-16, decision 4a): `generated:` is the key a checker reads to
+      // tell a generated page from an authored one, and the HTML comment in
+      // the banner is prose it must not trust. Never on a page only partly
+      // ours, and never a second block: front matter somebody else wrote
+      // (another generator's, or a site page's `title`/`nav` keys) is kept as
+      // it is, and then the page carries none of ours.
+      const next =
+        spliced === undefined || unit !== "page" || leadingFrontMatter(spliced) !== undefined
+          ? spliced
+          : generatedFrontMatter(SCRIPT) + spliced;
       if (next === undefined) {
         out.findings["unmarked-readme"].push({ ...at, path: relative(repo, readme) });
         continue;
