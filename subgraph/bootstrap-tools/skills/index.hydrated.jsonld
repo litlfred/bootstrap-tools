@@ -26,6 +26,15 @@
       "title": "Bootstrap contract semver"
     },
     {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#skill/github-pages",
+      "@type": "bootstrap:Skill",
+      "description": "The contract GitHub Pages keeps as the host of a rendered Knowledge Graph: serve the gh-pages branch at the publication root URL, exactly as committed, and answer 404 for what is not there. A mechanical Actor plays this Role; this is what it must do, and what it is tested against.",
+      "isPartOf": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#directory/bootstrap-tools-skills",
+      "name": "github-pages",
+      "source": "https://litlfred.github.io/bootstrap-tools/skills/github-pages.md",
+      "title": "GitHub Pages' contract"
+    },
+    {
       "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#skill/render-kg-to-github-pages",
       "@type": "bootstrap:Skill",
       "description": "Render a Knowledge Graph, or a list of its Subgraphs, to GitHub Pages at a publication root URL, and report the push: a status (pushed, not pushed, could not determine) and one message carrying the deployed commit and the QA result. The same steps for a staging preview and for a release; only the root URL differs.",

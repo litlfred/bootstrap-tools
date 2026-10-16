@@ -53,10 +53,6 @@
       "@id": "bpmn:flowNodeRef",
       "@type": "@id"
     },
-    "skill": {
-      "@id": "processes:skill",
-      "@type": "@id"
-    },
     "versionInfo": "owl:versionInfo",
     "path": "dcterms:identifier",
     "holdsGraph": {

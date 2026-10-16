@@ -343,6 +343,7 @@ Part of [Bootstrap tools](#readme) 0.1.0, declared as `bootstrap-tools-skills`, 
 | file | what it is | used by |
 |---|---|---|
 | [`bootstrap-contract-semver.md`](skills/bootstrap-contract-semver.md) | What MAJOR, MINOR and PATCH mean for bootstrap's PUBLISHED schemas and graph, and why the bump is computed from a diff of the generated documents rather than… |  |
+| [`github-pages.md`](skills/github-pages.md) | The contract GitHub Pages keeps as the host of a rendered [Knowledge Graph](https://litlfred.github.io/bootstrap/schemas/#knowledge-graph): serve the gh-pages branch at the publication root URL, exactly as committed, and a… |  |
 | [`package-manifest.json`](skills/package-manifest.json) | The toolset's skills: how bootstrap's published contract is versioned (what MAJOR, MINOR and PATCH mean for its generated schemas, and how the bump is comput… |  |
 | [`render-kg-to-github-pages.md`](skills/render-kg-to-github-pages.md) | Render a [Knowledge Graph](https://litlfred.github.io/bootstrap/schemas/#knowledge-graph), or a list of its [Subgraphs](https://litlfred.github.io/bootstrap/schemas/#subgraph), to GitHub Pages at a publication root URL, and report the push: a status (pushed, not pushed, could not… | "Render a Knowledge Graph to GitHub Pages" |
 

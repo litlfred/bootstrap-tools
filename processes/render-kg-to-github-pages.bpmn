@@ -7,6 +7,9 @@
                   id="Definitions_Process_RenderKgToGitHubPages"
                   targetNamespace="https://litlfred.github.io/bootstrap-tools/0.1.0/workflows"
                   exporter="bootstrap-tools" exporterVersion="1">
+  <bpmn:import namespace="https://litlfred.github.io/bootstrap/0.1.0/processes/ns#" location="https://litlfred.github.io/bootstrap/0.1.0/processes/ns.jsonld" importType="http://www.w3.org/ns/json-ld"/>
+  <bpmn:resource id="github-pages" name="GitHub Pages"/>
+  <bpmn:resource id="site-publisher" name="Site Publisher"/>
   <bpmn:collaboration id="Collaboration_Process_RenderKgToGitHubPages">
     <bpmn:participant id="Participant_Process_RenderKgToGitHubPages" name="Render a Knowledge Graph to GitHub Pages" processRef="Process_RenderKgToGitHubPages"/>
   </bpmn:collaboration>
@@ -21,9 +24,8 @@ THREE STATES, NOT TWO. A check that could not look (a 403 from a proxy, no netwo
 
 NO work-plan element on any activity, and isExecutable is false: this is bootstrap-tools' own diagram, in bootstrap's diagram vocabulary, and bootstrap's diagrams carry no work plan.</bpmn:documentation>
     <bpmn:laneSet id="LaneSet_Process_RenderKgToGitHubPages">
-      <bpmn:lane id="Lane_SitePublisher" name="Site Publisher">
+      <bpmn:lane id="Lane_SitePublisher" name="Site Publisher" partitionElementRef="site-publisher">
         <bpmn:documentation>An agent running these tools, or a Pages workflow running the same commands. It never reports a push it did not check.</bpmn:documentation>
-        <bpmn:extensionElements><bootstrap.processes:role ref="site-publisher"/></bpmn:extensionElements>
         <bpmn:flowNodeRef>Start_Render</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>A_ResolveInputs</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>A_Stage</bpmn:flowNodeRef>
@@ -35,9 +37,8 @@ NO work-plan element on any activity, and isExecutable is false: this is bootstr
         <bpmn:flowNodeRef>End_Pushed</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>End_NotPushed</bpmn:flowNodeRef>
       </bpmn:lane>
-      <bpmn:lane id="Lane_GitHubPages" name="GitHub Pages">
-        <bpmn:documentation>Not an actor that decides: the host. It receives the deployment and serves it at the publication root URL.</bpmn:documentation>
-        <bpmn:extensionElements><bootstrap.processes:role ref="github-pages"/></bpmn:extensionElements>
+      <bpmn:lane id="Lane_GitHubPages" name="GitHub Pages" partitionElementRef="github-pages">
+        <bpmn:documentation>The host, a mechanical Actor whose contract is skill github-pages. It decides nothing: it receives the deployment and serves it at the publication root URL.</bpmn:documentation>
         <bpmn:flowNodeRef>A_Provision</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>A_Deploy</bpmn:flowNodeRef>
       </bpmn:lane>

@@ -17,6 +17,12 @@
       "title": "Bootstrap contract semver"
     },
     {
+      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#skill/github-pages",
+      "@type": "bootstrap:Skill",
+      "name": "github-pages",
+      "title": "GitHub Pages' contract"
+    },
+    {
       "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#skill/render-kg-to-github-pages",
       "@type": "bootstrap:Skill",
       "name": "render-kg-to-github-pages",

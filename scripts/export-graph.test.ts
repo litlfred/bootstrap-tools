@@ -49,7 +49,7 @@ describe("bootstrap's graph, from bootstrap's files, in standard terms", () => {
     const ids = new Set([DOC, ...nodes().map((n) => n["@id"])]);
     const dangling: string[] = [];
     for (const n of nodes()) {
-      for (const k of ["isPartOf", "sourceRef", "targetRef", "skill", "calledElement", "requires"]) {
+      for (const k of ["isPartOf", "sourceRef", "targetRef", "calledElement", "requires"]) {
         for (const v of ([] as unknown[]).concat(n[k] ?? [])) if (typeof v === "string" && !ids.has(v)) dangling.push(`${n["@id"]} ${k} → ${v}`);
       }
       for (const v of (n["flowNodeRef"] as string[] | undefined) ?? []) if (!ids.has(v)) dangling.push(`${n["@id"]} flowNodeRef → ${v}`);
@@ -138,6 +138,42 @@ describe("a process says what it is for, what it calls, and where it is drawn", 
     expect("requires" in a).toBe(false);
     expect("calledElement" in graph.find((n) => n["@id"].endsWith("/node/C"))!).toBe(false);
     expect(g["problems"]).toEqual(["#process/P_A: calls #process/P_Missing, which no diagram here defines", "#process/P_A/node/C: calls #process/P_Missing, which no diagram here defines"]);
+  });
+
+  test("a lane NAMES its Role with partitionElementRef; the retired role ref still binds, with a problem", () => {
+    // Owner, 2026-10-16: "Lane names Role, not Actor" — and a lane is not the
+    // Role. The name is BPMN's own: partitionElementRef → a bpmn:resource.
+    const root = mkdtempSync(join(tmpdir(), "export-graph-"));
+    mkdirSync(join(root, "processes"));
+    mkdirSync(join(root, "scenarios"));
+    writeFileSync(
+      join(root, "demo.json"),
+      JSON.stringify({ name: "demo", needs: ["bootstrap"], directories: [{ id: "p", path: "processes/", graphTypologies: ["processes"] }, { id: "s", path: "scenarios/", graphTypologies: ["scenarios"] }] }),
+    );
+    writeFileSync(join(root, "scenarios", "roles.json"), JSON.stringify({ name: "demo", roles: [{ id: "r-new", title: "New" }, { id: "r-old", title: "Old" }] }));
+    writeFileSync(
+      join(root, "processes", "a.bpmn"),
+      '<bpmn:definitions xmlns:bpmn="x" xmlns:bootstrap.processes="y"><bpmn:resource id="r-new" name="New"/><bpmn:process id="P_A"><bpmn:laneSet>' +
+        '<bpmn:lane id="L_New" partitionElementRef="r-new"><bpmn:flowNodeRef>T1</bpmn:flowNodeRef></bpmn:lane>' +
+        '<bpmn:lane id="L_Old"><bpmn:extensionElements><bootstrap.processes:role ref="r-old"/></bpmn:extensionElements><bpmn:flowNodeRef>T2</bpmn:flowNodeRef></bpmn:lane>' +
+        '<bpmn:lane id="L_Dangling" partitionElementRef="r-old"><bpmn:flowNodeRef>T3</bpmn:flowNodeRef></bpmn:lane>' +
+        '</bpmn:laneSet><bpmn:task id="T1"/><bpmn:task id="T2"/><bpmn:task id="T3"/></bpmn:process></bpmn:definitions>',
+    );
+    const g = exportGraph(root, { docIri: DOC, bootstrapRoot: BOOTSTRAP });
+    const role = (r: string) => (g["@graph"] as Node[]).find((n) => n["@id"] === `${DOC}#role/${r}`)!;
+    expect(role("r-new")["flowNodeRef"]).toEqual([`${DOC}#process/P_A/node/T1`]);
+    expect(role("r-old")["flowNodeRef"]).toEqual([`${DOC}#process/P_A/node/T2`, `${DOC}#process/P_A/node/T3`]);
+    expect(g["problems"]).toEqual([
+      'processes/a.bpmn#L_Old: names Role "r-old" with the retired <processes:role ref>; use partitionElementRef',
+      'processes/a.bpmn#L_Dangling: partitionElementRef "r-old" names no <bpmn:resource> in this file',
+    ]);
+  });
+
+  test("a task REQUIRES its Skill (dcterms:requires); the Skill names no task", () => {
+    const tasks = nodes().filter((n) => n["@type"] === "bootstrap:ProcessNode" && String(n["requires"] ?? "").includes("#skill/"));
+    expect(tasks.length).toBeGreaterThan(0);
+    expect(nodes().some((n) => "skill" in n)).toBe(false);
+    expect((build()["@context"] as Record<string, unknown>)["requires"]).toEqual({ "@id": "dcterms:requires", "@type": "@id" });
   });
 
   test("another instance's graph is written in bootstrap's classes, whatever it declares", () => {

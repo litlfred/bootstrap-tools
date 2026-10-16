@@ -38,6 +38,9 @@ defaults:
   - scope: { path: "skills/bootstrap-contract-semver.md" }
     values:
       edit_url: "https://github.com/litlfred/bootstrap-tools/edit/main/skills/bootstrap-contract-semver.md"
+  - scope: { path: "skills/github-pages.md" }
+    values:
+      edit_url: "https://github.com/litlfred/bootstrap-tools/edit/main/skills/github-pages.md"
   - scope: { path: "skills/render-kg-to-github-pages.md" }
     values:
       edit_url: "https://github.com/litlfred/bootstrap-tools/edit/main/skills/render-kg-to-github-pages.md"
