@@ -14,7 +14,8 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { BEGIN, END, instancesIn, plan, splice } from "./subgraph-readmes.ts";
+import { generatedFrontMatter } from "./generated-by.ts";
+import { BEGIN, END, SCRIPT, instancesIn, plan, splice } from "./subgraph-readmes.ts";
 
 function repo(): string {
   const r = mkdtempSync(join(tmpdir(), "subgraph-readmes-"));
@@ -107,7 +108,7 @@ describe("plan, on a fixture", async () => {
 
   test("a missing README is created; the heading falls back to the id", () => {
     const notes = p.writes.get(join(inst, "notes", "README.md"))!;
-    expect(notes.startsWith(BEGIN)).toBe(true);
+    expect(notes.startsWith(generatedFrontMatter(SCRIPT) + BEGIN)).toBe(true);
     expect(notes).toContain("# notes");
     expect(notes).toContain("_No description is declared for `notes`._");
   });
@@ -249,5 +250,54 @@ describe("in a git work tree, only the committed tree is counted — bean ba9e, 
       expect(q.counts.get(readme)!.subdirs.pack).toBe(2);
       rmSync(r, { recursive: true, force: true });
     });
+  });
+});
+
+describe("a wholly generated README declares itself in front matter — owner decision 4a, 2026-10-16", async () => {
+  // A checker telling generated pages from authored ones reads a `generated:`
+  // key in the page's leading front matter (its regex: `^generated:\s*\S`),
+  // not the banner's HTML comment.
+  const r = repo();
+  const inst = join(r, "demo");
+  const at = (d: string) => join(inst, d, "README.md");
+  const DECLARES = (t: string) => {
+    const fm = /^---\r?\n([\s\S]*?)\r?\n---/.exec(t.slice(0, 2000));
+    return fm !== null && /^generated:\s*\S/m.test(fm[1]!);
+  };
+  const first = await plan(r, instancesIn(r));
+
+  test("a README created from nothing opens with it, then the region", () => {
+    const notes = first.writes.get(at("notes"))!;
+    expect(DECLARES(notes)).toBe(true);
+    expect(notes.split("\n").slice(0, 4)).toEqual(["---", expect.stringMatching(/^generated: ".*scripts\/subgraph-readmes\.ts.*"$/), "---", BEGIN]);
+  });
+
+  test("a partly authored README never claims to be generated", () => {
+    expect(DECLARES(first.writes.get(at("skills"))!)).toBe(false);
+  });
+
+  test("regenerating is a fixed point: no second block, nothing stale", async () => {
+    writeFileSync(at("notes"), first.writes.get(at("notes"))!);
+    const again = (await plan(r, instancesIn(r))).writes.get(at("notes"))!;
+    expect(again).toBe(first.writes.get(at("notes"))!);
+    expect(again.match(/^---$/gm)!.length).toBe(2);
+  });
+
+  test("a page that gains authored text loses it", async () => {
+    writeFileSync(at("notes"), `${first.writes.get(at("notes"))!}\nWritten by a person.\n`);
+    const next = (await plan(r, instancesIn(r))).writes.get(at("notes"))!;
+    expect(DECLARES(next)).toBe(false);
+    expect(next.startsWith(BEGIN)).toBe(true);
+    expect(next).toContain("This section was generated");
+  });
+
+  test("front matter somebody else wrote is kept as it is, and none is added", async () => {
+    const authored = `---\ntitle: "Notes"\nnav_order: 3\n---\n${BEGIN}\n${END}\n`;
+    writeFileSync(at("notes"), authored);
+    const next = (await plan(r, instancesIn(r))).writes.get(at("notes"))!;
+    expect(next.startsWith(`---\ntitle: "Notes"\nnav_order: 3\n---\n${BEGIN}`)).toBe(true);
+    expect(next.match(/^---$/gm)!.length).toBe(2);
+    expect(DECLARES(next)).toBe(false);
+    rmSync(r, { recursive: true, force: true });
   });
 });
