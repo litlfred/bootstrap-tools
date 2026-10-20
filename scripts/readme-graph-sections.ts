@@ -158,16 +158,37 @@ interface Graph {
   bpmn: { file: string; id: string; name: string; calls: string[]; skills: string[] }[];
 }
 
+/**
+ * The global tasks a `.bpmn` defines (BPMN 2.0's `globalTask`,
+ * `globalUserTask` …: root elements a call activity names by bare id), each
+ * with the Skill ids its own extension names.
+ */
+export function globalTasksOf(xml: string): Map<string, string[]> {
+  const out = new Map<string, string[]>();
+  for (const m of xml.matchAll(/<bpmn:(global(?:User|Script|Manual|BusinessRule)?Task)\b([^>]*?)(\/?)>/g)) {
+    const id = /\bid="([^"]+)"/.exec(m[2]!)?.[1];
+    if (!id) continue;
+    const end = m[3] === "/" ? m.index! + m[0].length : xml.indexOf(`</bpmn:${m[1]}>`, m.index!);
+    out.set(id, skillRefs(xml.slice(m.index!, end < 0 ? undefined : end)));
+  }
+  return out;
+}
+
 function readGraph(root: string, dirs: string[]): Graph {
   const bpmn: Graph["bpmn"] = [];
+  const globalTasks = new Map<string, string[]>();
   for (const d of dirs) {
     for (const f of filesUnder(root, join(root, d))) {
       if (!f.endsWith(".bpmn")) continue;
       const xml = readFileSync(join(root, f), "utf-8");
+      for (const [id, skills] of globalTasksOf(xml)) globalTasks.set(id, skills);
       const p = processOf(xml);
       if (p) bpmn.push({ file: f, ...p, skills: skillRefs(xml) });
     }
   }
+  // A step shared as a global task names its Skill once, on the global task;
+  // the processes that call it are the ones that use the Skill.
+  for (const p of bpmn) p.skills.push(...p.calls.flatMap((c) => globalTasks.get(c) ?? []));
   return { root, bpmn };
 }
 
@@ -273,7 +294,12 @@ export function describe(root: string, file: string, assets: Map<string, string>
     const h = /^#\s+(.+)$/m.exec(text())?.[1];
     return h ? h.replace(/`/g, "") : "text";
   }
-  if (file.endsWith(".bpmn")) return `a Process: ${processOf(text())?.name ?? basename(file)}`;
+  if (file.endsWith(".bpmn")) {
+    const p = processOf(text());
+    if (p) return `a Process: ${p.name}`;
+    const shared = globalTasksOf(text()).size;
+    return shared ? `${shared} global task${shared === 1 ? "" : "s"}, the steps several Processes share` : `a Process: ${basename(file)}`;
+  }
   if (file.endsWith(".liquid")) {
     // A template says what it is in its leading `{% comment %}` block.
     const c = /\{%-?\s*comment\s*-?%\}([\s\S]*?)\{%-?\s*endcomment\s*-?%\}/.exec(text())?.[1];

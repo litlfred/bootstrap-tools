@@ -345,12 +345,16 @@ export function auditSubgraphs(root: string, b: SubgraphBuild): string[] {
     }
   }
   const documented = new Map<string, Record<string, unknown>>();
+  const sharedTasks = new Set<string>();
   const base = b.repoIri.slice(0, -`${SUBGRAPH_DIR}/`.length);
   for (const [path, doc] of parsed) {
     if (!path.endsWith(HYDRATED_FILE)) continue;
     const walk = (n: Record<string, unknown>) => {
       for (const m of (n["hasMember"] as Record<string, unknown>[] | undefined) ?? []) {
         if (m["@type"] === "bootstrap:Process" && typeof m["source"] === "string") documented.set(String(m["source"]).slice(base.length), m);
+        // A file holding no process but a layer's shared global tasks is
+        // documented by those Task nodes (owner, 2026-10-20, "a1").
+        else if (m["@type"] === "bootstrap:Task" && typeof m["source"] === "string") sharedTasks.add(String(m["source"]).slice(base.length));
       }
       for (const c of (n["hasSubgraph"] as Record<string, unknown>[] | undefined) ?? []) walk(c);
     };
@@ -358,6 +362,7 @@ export function auditSubgraphs(root: string, b: SubgraphBuild): string[] {
   }
   for (const d of [...diagrams].sort()) {
     const m = documented.get(d);
+    if (!m && sharedTasks.has(d)) continue;
     if (!m) problems.push(`${d}: declared, and no hydrated subgraph holds a Process node for it`);
     else if (typeof m["summary"] !== "string" || !m["summary"]) problems.push(`${d}: its Process node carries no summary — give the diagram a <bpmn:documentation> of its own`);
   }
