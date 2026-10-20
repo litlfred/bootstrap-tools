@@ -31,6 +31,8 @@ Part of [Bootstrap tools](../README.md) 0.1.0, declared as `bootstrap-tools-scri
 | [`init.test.ts`](init.test.ts) | a file |  |
 | [`init.ts`](init.ts) | a file |  |
 | [`iri-sync.ts`](iri-sync.ts) | a file |  |
+| [`knowledge-graph-data-store.test.ts`](knowledge-graph-data-store.test.ts) | a file |  |
+| [`logger.test.ts`](logger.test.ts) | a file |  |
 | [`pages-status.test.ts`](pages-status.test.ts) | a file |  |
 | [`pages-status.ts`](pages-status.ts) | a file |  |
 | [`publish-files.test.ts`](publish-files.test.ts) | a file |  |

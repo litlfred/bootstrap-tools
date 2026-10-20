@@ -293,6 +293,8 @@ Part of [Bootstrap tools](#readme) 0.1.0, declared as `bootstrap-tools-scripts`,
 | [`init.test.ts`](scripts/init.test.ts) | a file |  |
 | [`init.ts`](scripts/init.ts) | a file |  |
 | [`iri-sync.ts`](scripts/iri-sync.ts) | a file |  |
+| [`knowledge-graph-data-store.test.ts`](scripts/knowledge-graph-data-store.test.ts) | a file |  |
+| [`logger.test.ts`](scripts/logger.test.ts) | a file |  |
 | [`pages-status.test.ts`](scripts/pages-status.test.ts) | a file |  |
 | [`pages-status.ts`](scripts/pages-status.ts) | a file |  |
 | [`publish-files.test.ts`](scripts/publish-files.test.ts) | a file |  |
