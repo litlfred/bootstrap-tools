@@ -161,7 +161,9 @@ describe("4. keep what is written", () => {
     const later = join(top, "later");
     expect(spawnSync("git", ["clone", "-q", dir, later]).status).toBe(0);
     expect(readFileSync(join(later, "demo.json")).equals(DECLARATION)).toBe(true);
-    const history = String(git(later, ["log", "--format=%an|%ae|%aI", "--", "demo.json"]).stdout).trim().split("\n");
-    expect(history).toEqual([`Writer|writer@example.org|2026-10-20T09:00:00+00:00`]);
+    // `%at` (seconds since the epoch), not `%aI`: git versions disagree on how
+    // `%aI` spells UTC (`+00:00` or `Z`), and the instant is what is asserted.
+    const history = String(git(later, ["log", "--format=%an|%ae|%at", "--", "demo.json"]).stdout).trim().split("\n");
+    expect(history).toEqual([`Writer|writer@example.org|${Date.parse(when) / 1000}`]);
   });
 });
