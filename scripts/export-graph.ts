@@ -32,7 +32,7 @@
  * | a subgraph's kinds; a process node's BPMN element | `dcterms:type` | DCMI |
  * | the file a node is | `dcterms:source` | DCMI |
  * | a flow's ends | `bpmn:sourceRef`, `bpmn:targetRef` | BPMN 2.0 |
- * | the process a call activity calls | `bpmn:calledElement` | BPMN 2.0 |
+ * | the process, or global task, a call activity calls | `bpmn:calledElement` | BPMN 2.0 |
  * | a process's documentation: whole, and its first sentence | `dcterms:description`, `dcterms:abstract` | DCMI |
  * | the processes a process calls; the Skills a task requires | `dcterms:requires` | DCMI |
  * | the drawing of a process | `foaf:depiction` | FOAF |
@@ -55,6 +55,20 @@
  * problem, never a dangling link. Its `depiction` is the SVG drawn beside the
  * `.bpmn` (`render-bpmn.ts`), when there is one.
  *
+ * ## A step several processes share is a global task
+ *
+ * BPMN 2.0's reusable task (`globalTask`, `globalUserTask`,
+ * `globalScriptTask`, `globalManualTask`, `globalBusinessRuleTask`) is a root
+ * element of `<bpmn:definitions>`, outside every process, which a call
+ * activity names by its bare id in `calledElement` exactly as it names a
+ * process (owner, 2026-10-20, "a1 b1 c1": one shared `.bpmn` per layer that
+ * holds no process, a bare id, sharing within one layer). Each is a
+ * `bootstrap:Task` node, `#globalTask/<id>`, whose `type` is its BPMN kind
+ * and whose `requires` is the Skill its extension names, so the Skill is
+ * named once, on the task, and never copied onto its callers. A call
+ * resolves to a process first, then to a global task; a call to neither is
+ * a problem, as before.
+ *
  * ## The vocabulary is always bootstrap's
  *
  * Every class here is bootstrap's, so the `bootstrap:` prefix is bootstrap's
@@ -66,7 +80,7 @@
  *
  * ## Identifiers are the ones already linked to
  *
- * `#skill/<name>`, `#process/<id>`, `#process/<id>/node/<id>`,
+ * `#skill/<name>`, `#process/<id>`, `#process/<id>/node/<id>`, `#globalTask/<id>`,
  * `#process/<id>/flow/<id>`, `#role/<id>`, `#directory/<id>`, `#asset/<id>` —
  * unchanged, because a harness mints links into this document (a skill's
  * home) and a moved fragment is a broken link.
@@ -150,6 +164,13 @@ const walk = (el: El, f: (e: El) => void) => {
 
 /** BPMN element local names that are flow nodes (a process node), never a flow or a container. */
 const FLOW_NODE = /^(task|userTask|serviceTask|scriptTask|manualTask|businessRuleTask|sendTask|receiveTask|callActivity|subProcess|startEvent|endEvent|intermediateCatchEvent|intermediateThrowEvent|boundaryEvent|exclusiveGateway|parallelGateway|inclusiveGateway|eventBasedGateway|complexGateway)$/;
+
+/**
+ * BPMN 2.0's global task kinds: root elements a call activity may call by id
+ * in place of a process. There is no global service, send or receive task in
+ * the standard.
+ */
+export const GLOBAL_TASK = /^global(User|Script|Manual|BusinessRule)?Task$/;
 
 /** The extension element `<prefix:skill …>` / `<prefix:role …>` inside an element, whatever the prefix. */
 function extension(el: El, what: "skill" | "role"): El | undefined {
@@ -289,6 +310,7 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
   // Processes, their nodes and flows. Process nodes are held apart until every
   // diagram is read, because a call may name a process in a file read later.
   const processNodes: Record<string, unknown>[] = [];
+  const globalTaskNodes: Record<string, unknown>[] = [];
   for (const d of dirs.filter((x) => x.graphTypologies.includes("processes"))) {
     for (const f of filesIn(join(root, d.path), ".bpmn")) {
       const rel = relative(root, f);
@@ -298,6 +320,25 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
       walk(xml, (e) => {
         if (local(e.name) === "resource" && e.name.startsWith("bpmn") && e.attrs["id"]) resourceIds.add(e.attrs["id"]);
       });
+      // Global tasks: root elements of `<bpmn:definitions>`, outside every process.
+      for (const defs of xml.children.filter((c) => local(c.name) === "definitions")) {
+        for (const g of defs.children) {
+          const kind = local(g.name);
+          if (!GLOBAL_TASK.test(kind) || !g.attrs["id"]) continue;
+          const skill = extensionRef(g, "skill");
+          const documentation = g.children.find((c) => local(c.name) === "documentation")?.text.trim();
+          globalTaskNodes.push({
+            "@id": id("globalTask", g.attrs["id"]),
+            "@type": "bootstrap:Task",
+            label: g.attrs["name"] ?? g.attrs["id"],
+            type: `bpmn:${kind}`,
+            ...(documentation ? { description: documentation } : {}),
+            ...(skill ? { requires: id("skill", skill) } : {}),
+            source: src(rel),
+            isPartOf: id("directory", d.id),
+          });
+        }
+      }
       walk(xml, (p) => {
         if (local(p.name) !== "process" || !p.attrs["id"]) return;
         const pid = p.attrs["id"]!;
@@ -385,15 +426,24 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
   }
 
   // A call to a process no diagram defines is a problem, and the link is not
-  // written: a dangling link is a link minted for a node nobody emitted.
+  // written: a dangling link is a link minted for a node nobody emitted. A
+  // call that names no process but a global task is a call to that task.
   const processIris = new Set(processNodes.map((n) => String(n["@id"])));
+  const globalTaskIris = new Set(globalTaskNodes.map((n) => String(n["@id"])));
   const skillIris = new Set(nodes.filter((n) => n["@type"] === "bootstrap:Skill").map((n) => String(n["@id"])));
-  for (const n of [...processNodes, ...nodes]) {
+  const processPrefix = `${doc}#process/`;
+  const asGlobalTask = (iri: string): string | undefined => {
+    if (processIris.has(iri) || !iri.startsWith(processPrefix) || iri.slice(processPrefix.length).includes("/")) return undefined;
+    const g = id("globalTask", iri.slice(processPrefix.length));
+    return globalTaskIris.has(g) ? g : undefined;
+  };
+  for (const n of [...processNodes, ...nodes, ...globalTaskNodes]) {
     for (const k of ["requires", "calledElement"] as const) {
       const v = n[k];
       if (v === undefined) continue;
-      const kept = ([] as string[]).concat(v as string | string[]).filter((iri) => {
-        if (processIris.has(iri) || skillIris.has(iri)) return true;
+      const resolved = [...new Set(([] as string[]).concat(v as string | string[]).map((iri) => asGlobalTask(iri) ?? iri))].sort();
+      const kept = resolved.filter((iri) => {
+        if (processIris.has(iri) || skillIris.has(iri) || globalTaskIris.has(iri)) return true;
         const isSkill = iri.startsWith(`${doc}#skill/`);
         problems.push(
           isSkill
@@ -406,7 +456,7 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
       else n[k] = Array.isArray(v) ? kept : kept[0];
     }
   }
-  nodes.push(...processNodes);
+  nodes.push(...processNodes, ...globalTaskNodes);
 
   // A Subgraph whose kinds none of the collectors above reads is declared (it
   // has its own node) but its contents are not: said, so "holds nothing" and
