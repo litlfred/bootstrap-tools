@@ -45,7 +45,7 @@ It is **one** toolset over swappable content. Someone who wants a different gene
 | `scripts/readme-sections.ts` | writes (or with `--check`, verifies) every section a README opts into by its marker pair; `--root` names the instance |
 | `scripts/readme-book.ts` | every README in a repository as one page: the root's first, then each directory's by path, with a table of contents, headings demoted per section and relative links rewritten; `--check` fails on any link on the page that would not land |
 | `scripts/site.ts` | stages an instance's GitHub Pages site. First every JSON Schema and JSON-LD document at the IRI it names (`$id` / `@id` under `iriBase`, an extensionless one included, with a `.json` copy beside each JSON-LD), and for bootstrap, and any instance that needs it, its graph and named subgraphs. The README page as `README.md` (served at `README.html`), ending in a "Published documents" list; then its files as they sit, also under `<version>/`; `index.html`, a redirect to `README.html` unless the instance brings its own landing page; and `_config.yml` with `_layouts/default.html`, whose footer links a generated page's generator and source rather than an edit page. `--check` stages into a temporary directory and lists every address |
-| `scripts/publish-site.ts` | publishes a staged site onto a branch (default `gh-pages`) of any git remote as a full replace: clone fresh, replace every file, commit, push; a lost race retries from a fresh clone, an empty site is refused. Not tied to a CI system: an agent or a person runs `site.ts --out <dir>` then `publish-site.ts --site <dir> --remote <url>` with their own git credentials, which is all `pages.yml` and `publish-bootstrap.yml` do |
+| `scripts/publish-site.ts` | publishes a staged site onto a branch (default `gh-pages`) of any git remote as a full replace: clone fresh, replace every file, commit, push; a lost race retries from a fresh clone, an empty site is refused. Not tied to a CI system: an agent or a person runs `site.ts --out <dir>` then `publish-site.ts --site <dir> --remote <url>` with their own git credentials, which is all `pages.yml` does, and how bootstrap's site is published |
 | `scripts/pages-status.ts` | the OUTPUT of rendering a Knowledge Graph to GitHub Pages: stages the site to check it, asks the publication root URL and every document address, and prints the push's status (`pushed`, `not-pushed`, `could-not-determine`) with one message naming the deployed commit and the QA result; `--json` for the whole record |
 | `processes/render-kg-to-github-pages.bpmn`, `skills/render-kg-to-github-pages.md`, `scenarios/roles.json` | the toolset's own small content graph: the Process that renders a Knowledge Graph (or a list of its Subgraphs) to GitHub Pages at a publication root URL, the Skill with each step's command, and the two Roles its lanes bind |
 | `scripts/init.ts` | walks an instance's initialization steps as its declarations name them. PRIMARY and first: `schemas:staged` and `schemas:published`, the JSON Schemas and JSON-LD at their IRIs. Then directories, assets, the README and its sections, needed harnesses' instructions and the Pages site. It performs what a tool can (switching Pages on needs an authenticated `gh`) and reports each as done, not done, could not determine, or stated. A 404 is not done; a 403, 407, 5xx or no answer could not be determined |
@@ -94,15 +94,16 @@ Every site's named subgraphs start at one file, `<root>subgraph/index.jsonld`:
 its instance's root, whose index lists its top-level subgraphs; a `processes`
 subgraph's `index.hydrated.jsonld` holds every Process node inline.
 
-Both sites are published from this repository. `.github/workflows/pages.yml`
-publishes this one's on each push to `main`;
-`.github/workflows/publish-bootstrap.yml` publishes bootstrap's on a schedule
-and by hand, because bootstrap carries no workflow that names these tools
-(owner, 2026-10-01) and a push there cannot trigger one here. Each checks out
-the instance and these tools side by side, runs `site.ts`, and commits the
-staged directory onto that instance's `gh-pages` branch as a full replace —
-bootstrap's with the `PUBLISH_SITE_BOOTSTRAP` token (the harness GitHub App, or a secret of that name), since this
-repository's own token cannot push to another. GitHub Pages builds that
+Both sites are published with the tools in this repository.
+`.github/workflows/pages.yml` publishes this one's on each push to `main`.
+bootstrap's is published by an agent, not by a workflow (owner, 2026-10-21):
+bootstrap carries no workflow that names these tools (owner, 2026-10-01), and
+a workflow here could only push to bootstrap with a stored key. The agent
+checks out bootstrap and these tools side by side, runs `site.ts --root
+<bootstrap> --out <dir>`, then `publish-site.ts --site <dir> --remote
+https://github.com/litlfred/bootstrap.git` with its own git credentials, which
+commits the staged directory onto bootstrap's `gh-pages` as a full replace.
+GitHub Pages builds that
 branch with Jekyll. The `gh-pages` branch has to exist before Pages can be
 switched on to serve it (`init.ts` step `site:branch`); then Pages has to be on, serving `gh-pages` at `/`:
 `init.ts` switches it on when an authenticated `gh` is present, and
