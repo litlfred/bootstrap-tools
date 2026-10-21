@@ -7,8 +7,8 @@
 # The same steps bootstrap's former .github/workflows/check.yml ran.
 #
 # Not on bootstrap's pushes or PRs: a workflow here cannot be triggered by
-# them. So it runs on a schedule (offset three hours from
-# publish-bootstrap.yml), by hand, and after each run of that publisher.
+# them. So it runs on a schedule and by hand. bootstrap's site is published
+# by an agent, not a workflow (owner, 2026-10-21), so no publish run triggers it.
 # Read-only: it needs no secret, because bootstrap is public.
 name: Check bootstrap
 
@@ -16,9 +16,6 @@ on:
   schedule:
     - cron: "47 3-23/6 * * *"
   workflow_dispatch:
-  workflow_run:
-    workflows: ["Publish bootstrap's site"]
-    types: [completed]
 
 permissions:
   contents: read
