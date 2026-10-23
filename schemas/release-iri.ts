@@ -72,6 +72,49 @@ export function releaseIris(decl: { iriBase?: string; version?: string } | undef
   return { iriBase, version, major, agent: at, human: at };
 }
 
+// ── TRANSITION: legacy exact-semver addresses (bootstrap-tools#39) ──────
+//
+// REMOVE once every litlfred layer has migrated to `<iriBase>v<major>/`
+// (added 2026-10-23; tracked in bootstrap-tools#39, which lists the layers
+// still carrying old ids). Until then a layer composed at `main` still says
+// `<iriBase>0.1.0/…`, and this layer's CI composes them: without a tolerance
+// neither side could merge first. So, for one transition release, the CHECKS
+// accept an address `<iriBase><semver>/` whose MAJOR is the declared major as
+// DEPRECATED — a warning naming the file, never a pass in silence — while the
+// WRITER (`iri:sync`) still rewrites it to `<iriBase>v<major>/`. A full
+// version naming ANOTHER major, or any other mismatch, still fails.
+
+/** When the tolerance is due to go, and the issue that removes it. */
+export const LEGACY_EXACT_SEMVER_UNTIL = "every litlfred layer at v<major>/ (bootstrap-tools#39)";
+
+const escRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * The legacy release segment an IRI starts with — `<iriBase><semver>/` where
+ * the semver's MAJOR is `r.major` — or `undefined` when it does not. Only
+ * this form is tolerated: another major is a different release, not an old
+ * spelling of this one.
+ */
+export function legacyExactSemver(r: ReleaseIris, iri: string): string | undefined {
+  const m = new RegExp(`^${escRe(r.iriBase)}(\\d+)\\.\\d+\\.\\d+/`).exec(iri);
+  return m && Number(m[1]) === r.major ? m[0] : undefined;
+}
+
+/**
+ * `text` with every legacy same-major address under `r` moved to
+ * `<iriBase>v<major>/`, and how many there were. A checker compares THAT with
+ * what it expects, and warns when `count` is not zero.
+ */
+export function withLegacyMoved(text: string, r: ReleaseIris): { text: string; count: number } {
+  let count = 0;
+  const out = text.replace(new RegExp(`${escRe(r.iriBase)}(\\d+)\\.\\d+\\.\\d+/`, "g"), (m, major: string) => {
+    if (Number(major) !== r.major) return m;
+    count++;
+    return r.agent;
+  });
+  return { text: out, count };
+}
+
 /** One path under a release, for the audience that will read it. */
 export function releaseIri(r: ReleaseIris, path: string, audience: "agent" | "human"): string {
   return `${audience === "agent" ? r.agent : r.human}${path.replace(/^\/+/, "")}`;

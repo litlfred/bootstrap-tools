@@ -5,7 +5,7 @@
  */
 import { describe, expect, test } from "bun:test";
 
-import { bootstrapRelease, releaseIri, releaseIris, tagCompatible } from "./release-iri";
+import { bootstrapRelease, legacyExactSemver, releaseIri, releaseIris, tagCompatible, withLegacyMoved } from "./release-iri";
 import { rewrite } from "../scripts/iri-sync";
 
 const R = releaseIris({ iriBase: "https://example.org/kg/", version: "2.3.4" })!;
@@ -64,7 +64,7 @@ describe("iri-sync rewrite", () => {
 
   test("a tree already at the major is left alone, so --check passes on it", () => {
     const text = 'a="https://example.org/kg/v2/ns#" b="https://example.org/kg/v2/"';
-    expect(rewrite(text, R)).toEqual({ text, changes: 0 });
+    expect(rewrite(text, R)).toEqual({ text, changes: 0, legacy: 0 });
   });
 
   test("--from moves an old base's identifiers, and leaves the bare base alone", () => {
@@ -75,7 +75,33 @@ describe("iri-sync rewrite", () => {
 
   test("another base is never touched", () => {
     const text = 'x="https://example.org/other/1.0.0/ns#"';
-    expect(rewrite(text, R)).toEqual({ text, changes: 0 });
+    expect(rewrite(text, R)).toEqual({ text, changes: 0, legacy: 0 });
+  });
+});
+
+// TRANSITION (bootstrap-tools#39): remove with the tolerance.
+describe("legacy exact-semver addresses — tolerated as deprecated for one release", () => {
+  test("only a full version of the DECLARED major is legacy; another major is not", () => {
+    expect(legacyExactSemver(R, "https://example.org/kg/2.0.1/ns#x")).toBe("https://example.org/kg/2.0.1/");
+    expect(legacyExactSemver(R, "https://example.org/kg/1.9.9/ns#x")).toBeUndefined();
+    expect(legacyExactSemver(R, "https://example.org/kg/v2/ns#x")).toBeUndefined();
+    expect(legacyExactSemver(R, "https://example.org/other/2.0.0/ns#x")).toBeUndefined();
+  });
+
+  test("a checker's view moves only the same-major copies, and counts them", () => {
+    const text = 'a="https://example.org/kg/2.3.3/ns#" b="https://example.org/kg/1.0.0/ns#" c="https://example.org/kg/v2/x"';
+    expect(withLegacyMoved(text, R)).toEqual({
+      text: 'a="https://example.org/kg/v2/ns#" b="https://example.org/kg/1.0.0/ns#" c="https://example.org/kg/v2/x"',
+      count: 1,
+    });
+  });
+
+  test("iri-sync's rewrite still MOVES every full version, and says which were legacy (warned) and which stale (failed)", () => {
+    const r = rewrite('a="https://example.org/kg/2.3.3/ns#" b="https://example.org/kg/1.0.0/ns#"', R);
+    expect(r.text).toBe('a="https://example.org/kg/v2/ns#" b="https://example.org/kg/v2/ns#"');
+    expect(r.changes).toBe(2);
+    expect(r.legacy).toBe(1); // the 2.3.3 copy: a warning under --check
+    expect(r.changes - r.legacy).toBe(1); // the 1.0.0 copy: another major, a failure under --check
   });
 });
 
