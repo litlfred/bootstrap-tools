@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  * iri-sync.ts — keep every literal copy of an instance's release IRIs at the
- * version its declaration states.
+ * major version its declaration states.
  *
  * ## Why a sync, when everything else is derived
  *
@@ -9,17 +9,21 @@
  * `version`, and every generator and template asks it rather than spelling
  * one out. Some copies cannot ask: an `xmlns` attribute in a BPMN file, a
  * value in a code list, a fixture string in a test. Those are literal by
- * nature. This keeps them at the declared version, so bumping a version — or
+ * nature. This keeps them at the declared major, so a breaking release — or
  * moving the address, in a fork — is ONE edit to the declaration and one run.
+ * A minor or patch release changes no address at all (owner, 2026-10-23,
+ * option "B. Major in address"; `release-iri.ts`).
  *
  * ## The rewrites
  *
  * For each instance declaring `iriBase` (see `releaseIris`):
  *
- * - `<iriBase><other semver>/` → `<iriBase><version>/` — agent-facing
- * - `<iriBase>v<other major>/` → `<iriBase>v<major>/` — person-facing
+ * - `<iriBase><any semver>/` → `<iriBase>v<major>/` — the full-version form
+ *   every program-read address carried until 2026-10-23, the declared
+ *   version's own included: no address carries a full version any more
+ * - `<iriBase>v<other major>/` → `<iriBase>v<major>/`
  * - with `--from <old base>` (a one-time move): `<old base><path>` →
- *   `<iriBase><version>/<path>`. Only for a move; `--check` never needs it.
+ *   `<iriBase>v<major>/<path>`. Only for a move; `--check` never needs it.
  *
  * `beans/` is left alone: a bean records what was true when it was written,
  * and rewriting history to today's address would make it say something it
@@ -52,15 +56,15 @@ const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 export function rewrite(text: string, r: ReleaseIris, from?: string): { text: string; changes: number } {
   let changes = 0;
   const base = esc(r.iriBase);
-  let out = text.replace(new RegExp(`${base}(\\d+\\.\\d+\\.\\d+)/`, "g"), (m, v: string) => {
-    if (v === r.version) return m;
+  // A full version is never current: the address carries the major alone.
+  let out = text.replace(new RegExp(`${base}\\d+\\.\\d+\\.\\d+/`, "g"), () => {
     changes++;
     return r.agent;
   });
   out = out.replace(new RegExp(`${base}v(\\d+)/`, "g"), (m, v: string) => {
     if (Number(v) === r.major) return m;
     changes++;
-    return r.human;
+    return r.agent;
   });
   if (from) {
     const old = from.endsWith("/") ? from : `${from}/`;
@@ -141,10 +145,10 @@ if (import.meta.main) {
     if (!check) writeFileSync(abs, text);
   }
   for (const { root, release } of rels) {
-    console.log(`${relative(repo, root) || "."}: agent ${release.agent}  ·  person ${release.human}`);
+    console.log(`${relative(repo, root) || "."}: ${release.agent} (${release.version})`);
   }
   if (stale.length === 0) {
-    console.log("✓ every literal release IRI is at its declared version.");
+    console.log("✓ every literal release IRI is at its declared major.");
     process.exit(0);
   }
   console.log(`${check ? "✗ stale" : "rewrote"}: ${total} IRI(s) in ${stale.length} file(s)`);

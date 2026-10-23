@@ -17,7 +17,7 @@
  * For every Knowledge Graph in the checkout that declares an `iriBase`, and
  * every JSON or JSON-LD file under it whose own identifier — a top-level `$id`,
  * or a top-level `@id` — starts with its release address for agents
- * (`<iriBase><version>/`, see `release-iri.ts`):
+ * (`<iriBase>v<major>/`, see `release-iri.ts`):
  *
  *   the rest of the identifier, without its `#fragment`, must be the file's
  *   path relative to the Knowledge Graph's root — or that path without its

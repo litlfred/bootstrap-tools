@@ -42,25 +42,25 @@ describe("site — what a Pages workflow publishes", () => {
     mkdirSync(join(r2, "schemas"), { recursive: true });
     writeFileSync(join(r2, "vocab.json"), JSON.stringify({ name: "vocab", version: "1.2.3", iriBase: "https://x.example/vocab/", directories: [] }));
     writeFileSync(join(r2, "README.md"), "# vocab\n");
-    writeFileSync(join(r2, "schemas", "a.schema.json"), JSON.stringify({ $id: "https://x.example/vocab/1.2.3/schemas/a.schema.json" }));
-    writeFileSync(join(r2, "ns.jsonld"), JSON.stringify({ "@context": {}, "@id": "https://x.example/vocab/1.2.3/ns" }));
+    writeFileSync(join(r2, "schemas", "a.schema.json"), JSON.stringify({ $id: "https://x.example/vocab/v1/schemas/a.schema.json" }));
+    writeFileSync(join(r2, "ns.jsonld"), JSON.stringify({ "@context": {}, "@id": "https://x.example/vocab/v1/ns" }));
     writeFileSync(join(r2, "elsewhere.json"), JSON.stringify({ $id: "https://other.example/x.json" }));
     spawnSync("git", ["init", "-q"], { cwd: r2 });
     const docs = publishedDocuments(r2);
     expect(docs.map((d) => [d.iri, d.path, d.kind])).toEqual([
-      ["https://x.example/vocab/1.2.3/ns", "1.2.3/ns", "json-ld"],
-      ["https://x.example/vocab/1.2.3/schemas/a.schema.json", "1.2.3/schemas/a.schema.json", "json-schema"],
+      ["https://x.example/vocab/v1/ns", "v1/ns", "json-ld"],
+      ["https://x.example/vocab/v1/schemas/a.schema.json", "v1/schemas/a.schema.json", "json-schema"],
     ]);
-    expect(stagedPaths(docs[0]!)).toEqual(["1.2.3/ns", "1.2.3/ns.json"]);
+    expect(stagedPaths(docs[0]!)).toEqual(["v1/ns", "v1/ns.json"]);
     const out = join(top, "_vocab");
     const r = stageSite(r2, out);
     expect(r.problems).toEqual([]);
-    for (const p of ["1.2.3/ns", "1.2.3/ns.json", "1.2.3/ns.jsonld", "1.2.3/schemas/a.schema.json"]) expect(existsSync(join(out, p)), p).toBe(true);
-    expect(readFileSync(join(out, "1.2.3/ns"), "utf-8")).toBe(readFileSync(join(r2, "ns.jsonld"), "utf-8"));
+    for (const p of ["v1/ns", "v1/ns.json", "v1/ns.jsonld", "v1/schemas/a.schema.json"]) expect(existsSync(join(out, p)), p).toBe(true);
+    expect(readFileSync(join(out, "v1/ns"), "utf-8")).toBe(readFileSync(join(r2, "ns.jsonld"), "utf-8"));
     const index = readFileSync(join(out, "README.md"), "utf-8");
     expect(index).toContain('## <a id="published-documents"></a>Published documents');
     expect(index).toContain("[Published documents](#published-documents)");
-    expect(documentsSection(docs)).toContain("[`https://x.example/vocab/1.2.3/ns`](1.2.3/ns) ([`.json`](1.2.3/ns.json))");
+    expect(documentsSection(docs)).toContain("[`https://x.example/vocab/v1/ns`](v1/ns) ([`.json`](v1/ns.json))");
   });
 
   test("the default landing page redirects to README.html; an instance's own index wins", () => {

@@ -23,7 +23,7 @@
  *    That copy shares its address with the declaration, and the graph keeps
  *    it, as `bootstrap-graph-publication` says and as the harness's own site
  *    build does (`--allow-collision bootstrap.json`). The declaration is still
- *    served, at `<version>/bootstrap.json`, and the skip is reported;
+ *    served, at `v<major>/bootstrap.json`, and the skip is reported;
  * 1a. its NAMED SUBGRAPHS (`subgraph-jsonld.ts`), framed from that same graph:
  *    `subgraph/index.jsonld` (the repository), `subgraph/<name>/index.jsonld`
  *    (the instance) and, for each directory of a kind the graph reads,
@@ -38,15 +38,16 @@
  *    GitHub Pages address;
  * 2. every DOCUMENT the instance publishes at the address it names — each
  *    JSON Schema's `$id` and each JSON-LD document's `@id` under `iriBase`
- *    ({@link publishedDocuments}). An `@id` with no extension (`…/0.1.0/ns`,
+ *    ({@link publishedDocuments}). An `@id` with no extension (`…/v0/ns`,
  *    the namespace a vocabulary is) gets the document at that extensionless
  *    path, as the harness's build copies `processes/ns.jsonld` to
  *    `processes/ns`; every `.jsonld` also gets a `.json` copy, because Pages
  *    serves `.jsonld` as a download and `.json` as JSON. The `.jsonld` stays
  *    the real one;
  * 3. every file of the instance, as it sits (`publish-files.ts`), so every
- *    relative link in them still resolves — and again under `<version>/`,
- *    because an IRI a program reads is `<iriBase><version>/…`;
+ *    relative link in them still resolves — and again under `v<major>/`,
+ *    because an IRI a program reads is `<iriBase>v<major>/…` (owner,
+ *    2026-10-23: the major, not the full version, is in every address);
  * 3a. `README.md`, the book (`readme-book.ts`), with its links checked,
  *    ending in a "Published documents" section that links every address
  *    above — rendered at `<root>/README.html`. Written BEFORE the files, so it
@@ -94,6 +95,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, posix, relative } from "node:path";
 
 import { readKnowledgeGraphDeclaration } from "../schemas/declaration.ts";
+import { SEMVER } from "../schemas/release-iri.ts";
 import { TOOLS_REPOSITORY, generatedScripts, wholeFileGenerated } from "./generated-by.ts";
 import { exportGraph } from "./export-graph.ts";
 import { frameSubgraphs, publicationBase } from "./subgraph-jsonld.ts";
@@ -378,10 +380,13 @@ export function stageSite(
   const files = publishFiles(root, out, selection.keep);
   report.written.push(...files.written);
   report.skipped.push(...files.skipped.filter((f) => f !== BOOK && differs(out, f)));
-  if (decl.version && decl.iriBase) {
-    const v = publishFiles(root, join(out, decl.version), selection.keep);
-    report.written.push(...v.written.map((f) => `${decl.version}/${f}`));
-    report.skipped.push(...v.skipped.filter((f) => differs(join(out, decl.version!), f)).map((f) => `${decl.version}/${f}`));
+  // Again under the release address's own segment, `v<major>` — what every
+  // identifier of this release names (`release-iri.ts`; owner, 2026-10-23).
+  const seg = releaseSegment(decl);
+  if (seg) {
+    const v = publishFiles(root, join(out, seg), selection.keep);
+    report.written.push(...v.written.map((f) => `${seg}/${f}`));
+    report.skipped.push(...v.skipped.filter((f) => differs(join(out, seg), f)).map((f) => `${seg}/${f}`));
   }
 
   // A document whose address is taken by something else is a broken IRI.
@@ -401,16 +406,26 @@ export function stageSite(
   for (const rel of pages) {
     const f = pageFooter(rel, readFileSync(join(root, rel), "utf-8"), repo, branch);
     footers.set(rel, f);
-    if (decl.version && decl.iriBase) footers.set(`${decl.version}/${rel}`, f);
+    if (seg) footers.set(`${seg}/${rel}`, f);
   }
   if (existsSync(join(out, BOOK)) && report.written.includes(BOOK)) {
     // The book is ONE generator's page, whatever notes the READMEs it gathers carry.
     footers.set(BOOK, { generated_by: ["scripts/readme-book.ts"], generated_from: "every README in this repository", ...(repo ? { source_url: `${repo}/tree/${branch}` } : {}) });
-    if (decl.version && decl.iriBase && existsSync(join(root, BOOK))) footers.set(`${decl.version}/${BOOK}`, pageFooter(BOOK, readFileSync(join(root, BOOK), "utf-8"), repo, branch));
+    if (seg && existsSync(join(root, BOOK))) footers.set(`${seg}/${BOOK}`, pageFooter(BOOK, readFileSync(join(root, BOOK), "utf-8"), repo, branch));
   }
   put("_config.yml", siteConfig(decl, footers));
   put("_layouts/default.html", readFileSync(LAYOUT, "utf-8"));
   return report;
+}
+
+/**
+ * The directory a release's files are staged under: `v<major>`, the segment
+ * every address of that release carries (`release-iri.ts`), or none when the
+ * instance declares no `iriBase` or no semver `version`.
+ */
+export function releaseSegment(decl: { iriBase?: string; version?: string }): string | undefined {
+  const m = decl.iriBase && decl.version ? SEMVER.exec(decl.version) : null;
+  return m ? `v${Number(m[1])}` : undefined;
 }
 
 if (import.meta.main) {

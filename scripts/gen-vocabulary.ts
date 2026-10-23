@@ -9,7 +9,7 @@
  *
  * ## Why this exists
  *
- * Every IRI bootstrap's files mint in its namespace (`<iriBase><version>/ns#…`)
+ * Every IRI bootstrap's files mint in its namespace (`<iriBase>v<major>/ns#…`)
  * must dereference to a definition. Until 2026-09-30 the document at that
  * address was produced by a harness (`ns-export --layer bootstrap`), and it
  * held what the HARNESS minted under bootstrap's prefix: 18 IRIs, 9 of them no

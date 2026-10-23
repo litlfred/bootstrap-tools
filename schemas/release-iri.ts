@@ -1,24 +1,31 @@
 /**
- * An instance's release addresses: where its identifiers live at the version
- * it declares.
+ * An instance's release addresses: where its identifiers live for the major
+ * version it declares.
  *
  * @module schemas/release-iri
  * @graphNode schema
  *
- * ## Two audiences, two forms (owner, 2026-09-29)
+ * ## One form, the major (owner, 2026-10-23, option "B. Major in address")
  *
- * > "2 used for human narrative centric content, 3 for agentic. but for
- * > document generation/jeckly/liquid stuff, make variables of version
- * > available to minimize drift."
+ * Every address carries the MAJOR only — `<iriBase>v<major>/` — whoever reads
+ * it: a namespace, a schema `$id`, a BPMN `xmlns`, a JSON-LD `@id`, and a page
+ * a person reads alike.
  *
- * | audience | form | example |
+ * | audience | form | example (bootstrap `0.1.1`) |
  * |---|---|---|
- * | an agent or program — a namespace, a schema `$id`, a BPMN `xmlns` | `<iriBase><version>/` | `…/bootstrap/0.1.0/ns#` |
+ * | an agent or program — a namespace, a schema `$id`, a BPMN `xmlns` | `<iriBase>v<major>/` | `…/bootstrap/v0/ns#` |
  * | a person — a page to read | `<iriBase>v<major>/` | `…/bootstrap/v0/` |
  *
- * An agent pins exactly, because a program that read `0.1.0` must not be
- * silently handed `0.2.0`. A person follows a link that stays good for the
- * life of a major version, because prose is not re-checked on every patch.
+ * The exact release a reader gets is fixed by its PIN (`index.lock.json`, the
+ * `needs` pins), which already names the commit, not by the address. This is
+ * the promise a `$schema` tag already makes ({@link tagCompatible}: any tag of
+ * the same major reads): within a major, a minor or patch adds and never
+ * breaks, so only a breaking change — a new major — changes an address.
+ *
+ * Before this ruling (owner, 2026-09-29) the program-read form carried the
+ * full semver, so every patch rewrote about a thousand literal copies across
+ * the layers for no reader's benefit. `agent` and `human` are both kept so a
+ * caller still says which audience it means; they are equal by the ruling.
  *
  * ## Derived, never typed
  *
@@ -27,7 +34,7 @@
  * an address asks {@link releaseIris} (or reads the `release` variable it is
  * handed) instead of spelling one out. The copies that cannot be computed at
  * read time — an `xmlns` attribute in 70 BPMN files, a value in a code list —
- * are kept at the declared version by `scripts/iri-sync.ts`, whose `--check`
+ * are kept at the declared major by `scripts/iri-sync.ts`, whose `--check`
  * is a gate.
  */
 import { join } from "node:path";
@@ -45,9 +52,9 @@ export interface ReleaseIris {
   readonly version: string;
   /** `MAJOR` alone, as a number. */
   readonly major: number;
-  /** `<iriBase><version>/` — what a program reads. */
+  /** `<iriBase>v<major>/` — what a program reads (owner, 2026-10-23: the major, not the full version). */
   readonly agent: string;
-  /** `<iriBase>v<major>/` — what a person reads. */
+  /** `<iriBase>v<major>/` — what a person reads; the same address as {@link agent}. */
   readonly human: string;
 }
 
@@ -61,7 +68,8 @@ export function releaseIris(decl: { iriBase?: string; version?: string } | undef
   }
   const iriBase = decl.iriBase.endsWith("/") ? decl.iriBase : `${decl.iriBase}/`;
   const major = Number(m[1]);
-  return { iriBase, version, major, agent: `${iriBase}${version}/`, human: `${iriBase}v${major}/` };
+  const at = `${iriBase}v${major}/`;
+  return { iriBase, version, major, agent: at, human: at };
 }
 
 /** One path under a release, for the audience that will read it. */

@@ -166,7 +166,7 @@ describe("init — the steps the declarations name, in four states", () => {
     mkdirSync(join(root, "schemas"), { recursive: true });
     writeFileSync(join(root, "kg.json"), JSON.stringify({ name: "kg", version: "0.1.0", iriBase: "https://o.github.io/kg/", repository: "o/kg", directories: [{ id: "schemas", path: "schemas/", graphTypologies: ["schemas"] }] }));
     writeFileSync(join(root, "README.md"), "# kg\n");
-    writeFileSync(join(root, "schemas", "a.schema.json"), JSON.stringify({ $id: "https://o.github.io/kg/0.1.0/schemas/a.schema.json" }));
+    writeFileSync(join(root, "schemas", "a.schema.json"), JSON.stringify({ $id: "https://o.github.io/kg/v0/schemas/a.schema.json" }));
     spawnSync("git", ["init", "-q"], { cwd: root });
     const probeWith = (status: (url: string) => number | undefined): Probe => ({ gh: () => undefined, httpStatus: async (u) => status(u) });
 
