@@ -42,11 +42,18 @@ function instance(withPictures: boolean): string {
     join(root, "processes/main.bpmn"),
     bpmn("P_Main", "Main", `<bpmn:callActivity id="C" calledElement="P_Sub"/><bpmn:task id="T"><x:skill ref="do-it"/></bpmn:task>`),
   );
-  writeFileSync(join(root, "processes/sub.bpmn"), bpmn("P_Sub", "Sub"));
+  writeFileSync(join(root, "processes/sub.bpmn"), bpmn("P_Sub", "Sub", `<bpmn:callActivity id="G" calledElement="GT_Shared"/>`));
+  // A shared step: a global task in a file that holds no process.
+  writeFileSync(
+    join(root, "processes/global-tasks.bpmn"),
+    `<?xml version="1.0"?><bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:x="urn:x">` +
+      `<bpmn:globalUserTask id="GT_Shared" name="Shared"><bpmn:extensionElements><x:skill ref="share-it"/></bpmn:extensionElements></bpmn:globalUserTask></bpmn:definitions>`,
+  );
   if (withPictures) {
     writeFileSync(join(root, "processes/main.svg"), "<svg/>");
     writeFileSync(join(root, "processes/sub.svg"), "<svg/>");
   }
+  writeFileSync(join(root, "skills/share-it.md"), "---\nname: share-it\ndescription: Shares it.\n---\n# Share it\n");
   writeFileSync(join(root, "skills/do-it.md"), "---\nname: do-it\ndescription: >\n  Does it. Carefully.\n---\n# Do it\n");
   writeFileSync(join(root, "test/results/kg-qa/a.json"), "{}");
   writeFileSync(join(root, "test/results/kg-qa/b.json"), "{}");
@@ -96,6 +103,11 @@ describe("kg:files", () => {
     expect(md).toContain("| [`sub.bpmn`](processes/sub.bpmn) | a Process: Sub | \"Main\" |");
     expect(md).toContain("| [`main.bpmn`](processes/main.bpmn) | a Process: Main |  |");
     expect(md).toContain("the picture of `main.bpmn`, generated from it");
+  });
+
+  test("a global task's Skill is used by the processes that call it; its file says what it holds", () => {
+    expect(md).toContain("| [`share-it.md`](skills/share-it.md) | Shares it. | \"Sub\" |");
+    expect(md).toContain("| [`global-tasks.bpmn`](processes/global-tasks.bpmn) | 1 global task, the steps several Processes share |  |");
   });
 
   test("directory heading uses the first sentence of its description", () => {

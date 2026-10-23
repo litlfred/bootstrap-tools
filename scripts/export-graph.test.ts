@@ -140,6 +140,48 @@ describe("a process says what it is for, what it calls, and where it is drawn", 
     expect(g["problems"]).toEqual(["#process/P_A: calls #process/P_Missing, which no diagram here defines", "#process/P_A/node/C: calls #process/P_Missing, which no diagram here defines"]);
   });
 
+  test("a global task is a Task that requires its Skill, and a call to it by bare id resolves to it from another file", () => {
+    // Owner, 2026-10-20, "a1 b1 c1": one shared .bpmn per layer that holds
+    // no process; a call activity names a global task by bare id.
+    const root = mkdtempSync(join(tmpdir(), "export-graph-"));
+    mkdirSync(join(root, "processes"));
+    mkdirSync(join(root, "skills"));
+    writeFileSync(
+      join(root, "demo.json"),
+      JSON.stringify({ name: "demo", needs: ["bootstrap"], directories: [{ id: "p", path: "processes/", graphTypologies: ["processes"] }, { id: "k", path: "skills/", graphTypologies: ["skills"] }] }),
+    );
+    writeFileSync(join(root, "skills", "seed.md"), "---\nname: seed\ndescription: Seed it.\n---\n# Seed\n");
+    writeFileSync(
+      join(root, "processes", "global-tasks.bpmn"),
+      '<bpmn:definitions xmlns:bpmn="x" xmlns:bootstrap.processes="y"><bpmn:globalUserTask id="GT_Seed" name="Seed the plan"><bpmn:documentation>Seed it.</bpmn:documentation>' +
+        '<bpmn:extensionElements><bootstrap.processes:skill ref="seed"/></bpmn:extensionElements></bpmn:globalUserTask><bpmn:globalTask id="GT_Bare"/></bpmn:definitions>',
+    );
+    for (const p of ["A", "B"]) {
+      writeFileSync(
+        join(root, "processes", `${p}.bpmn`),
+        `<bpmn:definitions xmlns:bpmn="x"><bpmn:process id="P_${p}"><bpmn:callActivity id="C" name="Seed" calledElement="GT_Seed"/><bpmn:callActivity id="D" calledElement="GT_Missing"/></bpmn:process></bpmn:definitions>`,
+      );
+    }
+    const g = exportGraph(root, { docIri: DOC, bootstrapRoot: BOOTSTRAP });
+    const graph = g["@graph"] as Node[];
+    const gt = graph.find((n) => n["@id"] === `${DOC}#globalTask/GT_Seed`)!;
+    expect(gt["@type"]).toBe("bootstrap:Task");
+    expect(gt["type"]).toBe("bpmn:globalUserTask");
+    expect(gt["label"]).toBe("Seed the plan");
+    expect(gt["description"]).toBe("Seed it.");
+    expect(gt["requires"]).toBe(`${DOC}#skill/seed`);
+    expect(graph.find((n) => n["@id"] === `${DOC}#globalTask/GT_Bare`)!["type"]).toBe("bpmn:globalTask");
+    for (const p of ["A", "B"]) {
+      expect(graph.find((n) => n["@id"] === `${DOC}#process/P_${p}/node/C`)!["calledElement"]).toBe(`${DOC}#globalTask/GT_Seed`);
+      expect(graph.find((n) => n["@id"] === `${DOC}#process/P_${p}`)!["requires"]).toEqual([`${DOC}#globalTask/GT_Seed`]);
+    }
+    // No Process node for the file that holds no process, and a call to
+    // neither a process nor a global task is still a problem.
+    expect(graph.filter((n) => n["@type"] === "bootstrap:Process").map((n) => n["@id"])).toEqual([`${DOC}#process/P_A`, `${DOC}#process/P_B`]);
+    expect((g["problems"] as string[]).filter((p) => p.includes("GT_Missing")).length).toBe(4);
+    expect(GraphExportSchema.safeParse(g).success).toBe(true);
+  });
+
   test("a lane NAMES its Role with partitionElementRef; the retired role ref still binds, with a problem", () => {
     // Owner, 2026-10-16: "Lane names Role, not Actor" — and a lane is not the
     // Role. The name is BPMN's own: partitionElementRef → a bpmn:resource.
