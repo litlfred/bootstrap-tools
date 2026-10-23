@@ -79,6 +79,11 @@ describe("patch and none", () => {
     const v2 = edit((s) => (s.$id = "https://example.org/b/0.2.0/x.schema.json"));
     expect(classify(text(v1), text(v2)).bump).toBe("none");
   });
+  test("a release IRI moving from the full version to the major (owner, 2026-10-23) is not a change either", () => {
+    const v1 = edit((s) => (s.$id = "https://example.org/b/0.1.0/x.schema.json"));
+    const v2 = edit((s) => (s.$id = "https://example.org/b/v0/x.schema.json"));
+    expect(classify(text(v1), text(v2)).bump).toBe("none");
+  });
   test("key order and indentation are not a change", () => {
     const reordered = JSON.stringify(Object.fromEntries(Object.entries(BASE).reverse()));
     expect(classify(text(BASE), reordered).bump).toBe("none");

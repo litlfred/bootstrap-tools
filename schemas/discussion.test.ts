@@ -24,6 +24,8 @@ import { join } from "node:path";
 
 import Ajv from "ajv";
 
+import { bootstrapRelease, withLegacyMoved } from "./release-iri.ts";
+
 import {
   DiscussionInputSchema,
   DiscussionOutputObjectSchema,
@@ -170,11 +172,18 @@ const INPUT_CASES: Array<{ why: string; doc: unknown; valid: boolean }> = [
 
 describe("the generated bootstrap schemas", () => {
   test("keep their published `$id` — it is a contract, cited from five languages' catalogues", () => {
-    expect(INPUT.$id).toBe(
-      "https://litlfred.github.io/bootstrap/0.1.0/schemas/discussion.input.schema.json",
+    // TRANSITION (bootstrap-tools#39): bootstrap at an older commit still
+    // spells the `$id` `<iriBase><semver>/`; of this major, that is deprecated.
+    const current = (id: unknown) => {
+      const moved = withLegacyMoved(String(id), bootstrapRelease());
+      if (moved.count > 0) console.warn(`⚠ deprecated legacy exact-semver $id: ${String(id)}`);
+      return moved.text;
+    };
+    expect(current(INPUT.$id)).toBe(
+      "https://litlfred.github.io/bootstrap/v0/schemas/discussion.input.schema.json",
     );
-    expect(OUTPUT.$id).toBe(
-      "https://litlfred.github.io/bootstrap/0.1.0/schemas/discussion.output.schema.json",
+    expect(current(OUTPUT.$id)).toBe(
+      "https://litlfred.github.io/bootstrap/v0/schemas/discussion.output.schema.json",
     );
   });
 

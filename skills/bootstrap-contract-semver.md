@@ -50,10 +50,12 @@ Two consequences worth stating, because each reads wrong at first:
   intent.
 
 **A `$id` moving to the next release is not a change.** bootstrap mints each
-`$id` from its declared iriBase and version (`…/bootstrap/<version>/…`), so
-every release rewrites that segment while the previous release stays at its
-own address. The classifier blanks the version segment before comparing; any
-OTHER change to a `$id` repoints consumers and is MAJOR.
+`$id` from its declared iriBase and the MAJOR of its version
+(`…/bootstrap/v<major>/…`; owner, 2026-10-23), so a minor or patch release
+leaves it as it is, and a new major moves it. The classifier blanks the release
+segment — `v<major>`, or the full version every `$id` carried before that
+ruling — before comparing; any OTHER change to a `$id` repoints consumers and
+is MAJOR.
 
 A keyword the classifier does not recognise is graded **MAJOR**. A change that
 cannot be proved harmless is not called harmless.

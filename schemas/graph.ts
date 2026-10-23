@@ -225,7 +225,7 @@ export const KnowledgeGraphDeclarationSchema = z
       .url()
       .optional()
       .describe(
-        "The address its IRIs are minted under, before the version. An identifier a program reads is `<iriBase><version>/…`; a page meant for a person is `<iriBase>v<major>/…`.",
+        "The address its IRIs are minted under, before the major version. An identifier a program reads and a page meant for a person are both `<iriBase>v<major>/…`; the exact release is the pin's, not the address's.",
       ),
     title: z.string().optional(),
     description: z.string().optional(),

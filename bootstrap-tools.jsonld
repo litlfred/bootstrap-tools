@@ -1,7 +1,7 @@
 {
   "@context": {
-    "bootstrap": "https://litlfred.github.io/bootstrap/0.1.0/ns#",
-    "processes": "https://litlfred.github.io/bootstrap/0.1.0/processes/ns#",
+    "bootstrap": "https://litlfred.github.io/bootstrap/v0/ns#",
+    "processes": "https://litlfred.github.io/bootstrap/v0/processes/ns#",
     "bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL#",
     "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
     "dcterms": "http://purl.org/dc/terms/",

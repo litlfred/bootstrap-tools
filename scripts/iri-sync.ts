@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  * iri-sync.ts — keep every literal copy of an instance's release IRIs at the
- * version its declaration states.
+ * major version its declaration states.
  *
  * ## Why a sync, when everything else is derived
  *
@@ -9,17 +9,21 @@
  * `version`, and every generator and template asks it rather than spelling
  * one out. Some copies cannot ask: an `xmlns` attribute in a BPMN file, a
  * value in a code list, a fixture string in a test. Those are literal by
- * nature. This keeps them at the declared version, so bumping a version — or
+ * nature. This keeps them at the declared major, so a breaking release — or
  * moving the address, in a fork — is ONE edit to the declaration and one run.
+ * A minor or patch release changes no address at all (owner, 2026-10-23,
+ * option "B. Major in address"; `release-iri.ts`).
  *
  * ## The rewrites
  *
  * For each instance declaring `iriBase` (see `releaseIris`):
  *
- * - `<iriBase><other semver>/` → `<iriBase><version>/` — agent-facing
- * - `<iriBase>v<other major>/` → `<iriBase>v<major>/` — person-facing
+ * - `<iriBase><any semver>/` → `<iriBase>v<major>/` — the full-version form
+ *   every program-read address carried until 2026-10-23, the declared
+ *   version's own included: no address carries a full version any more
+ * - `<iriBase>v<other major>/` → `<iriBase>v<major>/`
  * - with `--from <old base>` (a one-time move): `<old base><path>` →
- *   `<iriBase><version>/<path>`. Only for a move; `--check` never needs it.
+ *   `<iriBase>v<major>/<path>`. Only for a move; `--check` never needs it.
  *
  * `beans/` is left alone: a bean records what was true when it was written,
  * and rewriting history to today's address would make it say something it
@@ -39,7 +43,7 @@ import { join, relative } from "node:path";
 
 import { knowledgeGraphsIn } from "../schemas/declaration.ts";
 import { gitFiles } from "./git-files.ts";
-import { type ReleaseIris, releaseIris } from "../schemas/release-iri.ts";
+import { LEGACY_EXACT_SEMVER_UNTIL, type ReleaseIris, releaseIris } from "../schemas/release-iri.ts";
 
 /** Text a person or program reads; binaries and lockfiles are never IRI carriers here. */
 const TEXT = /\.(bpmn|dmn|json|jsonld|ts|md|xml|svg|liquid|html|ya?ml|pot|po|ttl|txt)$/;
@@ -48,19 +52,26 @@ const SKIP = [/^beans\//, /(^|\/)node_modules\//];
 
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-/** One file's text rewritten to `r`, and how many copies changed. */
-export function rewrite(text: string, r: ReleaseIris, from?: string): { text: string; changes: number } {
+/**
+ * One file's text rewritten to `r`, how many copies changed, and how many of
+ * those were LEGACY — a full version of the declared major, which `--check`
+ * tolerates as deprecated for one transition release (`legacyExactSemver` in
+ * `release-iri.ts`; remove with bootstrap-tools#39). The writer moves them all.
+ */
+export function rewrite(text: string, r: ReleaseIris, from?: string): { text: string; changes: number; legacy: number } {
   let changes = 0;
+  let legacy = 0;
   const base = esc(r.iriBase);
-  let out = text.replace(new RegExp(`${base}(\\d+\\.\\d+\\.\\d+)/`, "g"), (m, v: string) => {
-    if (v === r.version) return m;
+  // A full version is never current: the address carries the major alone.
+  let out = text.replace(new RegExp(`${base}(\\d+)\\.\\d+\\.\\d+/`, "g"), (_m, major: string) => {
     changes++;
+    if (Number(major) === r.major) legacy++;
     return r.agent;
   });
   out = out.replace(new RegExp(`${base}v(\\d+)/`, "g"), (m, v: string) => {
     if (Number(v) === r.major) return m;
     changes++;
-    return r.human;
+    return r.agent;
   });
   if (from) {
     const old = from.endsWith("/") ? from : `${from}/`;
@@ -71,7 +82,7 @@ export function rewrite(text: string, r: ReleaseIris, from?: string): { text: st
       return r.agent;
     });
   }
-  return { text: out, changes };
+  return { text: out, changes, legacy };
 }
 
 /** Every instance that declares an `iriBase`, with its release. */
@@ -116,7 +127,9 @@ if (import.meta.main) {
     process.exit(2);
   }
   const stale: string[] = [];
+  const deprecated: string[] = [];
   let total = 0;
+  let legacyTotal = 0;
   for (const abs of files) {
     const rel = relative(repo, abs);
     if (!TEXT.test(rel) || SKIP.some((re) => re.test(rel))) continue;
@@ -130,21 +143,42 @@ if (import.meta.main) {
     const before = readFileSync(abs, "utf-8");
     let text = before;
     let n = 0;
+    let legacy = 0;
     for (const { release } of rels) {
       const r = rewrite(text, release, from);
       text = r.text;
       n += r.changes;
+      legacy += r.legacy;
     }
     if (n === 0) continue;
-    total += n;
-    stale.push(`${rel} (${n})`);
-    if (!check) writeFileSync(abs, text);
+    if (!check) {
+      total += n;
+      stale.push(`${rel} (${n})`);
+      writeFileSync(abs, text);
+      continue;
+    }
+    // TRANSITION (bootstrap-tools#39): a legacy same-major copy is a warning.
+    if (legacy > 0) {
+      legacyTotal += legacy;
+      deprecated.push(`${rel} (${legacy})`);
+    }
+    if (n > legacy) {
+      total += n - legacy;
+      stale.push(`${rel} (${n - legacy})`);
+    }
   }
   for (const { root, release } of rels) {
-    console.log(`${relative(repo, root) || "."}: agent ${release.agent}  ·  person ${release.human}`);
+    console.log(`${relative(repo, root) || "."}: ${release.agent} (${release.version})`);
+  }
+  if (deprecated.length > 0) {
+    console.warn(
+      `⚠ deprecated: ${legacyTotal} legacy exact-semver IRI(s) of the declared major in ${deprecated.length} file(s) — ` +
+        `tolerated until ${LEGACY_EXACT_SEMVER_UNTIL}; \`bun run iri:sync\` moves them to v<major>/:`,
+    );
+    for (const d of deprecated.sort()) console.warn(`  · ${d}`);
   }
   if (stale.length === 0) {
-    console.log("✓ every literal release IRI is at its declared version.");
+    console.log("✓ every literal release IRI is at its declared major" + (deprecated.length ? " (legacy copies above are deprecated, not stale)." : "."));
     process.exit(0);
   }
   console.log(`${check ? "✗ stale" : "rewrote"}: ${total} IRI(s) in ${stale.length} file(s)`);
