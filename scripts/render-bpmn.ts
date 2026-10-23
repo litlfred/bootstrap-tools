@@ -245,6 +245,13 @@ if (import.meta.main) {
   for (const file of sources.sort()) {
     const out = file.replace(/\.bpmn$/, ".svg");
     const shown = relative(repo, out);
+    // A file that holds no process — a layer's shared global tasks (owner,
+    // 2026-10-20, "a1") — has no diagram to draw; it is drawn in each
+    // process that calls one of its tasks.
+    if (processIds(readFileSync(file, "utf-8")).length === 0) {
+      console.log(`· ${relative(repo, file)} holds no process — nothing to draw`);
+      continue;
+    }
     const got = await besideSource(r, file, processFile);
     if ("error" in got) {
       console.error(`✗ ${relative(repo, file)}: ${got.error}`);
