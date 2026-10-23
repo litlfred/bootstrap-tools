@@ -93,8 +93,14 @@ function setMove(base: string[], head: string[]): "same" | "wider" | "narrower" 
   return removed.length ? "narrower" : "wider";
 }
 
-/** A `$id` with its release segment (`/1.2.3/`) blanked, so two releases of one schema compare equal. */
-export const unversioned = (id: string): string => id.replace(/\/\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?\//, "/{version}/");
+/**
+ * A `$id` with its release segment blanked, so two releases of one schema
+ * compare equal: the major alone (`/v0/`), which every address carries since
+ * the owner's 2026-10-23 ruling, or the full version (`/1.2.3/`) it carried
+ * before — so the move from one form to the other is not a change either.
+ */
+export const unversioned = (id: string): string =>
+  id.replace(/\/(?:\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?|v\d+)\//, "/{version}/");
 
 /** Is an object schema CLOSED — does it reject keys it does not list? */
 const closed = (s: Obj): boolean => s.additionalProperties === false;
