@@ -4,7 +4,7 @@
 name: Harness PR checks
 on:
   pull_request:
-    # Draft PRs run only the fast tier (bean dft1, cat-harness-tools#616);
+    # Draft PRs run only the fast tier (bean dft1, issue 616 of the shared workflow);
     # ready_for_review re-runs the full tier the moment a PR is marked ready.
     types: [opened, synchronize, reopened, ready_for_review]
   # main's own run keeps main's answer, the gate seconds and the cone records
