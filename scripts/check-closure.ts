@@ -32,6 +32,24 @@
  * bun run check:tools-closure
  * ```
  *
+ * ## One walker: the transitive resolver the gate and a mount share
+ *
+ * {@link importClosure} is the walk: from a set of entry files, every module
+ * they import, transitively, with each edge resolved or said not to be. This
+ * gate is one caller (every file of the package, followed only inside it);
+ * a remote mount that brings a chosen Tool is another (its definition and
+ * implementation, followed across the mounted instances); the staging cone is
+ * a third. Owner, 2026-10-24 (bean `mo75` G3, cat-harness-tools#744): *one*
+ * closure walker, refactored out of this gate, rather than a second one
+ * written beside it — two walkers are two answers to "what does this code
+ * load", and the one a gate does not exercise is the one that drifts.
+ *
+ * The walker reads through a {@link ClosureHost}, so a caller can walk a tree
+ * it has not checked out (a remote mount reads the pin), and it never decides
+ * what a BARE specifier is: `resolveBare` maps a package the caller holds to a
+ * file, and anything it does not map is `external`, left to the package
+ * manager. It judges nothing; the gate below and each other caller do.
+ *
  * @module bootstrap-tools/scripts/check-closure
  * @covers code
  */
@@ -115,31 +133,147 @@ function tsFiles(dir: string): string[] {
   return out;
 }
 
-function resolvesTo(from: string, spec: string): string | undefined {
-  const base = resolve(dirname(from), spec);
-  for (const c of [base, base.replace(/\.js$/, ".ts"), `${base}.ts`, join(base, "index.ts")]) {
-    if (existsSync(c) && statSync(c).isFile()) return c;
-  }
-  return undefined;
+// ── The walker ───────────────────────────────────────────────────────────────
+
+/** Where the walker reads: the disk by default, or a tree a caller has not checked out. */
+export interface ClosureHost {
+  /** Is `abs` a file (not a directory)? */
+  isFile(abs: string): boolean;
+  /** The text of file `abs`. Called only for a module the walker parses. */
+  read(abs: string): string;
 }
+
+export const diskHost: ClosureHost = {
+  isFile: (abs) => existsSync(abs) && statSync(abs).isFile(),
+  read: (abs) => readFileSync(abs, "utf-8"),
+};
+
+/** Files whose imports are read; anything else (JSON, a stylesheet) is a leaf of the closure. */
+export const MODULE_FILE = /\.(?:ts|tsx|mts|cts|js|jsx|mjs|cjs)$/;
+
+/**
+ * A relative specifier, resolved the way Bun resolves this code: as written,
+ * then `.js` → `.ts` (the `allowImportingTsExtensions` convention), then by
+ * extension, then a directory's `index`.
+ */
+export function resolveRelative(from: string, spec: string, host: ClosureHost = diskHost): string | undefined {
+  const base = resolve(dirname(from), spec);
+  const candidates = [
+    base,
+    base.replace(/\.js$/, ".ts"),
+    base.replace(/\.mjs$/, ".mts"),
+    ...["ts", "tsx", "js", "mjs"].map((e) => `${base}.${e}`),
+    join(base, "index.ts"),
+    join(base, "index.js"),
+  ];
+  return candidates.find((c) => host.isFile(c));
+}
+
+/** One import: who, what it says, and — when it resolved — the file it names. */
+export interface ImportEdge {
+  from: string;
+  specifier: string;
+  /** `relative` starts with `.`; anything else is `bare`. */
+  kind: "relative" | "bare";
+  /** The file it resolved to; absent when it did not resolve or was left `external`. */
+  to?: string;
+}
+
+export interface ImportClosureResult {
+  /** Every file reached, entries included, sorted. Leaves (JSON, …) are listed, not parsed. */
+  files: string[];
+  /** Every import read, in walk order. */
+  edges: ImportEdge[];
+  /** Relative imports that name no file, and bare ones `resolveBare` claimed and could not find. */
+  unresolved: ImportEdge[];
+  /** Bare imports `resolveBare` left to the package manager. */
+  external: ImportEdge[];
+  /** Files that `import()` a COMPUTED path: the closure may reach modules it cannot list. */
+  computed: string[];
+  /** Entries that are not files. */
+  missing: string[];
+}
+
+export interface ImportClosureOptions {
+  host?: ClosureHost;
+  /**
+   * A bare specifier's file, for the packages the caller holds as source (a
+   * workspace sibling, a mounted instance). Return a path to follow it,
+   * `null` when the package is the caller's and the path names nothing
+   * (unresolved), or `undefined` to leave it `external`. Absent: every bare
+   * import is external.
+   */
+  resolveBare?: (specifier: string, from: string) => string | null | undefined;
+  /** Whether to read a reached file's own imports. Default: every file. The edge is recorded either way. */
+  follow?: (abs: string) => boolean;
+  /** Targets a file loads by a computed path that are DECLARED somewhere, walked like imports. */
+  declaredEdges?: (abs: string) => readonly string[];
+}
+
+/** `import(` followed by anything but a string literal, in code with comments and strings blanked. */
+const COMPUTED_IMPORT = /\bimport\s*\(\s*[^"'\s)]/;
+
+/**
+ * Every file `entries` load, transitively: THE closure walker (module note,
+ * §"One walker"). It resolves and records; whether an edge is allowed is the
+ * caller's to judge.
+ */
+export function importClosure(entries: readonly string[], opts: ImportClosureOptions = {}): ImportClosureResult {
+  const host = opts.host ?? diskHost;
+  const seen = new Set<string>();
+  const out: ImportClosureResult = { files: [], edges: [], unresolved: [], external: [], computed: [], missing: [] };
+  const queue: string[] = [];
+  for (const e of entries) {
+    const abs = resolve(e);
+    if (host.isFile(abs)) queue.push(abs);
+    else out.missing.push(abs);
+  }
+  while (queue.length) {
+    const file = queue.shift()!;
+    if (seen.has(file)) continue;
+    seen.add(file);
+    if (!MODULE_FILE.test(file) || !(opts.follow?.(file) ?? true)) continue;
+    const src = host.read(file);
+    if (COMPUTED_IMPORT.test(stripComments(src))) out.computed.push(file);
+    for (const t of opts.declaredEdges?.(file) ?? []) if (host.isFile(resolve(t))) queue.push(resolve(t));
+    for (const specifier of specifiersOf(src)) {
+      const kind = specifier.startsWith(".") ? "relative" : "bare";
+      let to: string | undefined;
+      if (kind === "relative") {
+        to = resolveRelative(file, specifier, host);
+        if (to === undefined) out.unresolved.push({ from: file, specifier, kind });
+      } else {
+        const r = opts.resolveBare?.(specifier, file);
+        if (r === undefined) out.external.push({ from: file, specifier, kind });
+        else if (r === null || !host.isFile(resolve(r))) out.unresolved.push({ from: file, specifier, kind });
+        else to = resolve(r);
+      }
+      out.edges.push({ from: file, specifier, kind, ...(to !== undefined ? { to } : {}) });
+      if (to !== undefined) queue.push(to);
+    }
+  }
+  out.files = [...seen].sort();
+  return out;
+}
+
+// ── The gate ─────────────────────────────────────────────────────────────────
 
 /** Every import under `root` that leaves the package or names a package it may not use. */
 export function checkClosure(root: string): ClosureFinding[] {
   const findings: ClosureFinding[] = [];
   const top = resolve(root);
-  for (const file of tsFiles(top)) {
-    const isTest = file.endsWith(".test.ts");
-    const rel = relative(top, file);
-    for (const spec of specifiersOf(readFileSync(file, "utf-8"))) {
-      if (spec.startsWith(".")) {
-        const target = resolvesTo(file, spec);
-        if (!target) findings.push({ file: rel, specifier: spec, why: "does not resolve to a file" });
-        else if (!(target === top || target.startsWith(`${top}/`))) {
-          findings.push({ file: rel, specifier: spec, why: `leaves bootstrap-tools (${relative(top, target)})` });
-        }
-      } else if (!ALLOWED.some((re) => re.test(spec)) && !(isTest && ALLOWED_IN_TESTS.some((re) => re.test(spec)))) {
-        findings.push({ file: rel, specifier: spec, why: isTest ? "a package tests may not use" : "a package bootstrap-tools may not use" });
-      }
+  const inside = (p: string): boolean => p === top || p.startsWith(`${top}/`);
+  // Every file of the package is an entry, and the walk stays inside it: an
+  // edge out is recorded (and judged below), never followed.
+  const walk = importClosure(tsFiles(top), { follow: inside });
+  for (const e of walk.edges) {
+    const isTest = e.from.endsWith(".test.ts");
+    const rel = relative(top, e.from);
+    if (e.kind === "relative") {
+      if (e.to === undefined) findings.push({ file: rel, specifier: e.specifier, why: "does not resolve to a file" });
+      else if (!inside(e.to)) findings.push({ file: rel, specifier: e.specifier, why: `leaves bootstrap-tools (${relative(top, e.to)})` });
+    } else if (!ALLOWED.some((re) => re.test(e.specifier)) && !(isTest && ALLOWED_IN_TESTS.some((re) => re.test(e.specifier)))) {
+      findings.push({ file: rel, specifier: e.specifier, why: isTest ? "a package tests may not use" : "a package bootstrap-tools may not use" });
     }
   }
   return findings;
