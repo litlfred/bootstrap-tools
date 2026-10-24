@@ -7,7 +7,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { checkClosure, specifiersOf } from "./check-closure.ts";
+import { checkClosure, importClosure, specifiersOf } from "./check-closure.ts";
 
 function pkg(files: Record<string, string>): string {
   const dir = mkdtempSync(join(tmpdir(), "bt-closure-"));
@@ -53,5 +53,79 @@ describe("check-closure", () => {
 describe("strings are data, not imports", () => {
   test("a fixture that builds an import inside a string is not read as one", () => {
     expect(specifiersOf('const src = \'import { x } from "../../above/x.ts";\';\nconst t = `await import("./b.ts")`;\n')).toEqual([]);
+  });
+});
+
+/**
+ * THE closure walker (owner, 2026-10-24: one walker, the gate and a mount
+ * share it). Each case is one thing a caller relies on and that a shallower
+ * walk would get wrong.
+ */
+describe("importClosure: the transitive walk", () => {
+  function tree(files: Record<string, string>): string {
+    const dir = mkdtempSync(join(tmpdir(), "bt-walk-"));
+    for (const [p, src] of Object.entries(files)) {
+      mkdirSync(join(dir, p, ".."), { recursive: true });
+      writeFileSync(join(dir, p), src);
+    }
+    return dir;
+  }
+
+  test("follows relative imports transitively, across directories, with .js → .ts and JSON as a leaf", () => {
+    const d = tree({
+      "a/entry.ts": 'import { b } from "../b/b.js";\nexport const e = b;\n',
+      "b/b.ts": 'import data from "./data.json";\nexport { c } from "../c/index.ts";\nexport const b = data;\n',
+      "b/data.json": "{}\n",
+      "c/index.ts": "export const c = 1;\n",
+      "c/unreached.ts": "export const u = 1;\n",
+    });
+    const r = importClosure([join(d, "a/entry.ts")]);
+    expect(r.files.map((f) => f.slice(d.length + 1))).toEqual(["a/entry.ts", "b/b.ts", "b/data.json", "c/index.ts"]);
+    expect(r.unresolved).toEqual([]);
+    expect(r.missing).toEqual([]);
+  });
+
+  test("a bare import is external unless resolveBare maps it; a mapped one is followed; a claimed one that names nothing is unresolved", () => {
+    const d = tree({
+      "app/main.ts": 'import { z } from "zod";\nimport { s } from "@fx/lib/s.js";\nimport { g } from "@fx/lib/gone.js";\n',
+      "lib/s.ts": 'import { t } from "./t.ts";\nexport const s = t;\n',
+      "lib/t.ts": "export const t = 1;\n",
+    });
+    const r = importClosure([join(d, "app/main.ts")], {
+      resolveBare: (spec) => (spec.startsWith("@fx/lib/") ? join(d, "lib", spec.slice("@fx/lib/".length).replace(/\.js$/, ".ts")) : undefined),
+    });
+    expect(r.files.map((f) => f.slice(d.length + 1))).toEqual(["app/main.ts", "lib/s.ts", "lib/t.ts"]);
+    expect(r.external.map((e) => e.specifier)).toEqual(["zod"]);
+    expect(r.unresolved.map((e) => e.specifier)).toEqual(["@fx/lib/gone.js"]);
+  });
+
+  test("an unresolved relative import, a missing entry and a computed import() are each reported, never dropped", () => {
+    const d = tree({ "m.ts": 'import "./nope.ts";\nconst p = "./x.ts";\nawait import(p);\n' });
+    const r = importClosure([join(d, "m.ts"), join(d, "absent.ts")]);
+    expect(r.unresolved.map((e) => e.specifier)).toEqual(["./nope.ts"]);
+    expect(r.missing).toEqual([join(d, "absent.ts")]);
+    expect(r.computed).toEqual([join(d, "m.ts")]);
+  });
+
+  test("`follow` records an edge without walking past it; `declaredEdges` walks a declared computed target", () => {
+    const d = tree({
+      "in/a.ts": 'import { o } from "../out/o.ts";\n',
+      "out/o.ts": 'import "./deeper.ts";\n',
+      "out/deeper.ts": "",
+      "in/loader.ts": "export const load = (p: string) => import(p);\n",
+      "in/plugin.ts": "export const plugin = 1;\n",
+    });
+    const inside = (p: string) => p.startsWith(join(d, "in"));
+    const r = importClosure([join(d, "in/a.ts")], { follow: inside });
+    expect(r.files.map((f) => f.slice(d.length + 1))).toEqual(["in/a.ts", "out/o.ts"]);
+    const l = importClosure([join(d, "in/loader.ts")], { declaredEdges: (f) => (f.endsWith("loader.ts") ? [join(d, "in/plugin.ts")] : []) });
+    expect(l.files.map((f) => f.slice(d.length + 1))).toEqual(["in/loader.ts", "in/plugin.ts"]);
+  });
+
+  test("it reads through a host, so a caller can walk a tree it has not checked out", () => {
+    const files: Record<string, string> = { "/v/a.ts": 'import "./b.js";\n', "/v/b.ts": "" };
+    const r = importClosure(["/v/a.ts"], { host: { isFile: (p) => p in files, read: (p) => files[p]! } });
+    expect(r.files).toEqual(["/v/a.ts", "/v/b.ts"]);
+    expect(r.edges).toEqual([{ from: "/v/a.ts", specifier: "./b.js", kind: "relative", to: "/v/b.ts" }]);
   });
 });

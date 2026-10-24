@@ -83,7 +83,7 @@ It is **one** toolset over swappable content. Someone who wants a different gene
 | `scripts/init.ts` | walks an instance's initialization steps as its declarations name them. PRIMARY and first: `schemas:staged` and `schemas:published`, the JSON Schemas and JSON-LD at their IRIs. Then directories, assets, the README and its sections, needed harnesses' instructions and the Pages site. It performs what a tool can (switching Pages on needs an authenticated `gh`) and reports each as done, not done, could not determine, or stated. A 404 is not done; a 403, 407, 5xx or no answer could not be determined |
 | `scripts/render-bpmn.ts` | draws each Process as an SVG beside its `.bpmn`, with bpmn-js in headless Chromium; the harness's site renderer uses the same drawing |
 | `scripts/git-files.ts` | the files git accounts for — tracked, plus untracked and not ignored |
-| `scripts/check-closure.ts` | fails if anything here imports beyond itself, `zod`, `liquidjs`, `@playwright/test` and the runtime |
+| `scripts/check-closure.ts` | fails if anything here imports beyond itself, `zod`, `liquidjs`, `@playwright/test` and the runtime. Its walk, `importClosure`, is the one import-closure walker: a harness's remote mount uses it to bring a chosen Tool with its code, and nothing writes a second (owner, 2026-10-24) |
 | `scripts/check-node-iris.ts` | fails if a published node's identifier is not its file's path |
 | `scripts/check-bootstrap-concepts.ts` | checks bootstrap's requirement concepts |
 
