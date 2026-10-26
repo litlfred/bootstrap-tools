@@ -39,7 +39,8 @@
  * gate is one caller (every file of the package, followed only inside it);
  * a remote mount that brings a chosen Tool is another (its definition and
  * implementation, followed across the mounted instances); the staging cone is
- * a third. Owner, 2026-10-24 (bean `mo75` G3, cat-harness-tools#744): *one*
+ * a third. Owner, 2026-10-24 (bean `mo75` G3,
+ * https://github.com/litlfred/cat-harness-tools/issues/744): *one*
  * closure walker, refactored out of this gate, rather than a second one
  * written beside it — two walkers are two answers to "what does this code
  * load", and the one a gate does not exercise is the one that drifts.
