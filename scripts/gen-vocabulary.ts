@@ -46,7 +46,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { BOOTSTRAP_GRAPH_TYPOLOGIES, BOOTSTRAP_TERM_DEFINED_BY, BOOTSTRAP_TERM_USES, BOOTSTRAP_TERMS } from "../schemas/graph.ts";
-import { type ReleaseIris, releaseIri, bootstrapRelease, LEGACY_EXACT_SEMVER_UNTIL, withLegacyMoved } from "../schemas/release-iri.ts";
+import { type ReleaseIris, releaseIri, bootstrapRelease } from "../schemas/release-iri.ts";
 
 const W3 = {
   rdf: "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
@@ -135,15 +135,7 @@ if (import.meta.main) {
   const n = Object.keys(BOOTSTRAP_TERMS).length;
   const k = Object.keys(BOOTSTRAP_GRAPH_TYPOLOGIES).length;
   if (check) {
-    // TRANSITION (bootstrap-tools#39): a committed file that differs only by
-    // legacy exact-semver addresses of this major is deprecated, not stale.
-    const legacy = prev === undefined ? { text: prev, count: 0 } : withLegacyMoved(prev, r);
-    if (legacy.count > 0 && legacy.text === text) {
-      console.warn(
-        `⚠ ${out}: ${legacy.count} legacy exact-semver address(es) — deprecated, tolerated until ${LEGACY_EXACT_SEMVER_UNTIL}; ` +
-          "regenerate to move them to v<major>/.",
-      );
-    } else if (prev !== text) {
+    if (prev !== text) {
       console.error(`✗ ${out} is stale — run bun run bootstrap-tools/scripts/gen-vocabulary.ts`);
       process.exit(1);
     }
