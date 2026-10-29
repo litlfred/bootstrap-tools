@@ -43,33 +43,12 @@ describe("check-node-iris", () => {
     expect(checkNodeIris(root, BASE, AGENT).map((f) => f.file)).toEqual(["a.json"]);
   });
 
-  // TRANSITION (bootstrap-tools#39): remove these two with the tolerance.
-  describe("a legacy exact-semver id during the transition release", () => {
+  test("a full version of the declared major is another release: it FAILS (the bootstrap-tools#39 tolerance is gone)", () => {
     const R = releaseIris({ iriBase: BASE, version: "1.4.0" })!; // agent: <BASE>v1/
-
-    test("of the declared major, at its file's path: a deprecated WARNING, not a failure", () => {
-      const root = kg({
-        "schemas/a.schema.json": { $id: `${BASE}1.2.3/schemas/a.schema.json` },
-        "processes/ns.jsonld": { "@id": `${BASE}1.0.0/processes/ns` },
-        "current.json": { $id: `${R.agent}current.json` },
-      });
-      const all = checkNodeIris(root, R.iriBase, R.agent, R);
-      expect(all.filter((f) => !f.deprecated)).toEqual([]);
-      expect(all.filter((f) => f.deprecated).map((f) => f.file).sort()).toEqual(["processes/ns.jsonld", "schemas/a.schema.json"]);
-      expect(all.every((f) => !f.deprecated || /deprecated/.test(f.why))).toBe(true);
-    });
-
-    test("of ANOTHER major, or at the wrong path, still FAILS", () => {
-      const root = kg({
-        "a.json": { $id: `${BASE}0.9.0/a.json` },
-        "b.json": { $id: `${BASE}2.0.0/b.json` },
-        "c.json": { $id: `${BASE}1.2.3/elsewhere/c.json` },
-      });
-      const failing = checkNodeIris(root, R.iriBase, R.agent, R).filter((f) => !f.deprecated);
-      expect(failing.map((f) => f.file).sort()).toEqual(["a.json", "b.json", "c.json"]);
-      expect(failing.find((f) => f.file === "c.json")!.why).toBe("names `elsewhere/c.json`, but the file sits at `c.json`");
-    });
+    const root = kg({ "schemas/a.schema.json": { $id: `${BASE}1.2.3/schemas/a.schema.json` } });
+    expect(checkNodeIris(root, R.iriBase, R.agent).map((f) => f.file)).toEqual(["schemas/a.schema.json"]);
   });
+
 
   test("only a document's own top-level identifier counts", () => {
     expect(ownIdentifier({ items: { $id: "x" } })).toBeUndefined();
