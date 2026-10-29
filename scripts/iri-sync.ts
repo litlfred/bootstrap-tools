@@ -43,7 +43,7 @@ import { join, relative } from "node:path";
 
 import { knowledgeGraphsIn } from "../schemas/declaration.ts";
 import { gitFiles } from "./git-files.ts";
-import { LEGACY_EXACT_SEMVER_UNTIL, type ReleaseIris, releaseIris } from "../schemas/release-iri.ts";
+import { type ReleaseIris, releaseIris } from "../schemas/release-iri.ts";
 
 /** Text a person or program reads; binaries and lockfiles are never IRI carriers here. */
 const TEXT = /\.(bpmn|dmn|json|jsonld|ts|md|xml|svg|liquid|html|ya?ml|pot|po|ttl|txt)$/;
@@ -52,20 +52,13 @@ const SKIP = [/^beans\//, /(^|\/)node_modules\//];
 
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-/**
- * One file's text rewritten to `r`, how many copies changed, and how many of
- * those were LEGACY — a full version of the declared major, which `--check`
- * tolerates as deprecated for one transition release (`legacyExactSemver` in
- * `release-iri.ts`; remove with bootstrap-tools#39). The writer moves them all.
- */
-export function rewrite(text: string, r: ReleaseIris, from?: string): { text: string; changes: number; legacy: number } {
+/** One file's text rewritten to `r`, and how many copies changed. */
+export function rewrite(text: string, r: ReleaseIris, from?: string): { text: string; changes: number } {
   let changes = 0;
-  let legacy = 0;
   const base = esc(r.iriBase);
   // A full version is never current: the address carries the major alone.
-  let out = text.replace(new RegExp(`${base}(\\d+)\\.\\d+\\.\\d+/`, "g"), (_m, major: string) => {
+  let out = text.replace(new RegExp(`${base}\\d+\\.\\d+\\.\\d+/`, "g"), () => {
     changes++;
-    if (Number(major) === r.major) legacy++;
     return r.agent;
   });
   out = out.replace(new RegExp(`${base}v(\\d+)/`, "g"), (m, v: string) => {
@@ -82,7 +75,7 @@ export function rewrite(text: string, r: ReleaseIris, from?: string): { text: st
       return r.agent;
     });
   }
-  return { text: out, changes, legacy };
+  return { text: out, changes };
 }
 
 /** Every instance that declares an `iriBase`, with its release. */
@@ -127,9 +120,7 @@ if (import.meta.main) {
     process.exit(2);
   }
   const stale: string[] = [];
-  const deprecated: string[] = [];
   let total = 0;
-  let legacyTotal = 0;
   for (const abs of files) {
     const rel = relative(repo, abs);
     if (!TEXT.test(rel) || SKIP.some((re) => re.test(rel))) continue;
@@ -143,12 +134,10 @@ if (import.meta.main) {
     const before = readFileSync(abs, "utf-8");
     let text = before;
     let n = 0;
-    let legacy = 0;
     for (const { release } of rels) {
       const r = rewrite(text, release, from);
       text = r.text;
       n += r.changes;
-      legacy += r.legacy;
     }
     if (n === 0) continue;
     if (!check) {
@@ -157,28 +146,14 @@ if (import.meta.main) {
       writeFileSync(abs, text);
       continue;
     }
-    // TRANSITION (bootstrap-tools#39): a legacy same-major copy is a warning.
-    if (legacy > 0) {
-      legacyTotal += legacy;
-      deprecated.push(`${rel} (${legacy})`);
-    }
-    if (n > legacy) {
-      total += n - legacy;
-      stale.push(`${rel} (${n - legacy})`);
-    }
+    total += n;
+    stale.push(`${rel} (${n})`);
   }
   for (const { root, release } of rels) {
     console.log(`${relative(repo, root) || "."}: ${release.agent} (${release.version})`);
   }
-  if (deprecated.length > 0) {
-    console.warn(
-      `⚠ deprecated: ${legacyTotal} legacy exact-semver IRI(s) of the declared major in ${deprecated.length} file(s) — ` +
-        `tolerated until ${LEGACY_EXACT_SEMVER_UNTIL}; \`bun run iri:sync\` moves them to v<major>/:`,
-    );
-    for (const d of deprecated.sort()) console.warn(`  · ${d}`);
-  }
   if (stale.length === 0) {
-    console.log("✓ every literal release IRI is at its declared major" + (deprecated.length ? " (legacy copies above are deprecated, not stale)." : "."));
+    console.log("✓ every literal release IRI is at its declared major.");
     process.exit(0);
   }
   console.log(`${check ? "✗ stale" : "rewrote"}: ${total} IRI(s) in ${stale.length} file(s)`);
