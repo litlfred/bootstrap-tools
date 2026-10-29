@@ -72,3 +72,19 @@ jobs:
 The tools are checked out at a **tag**, never a branch: a content check that changes under the content without a commit to it cannot be reproduced. Rendering the diagrams needs a browser and is left to the agent's run, not this workflow, until someone asks.
 
 No npm package is published either: `package.json` is `"private": true`. The parent consumes the tools by path while the pair is staged, and a published package is a decision for the first release (`kg-separation` stage 12).
+
+## The skills this layer publishes
+
+<!-- cat-harness:skills:begin -->
+
+_3 skills in 1 directory, generated from each skill's front matter. `bun run cat readme:sync` rewrites this list and `readme:sync:check` fails when it is stale. Skills this repository inherits are listed by the repositories that publish them._
+
+**`skills/`** (3)
+
+| Skill | What it is for |
+|---|---|
+| [`bootstrap-contract-semver`](skills/bootstrap-contract-semver.md) | What MAJOR, MINOR and PATCH mean for bootstrap's PUBLISHED schemas and graph, and why the bump is computed from a diff of the generated documents rather than asserted. |
+| [`github-pages`](skills/github-pages.md) | The contract GitHub Pages keeps as the host of a rendered Knowledge Graph: serve the gh-pages branch at the publication root URL, exactly as committed, and answer 404 for what is not there. |
+| [`render-kg-to-github-pages`](skills/render-kg-to-github-pages.md) | Render a Knowledge Graph, or a list of its Subgraphs, to GitHub Pages at a publication root URL, and report the push: a status (pushed, not pushed, could not determine) and one message carrying the… |
+
+<!-- cat-harness:skills:end -->
