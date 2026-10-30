@@ -1,0 +1,19 @@
+{
+  "@context": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.context.jsonld",
+  "@id": "https://litlfred.github.io/bootstrap-tools/role/github-pages.jsonld",
+  "isPartOf": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld",
+  "@graph": [
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/role/github-pages",
+      "@type": "bootstrap:Role",
+      "label": "GitHub Pages",
+      "description": "The host that serves what the Site Publisher deployed, at the publication root URL. It receives a deployment — a commit on the `gh-pages` branch — and serves it, deciding nothing. Its skill is its contract, `github-pages`, which `pages-status` tests (owner, 2026-10-16).",
+      "source": "https://litlfred.github.io/bootstrap-tools/scenarios/roles.json",
+      "isPartOf": "https://litlfred.github.io/bootstrap-tools/directory/bootstrap-tools-scenarios",
+      "flowNodeRef": [
+        "https://litlfred.github.io/bootstrap-tools/process/Process_RenderKgToGitHubPages/node/A_Deploy",
+        "https://litlfred.github.io/bootstrap-tools/process/Process_RenderKgToGitHubPages/node/A_Provision"
+      ]
+    }
+  ]
+}

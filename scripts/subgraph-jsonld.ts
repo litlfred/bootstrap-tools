@@ -219,7 +219,9 @@ export function frameSubgraphs(root: string, graph: Record<string, unknown>, bas
   }
 
   // Place by path, then through `isPartOf` to a fixed point.
-  const nodes = (graph["@graph"] as Node[]) ?? [];
+  // A tombstone (an old `#fragment` naming its subject's new path) carries no
+  // `@type` and belongs to no subgraph.
+  const nodes = ((graph["@graph"] as Node[]) ?? []).filter((n) => n["@type"] !== undefined);
   const byId = new Map(nodes.map((n) => [n["@id"], n]));
   const placed = new Map<string, Entry>();
   const pathOf = (n: Node): string | undefined => {

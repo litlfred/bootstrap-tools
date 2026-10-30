@@ -1,0 +1,15 @@
+{
+  "@context": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.context.jsonld",
+  "@id": "https://litlfred.github.io/bootstrap-tools/process/Process_RenderKgToGitHubPages/node/A_Report.jsonld",
+  "isPartOf": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld",
+  "@graph": [
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/process/Process_RenderKgToGitHubPages/node/A_Report",
+      "@type": "bootstrap:ProcessNode",
+      "label": "Report the push: status and message",
+      "type": "bpmn:task",
+      "isPartOf": "https://litlfred.github.io/bootstrap-tools/process/Process_RenderKgToGitHubPages",
+      "requires": "https://litlfred.github.io/bootstrap-tools/skill/render-kg-to-github-pages"
+    }
+  ]
+}

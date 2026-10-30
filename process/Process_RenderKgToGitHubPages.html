@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Render a Knowledge Graph to GitHub Pages</title>
+<link rel="alternate" type="application/ld+json" href="Process_RenderKgToGitHubPages.jsonld">
+</head><body>
+<h1>Render a Knowledge Graph to GitHub Pages</h1>
+<p><code>https://litlfred.github.io/bootstrap-tools/process/Process_RenderKgToGitHubPages</code> · bootstrap:Process · <a href="Process_RenderKgToGitHubPages.jsonld">JSON-LD</a> · part of <a href="https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld">bootstrap-tools.jsonld</a></p>
+<table><tr><th>label</th><td>Render a Knowledge Graph to GitHub Pages</td></tr><tr><th>summary</th><td>Render a Knowledge Graph — the whole of it, or a list of its Subgraphs — to GitHub Pages at a publication root URL, and report the push: a STATUS (pushed, not pushed, could not determine) and one MESSAGE carrying the deployed commit and the QA result.</td></tr><tr><th>description</th><td>Render a Knowledge Graph — the whole of it, or a list of its Subgraphs — to GitHub Pages at a publication root URL, and report the push: a STATUS (pushed, not pushed, could not determine) and one MESSAGE carrying the deployed commit and the QA result. Owner, 2026-09-30: &quot;render content of a KG (or list of subgraphs within) for publication to a CDN at a given publication root URL … independent of staging vs publication … just rendering … output is status of push to CDN + message&quot;, and &quot;the rendering bpmn is ok in bootstrap-tools … so 'render KG to githubpages' works and self described&quot;.
+
+STAGING AND RELEASE ARE THE SAME PROCESS. A preview is this with a root under the release root; a release is this with the release root. What differs between them — who may start it, what must be reviewed first, what else lives on the same host — belongs to whatever calls this, never in here.
+
+EVERY STEP IS ONE OF THESE TOOLS: site.ts stages, site.ts --check and readme-book.ts --check check the staging, the instance's Pages workflow deploys, pages-status.ts checks what is served and writes the message. The skill render-kg-to-github-pages has each command.
+
+THREE STATES, NOT TWO. A check that could not look (a 403 from a proxy, no network) is could-not-determine, and never reported as pushed.
+
+NO work-plan element on any activity, and isExecutable is false: this is bootstrap-tools' own diagram, in bootstrap's diagram vocabulary, and bootstrap's diagrams carry no work plan.</td></tr><tr><th>source</th><td><a href="https://litlfred.github.io/bootstrap-tools/processes/render-kg-to-github-pages.bpmn">https://litlfred.github.io/bootstrap-tools/processes/render-kg-to-github-pages.bpmn</a></td></tr><tr><th>depiction</th><td><a href="https://litlfred.github.io/bootstrap-tools/processes/render-kg-to-github-pages.svg">https://litlfred.github.io/bootstrap-tools/processes/render-kg-to-github-pages.svg</a></td></tr><tr><th>isPartOf</th><td><a href="../directory/bootstrap-tools-processes">https://litlfred.github.io/bootstrap-tools/directory/bootstrap-tools-processes</a></td></tr></table>
+<h2>Sequence flows</h2>
+<ul><li id="flow/SF_RG_1">flow/SF_RG_1</li><li id="flow/SF_RG_10">yes</li><li id="flow/SF_RG_11">no</li><li id="flow/SF_RG_2">flow/SF_RG_2</li><li id="flow/SF_RG_2b">flow/SF_RG_2b</li><li id="flow/SF_RG_3">flow/SF_RG_3</li><li id="flow/SF_RG_4">flow/SF_RG_4</li><li id="flow/SF_RG_5">yes</li><li id="flow/SF_RG_6">no</li><li id="flow/SF_RG_7">flow/SF_RG_7</li><li id="flow/SF_RG_8">flow/SF_RG_8</li><li id="flow/SF_RG_9">flow/SF_RG_9</li></ul>
+</body></html>

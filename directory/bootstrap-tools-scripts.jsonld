@@ -1,0 +1,19 @@
+{
+  "@context": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.context.jsonld",
+  "@id": "https://litlfred.github.io/bootstrap-tools/directory/bootstrap-tools-scripts.jsonld",
+  "isPartOf": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld",
+  "@graph": [
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/directory/bootstrap-tools-scripts",
+      "@type": "bootstrap:Subgraph",
+      "label": "bootstrap-tools-scripts",
+      "title": "The tools",
+      "description": "The schema generator and drawn schema page, the README writers (each directory's README, and the `kg:processes` and `kg:files` sections) with their Liquid templates, the Process renderer, the release-IRI sync, the term linker, and the checks: import closure, node identifiers, bootstrap's concepts, bootstrap's documents parsed against their Zod (`bootstrap:validate`), and the semver bump the published schemas require, computed from a diff (`bootstrap:semver`).",
+      "type": [
+        "bootstrap:graphTypology/code"
+      ],
+      "source": "https://litlfred.github.io/bootstrap-tools/scripts/",
+      "isPartOf": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld"
+    }
+  ]
+}

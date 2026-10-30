@@ -5,25 +5,25 @@
   "description": "The Zod source of bootstrap's schemas, the generators that write bootstrap's JSON Schemas, schema page and READMEs, and the checks bootstrap's content must pass — runnable by an agent, with zod, liquidjs, Playwright and bpmn-js as its dependencies.",
   "hasMember": [
     {
-      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#asset/agent-instructions",
+      "@id": "https://litlfred.github.io/bootstrap-tools/asset/agent-instructions",
       "@type": "bootstrap:Asset",
       "name": "agent-instructions",
       "title": "AGENTS.md — bootstrap-tools"
     },
     {
-      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#asset/readme",
+      "@id": "https://litlfred.github.io/bootstrap-tools/asset/readme",
       "@type": "bootstrap:Asset",
       "name": "readme",
       "title": "bootstrap-tools"
     },
     {
-      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#directory/bootstrap-tools-schemas",
+      "@id": "https://litlfred.github.io/bootstrap-tools/directory/bootstrap-tools-schemas",
       "@type": "bootstrap:Subgraph",
       "name": "bootstrap-tools-schemas",
       "title": "Bootstrap's shapes, in Zod"
     },
     {
-      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#directory/bootstrap-tools-scripts",
+      "@id": "https://litlfred.github.io/bootstrap-tools/directory/bootstrap-tools-scripts",
       "@type": "bootstrap:Subgraph",
       "name": "bootstrap-tools-scripts",
       "title": "The tools"

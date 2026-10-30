@@ -1,0 +1,16 @@
+{
+  "@context": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.context.jsonld",
+  "@id": "https://litlfred.github.io/bootstrap-tools/asset/readme.jsonld",
+  "isPartOf": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld",
+  "@graph": [
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/asset/readme",
+      "@type": "bootstrap:Asset",
+      "label": "readme",
+      "title": "bootstrap-tools",
+      "description": "What the toolset holds, why it is outside bootstrap, and how to run it.",
+      "source": "https://litlfred.github.io/bootstrap-tools/README.md",
+      "isPartOf": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "@context": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.context.jsonld",
+  "@id": "https://litlfred.github.io/bootstrap-tools/asset/agent-instructions.jsonld",
+  "isPartOf": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld",
+  "@graph": [
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/asset/agent-instructions",
+      "@type": "bootstrap:Asset",
+      "label": "agent-instructions",
+      "title": "AGENTS.md — bootstrap-tools",
+      "description": "The one-way boundary: this reads and writes bootstrap, bootstrap never imports from here, and nothing here imports above bootstrap. How an agent runs each tool, and what a Zod change does to a published contract.",
+      "source": "https://litlfred.github.io/bootstrap-tools/AGENTS.md",
+      "isPartOf": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld"
+    }
+  ]
+}

@@ -97,7 +97,7 @@ import { dirname, join, posix, relative } from "node:path";
 import { readKnowledgeGraphDeclaration } from "../schemas/declaration.ts";
 import { SEMVER } from "../schemas/release-iri.ts";
 import { TOOLS_REPOSITORY, generatedScripts, wholeFileGenerated } from "./generated-by.ts";
-import { exportGraph } from "./export-graph.ts";
+import { exportGraph, subjectDocuments } from "./export-graph.ts";
 import { frameSubgraphs, publicationBase } from "./subgraph-jsonld.ts";
 import { publishFiles } from "./publish-files.ts";
 import { gitFiles } from "./git-files.ts";
@@ -331,6 +331,7 @@ export function stageSite(
         // graph keeps it (bootstrap-graph-publication); another instance's
         // declaration has no versioned copy to fall back on, so it keeps its own.
         if (decl.name === "bootstrap") put("bootstrap.json", doc);
+        for (const [rel, body] of subjectDocuments(graph, `${decl.name}.jsonld`)) put(rel, body);
         const sub = frameSubgraphs(root, graph, graphBase);
         report.problems.push(...sub.problems.map((p) => `subgraph: ${p}`));
         if (sub.problems.length === 0) for (const [path, text] of sub.files) put(path, text);

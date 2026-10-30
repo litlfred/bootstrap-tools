@@ -5,18 +5,18 @@
   "description": "`roles.json`: the Roles the toolset's Processes bind their lanes to. The Site Publisher, who renders, deploys, checks and reports; and GitHub Pages, the host, acted upon.",
   "hasMember": [
     {
-      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#directory/bootstrap-tools-scenarios",
+      "@id": "https://litlfred.github.io/bootstrap-tools/directory/bootstrap-tools-scenarios",
       "@type": "bootstrap:Subgraph",
       "name": "bootstrap-tools-scenarios",
       "title": "The toolset's Roles"
     },
     {
-      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#role/github-pages",
+      "@id": "https://litlfred.github.io/bootstrap-tools/role/github-pages",
       "@type": "bootstrap:Role",
       "name": "GitHub Pages"
     },
     {
-      "@id": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld#role/site-publisher",
+      "@id": "https://litlfred.github.io/bootstrap-tools/role/site-publisher",
       "@type": "bootstrap:Role",
       "name": "Site Publisher"
     }

@@ -1,0 +1,27 @@
+{
+  "@context": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.context.jsonld",
+  "@id": "https://litlfred.github.io/bootstrap-tools/role/site-publisher.jsonld",
+  "isPartOf": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld",
+  "@graph": [
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/role/site-publisher",
+      "@type": "bootstrap:Role",
+      "label": "Site Publisher",
+      "description": "Renders a Knowledge Graph — the whole of it, or a list of its Subgraphs — for GitHub Pages at a publication root URL, has it deployed, checks what is served, and reports the push's status with one message. Performed by an agent running these tools, or by a Pages workflow running the same commands; the steps and the report are the same either way. It does not decide WHICH root URL or WHICH Subgraphs: whoever started the process says, and a staging root and a release root are the same process with a different answer.",
+      "source": "https://litlfred.github.io/bootstrap-tools/scenarios/roles.json",
+      "isPartOf": "https://litlfred.github.io/bootstrap-tools/directory/bootstrap-tools-scenarios",
+      "flowNodeRef": [
+        "https://litlfred.github.io/bootstrap-tools/process/Process_RenderKgToGitHubPages/node/A_CheckServed",
+        "https://litlfred.github.io/bootstrap-tools/process/Process_RenderKgToGitHubPages/node/A_CheckStaged",
+        "https://litlfred.github.io/bootstrap-tools/process/Process_RenderKgToGitHubPages/node/A_Report",
+        "https://litlfred.github.io/bootstrap-tools/process/Process_RenderKgToGitHubPages/node/A_ResolveInputs",
+        "https://litlfred.github.io/bootstrap-tools/process/Process_RenderKgToGitHubPages/node/A_Stage",
+        "https://litlfred.github.io/bootstrap-tools/process/Process_RenderKgToGitHubPages/node/End_NotPushed",
+        "https://litlfred.github.io/bootstrap-tools/process/Process_RenderKgToGitHubPages/node/End_Pushed",
+        "https://litlfred.github.io/bootstrap-tools/process/Process_RenderKgToGitHubPages/node/GW_Pushed",
+        "https://litlfred.github.io/bootstrap-tools/process/Process_RenderKgToGitHubPages/node/GW_Staged",
+        "https://litlfred.github.io/bootstrap-tools/process/Process_RenderKgToGitHubPages/node/Start_Render"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "@context": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.context.jsonld",
+  "@id": "https://litlfred.github.io/bootstrap-tools/process/Process_RenderKgToGitHubPages/node/End_Pushed.jsonld",
+  "isPartOf": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld",
+  "@graph": [
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/process/Process_RenderKgToGitHubPages/node/End_Pushed",
+      "@type": "bootstrap:ProcessNode",
+      "label": "Pushed, and the message says what is live",
+      "type": "bpmn:endEvent",
+      "isPartOf": "https://litlfred.github.io/bootstrap-tools/process/Process_RenderKgToGitHubPages"
+    }
+  ]
+}

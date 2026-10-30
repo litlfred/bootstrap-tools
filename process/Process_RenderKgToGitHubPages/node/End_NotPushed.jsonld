@@ -1,0 +1,14 @@
+{
+  "@context": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.context.jsonld",
+  "@id": "https://litlfred.github.io/bootstrap-tools/process/Process_RenderKgToGitHubPages/node/End_NotPushed.jsonld",
+  "isPartOf": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld",
+  "@graph": [
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/process/Process_RenderKgToGitHubPages/node/End_NotPushed",
+      "@type": "bootstrap:ProcessNode",
+      "label": "Not pushed, or could not tell, and the message says why",
+      "type": "bpmn:endEvent",
+      "isPartOf": "https://litlfred.github.io/bootstrap-tools/process/Process_RenderKgToGitHubPages"
+    }
+  ]
+}

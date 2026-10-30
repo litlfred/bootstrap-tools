@@ -78,12 +78,21 @@
  * beside. An instance cannot rename bootstrap's terms by declaring an
  * `iriBase` of its own.
  *
- * ## Identifiers are the ones already linked to
+ * ## Subjects are paths beside the document, and each one loads
  *
- * `#skill/<name>`, `#process/<id>`, `#process/<id>/node/<id>`, `#globalTask/<id>`,
- * `#process/<id>/flow/<id>`, `#role/<id>`, `#directory/<id>`, `#asset/<id>` —
- * unchanged, because a harness mints links into this document (a skill's
- * home) and a moved fragment is a broken link.
+ * A subject is `<doc dir>/<kind>/<id>`, not a `#fragment` of this document:
+ * `skill/<name>`, `process/<id>`, `process/<id>/node/<id>`, `globalTask/<id>`,
+ * `role/<id>`, `directory/<id>`, `asset/<id>`. A sequence flow stays a
+ * fragment of its process's page, `process/<id>#flow/<id>`. This is the rule
+ * cat-harness-tools' `scripts/lib/subject-iri.ts` writes for every other
+ * layer (cat-harness skill `kg-export.md`, "Subject IRIs — a path, not a
+ * `#fragment`"; litlfred/cat-harness-tools#603, #958).
+ *
+ * {@link subjectDocuments} gives each subject its own `<kind>/<id>.jsonld` and
+ * `<kind>/<id>.html` beside the document, so the bare IRI dereferences on
+ * GitHub Pages. For one release the document also carries a tombstone per old
+ * `<doc>#<kind>/<id>` fragment (`deprecated`, `isReplacedBy` and `sameAs` the
+ * new path), so a link minted before the move still finds its subject.
  *
  * ## Pure unless asked
  *
@@ -225,6 +234,104 @@ export function vocabularyRoot(root: string, bootstrapRoot?: string): string {
   return bootstrapRoot ?? join(root, "..", "bootstrap");
 }
 
+/** The directory a document is served from, with its trailing `/`; `""` for a bare file name. */
+export function subjectBase(docIri: string): string {
+  const i = docIri.lastIndexOf("/");
+  return i === -1 ? "" : docIri.slice(0, i + 1);
+}
+
+/** Escape what would end or re-delimit a path segment; `/` stays, as the nested form uses it. */
+function escapeId(id: string): string {
+  return id.replace(/[%#?\s]/g, (c) => encodeURIComponent(c));
+}
+
+const escapeHtml = (v: string) => v.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+
+/**
+ * Every subject's own files, beside the graph document, keyed by path relative
+ * to the document's directory: `<kind>/<id>.jsonld`, `<kind>/<id>.html` (which
+ * GitHub Pages serves at the bare `<kind>/<id>`), `<kind>/<id>/index.html` when
+ * another subject sits under it (`process/P` under `process/P/node/T`), and one
+ * shared `<stub>.context.jsonld`. A flow (`process/P#flow/F`) has no file: it
+ * is listed on its process's document and page. A tombstone has none either.
+ */
+export function subjectDocuments(graph: Record<string, unknown>, docFile: string): Map<string, string> {
+  const docIri = String(graph["@id"]);
+  const base = subjectBase(docIri);
+  const out = new Map<string, string>();
+  const subjects: Array<{ node: Record<string, unknown>; iri: string; stem: string }> = [];
+  const flowsOf = new Map<string, Record<string, unknown>[]>();
+  // A relative `source` or `depiction` is relative to the graph document; a
+  // subject's document sits deeper, so it carries them resolved.
+  const absolute = (n: Record<string, unknown>) =>
+    Object.fromEntries(Object.entries(n).map(([k, v]) => [k, (k === "source" || k === "depiction") && typeof v === "string" && !/^[a-z][a-z0-9+.-]*:/i.test(v) ? `${base}${v}` : v]));
+  for (const node of (graph["@graph"] ?? []) as Record<string, unknown>[]) {
+    const iri = String(node["@id"]);
+    if (node["@type"] === undefined || !iri.startsWith(base)) continue;
+    const path = iri.slice(base.length);
+    const hash = path.indexOf("#");
+    if (hash !== -1) {
+      const owner = iri.slice(0, base.length + hash);
+      flowsOf.set(owner, [...(flowsOf.get(owner) ?? []), node]);
+      continue;
+    }
+    const segments = path.split("/").map((x) => decodeURIComponent(x));
+    if (segments.length < 2 || segments.some((x) => x === "" || x === "." || x === ".." || x.includes("\\"))) continue;
+    subjects.push({ node: absolute(node), iri, stem: segments.join("/") });
+  }
+  if (subjects.length === 0) return out;
+  const contextName = `${docFile.replace(/\.jsonld$/, "")}.context.jsonld`;
+  out.set(contextName, `${JSON.stringify({ "@context": graph["@context"] }, null, 2)}\n`);
+  const parents = new Set<string>();
+  for (const { stem } of subjects) {
+    const parts = stem.split("/");
+    for (let i = 2; i < parts.length; i++) parents.add(parts.slice(0, i).join("/"));
+  }
+  const link = (v: string, depth: number) =>
+    v.startsWith(base) && !v.includes("#") && subjects.some((x) => x.iri === v) ? `${"../".repeat(depth)}${v.slice(base.length)}` : v;
+  for (const { node, iri, stem } of subjects) {
+    const depth = stem.split("/").length - 1;
+    const flows = (flowsOf.get(iri) ?? []).sort((a, b) => (String(a["@id"]) < String(b["@id"]) ? -1 : 1));
+    const name = stem.split("/").pop()!;
+    const doc = {
+      "@context": /^https?:\/\//.test(docIri) ? `${base}${contextName}` : `${"../".repeat(depth)}${contextName}`,
+      "@id": `${iri}.jsonld`,
+      isPartOf: docIri,
+      "@graph": [node, ...flows],
+    };
+    out.set(`${stem}.jsonld`, `${JSON.stringify(doc, null, 2)}\n`);
+    const page = (up: number, self: string) => {
+      const rows = Object.entries(node)
+        .filter(([k]) => !k.startsWith("@"))
+        .map(([k, v]) => {
+          const vals = ([] as unknown[]).concat(v).map((x) => {
+            const t = String(x);
+            return /^(https?:|\.\.?\/|[a-z]+\/)/.test(t) && !/\s/.test(t) ? `<a href="${escapeHtml(link(t, up))}">${escapeHtml(t)}</a>` : escapeHtml(t);
+          });
+          return `<tr><th>${escapeHtml(k)}</th><td>${vals.join("<br>")}</td></tr>`;
+        });
+      const flowRows = flows.map((f) => `<li id="${escapeHtml(String(f["@id"]).slice(iri.length + 1))}">${escapeHtml(String(f["label"] ?? String(f["@id"]).slice(iri.length + 1)))}</li>`);
+      const title = String(node["title"] ?? node["label"] ?? name);
+      return [
+        "<!doctype html>",
+        '<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">',
+        `<title>${escapeHtml(title)}</title>`,
+        `<link rel="alternate" type="application/ld+json" href="${escapeHtml(self)}">`,
+        "</head><body>",
+        `<h1>${escapeHtml(title)}</h1>`,
+        `<p><code>${escapeHtml(iri)}</code> · ${escapeHtml(String(node["@type"]))} · <a href="${escapeHtml(self)}">JSON-LD</a> · part of <a href="${escapeHtml(docIri)}">${escapeHtml(docFile)}</a></p>`,
+        `<table>${rows.join("")}</table>`,
+        ...(flowRows.length ? ["<h2>Sequence flows</h2>", `<ul>${flowRows.join("")}</ul>`] : []),
+        "</body></html>",
+        "",
+      ].join("\n");
+    };
+    out.set(`${stem}.html`, page(depth, `${name}.jsonld`));
+    if (parents.has(stem)) out.set(`${stem}/index.html`, page(depth + 1, `../${name}.jsonld`));
+  }
+  return out;
+}
+
 /** The Graph Typologies whose Subgraphs' contents this exporter reads. */
 export const COLLECTED_KINDS: readonly string[] = ["skills", "scenarios", "processes"];
 
@@ -236,7 +343,8 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
   const ns = releaseIri(r, "ns#", "agent");
   const processesNs = releaseIri(r, "processes/ns#", "agent");
   const doc = opts.docIri;
-  const id = (kind: string, rest: string) => `${doc}#${kind}/${rest}`;
+  const base = subjectBase(doc);
+  const id = (kind: string, rest: string) => `${base}${kind}/${escapeId(rest)}`;
   const src = (rel: string) => (opts.sourceBase ? `${opts.sourceBase.replace(/\/?$/, "/")}${rel}` : rel);
   const nodes: Record<string, unknown>[] = [];
   const problems: string[] = [];
@@ -382,7 +490,7 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
             });
           } else if (kind === "sequenceFlow" && c.attrs["id"]) {
             nodes.push({
-              "@id": `${pIri}/flow/${c.attrs["id"]}`,
+              "@id": `${pIri}#flow/${escapeId(c.attrs["id"])}`,
               "@type": "bootstrap:SequenceFlow",
               ...(c.attrs["name"] ? { label: c.attrs["name"] } : {}),
               sourceRef: nodeIri(c.attrs["sourceRef"] ?? ""),
@@ -431,7 +539,7 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
   const processIris = new Set(processNodes.map((n) => String(n["@id"])));
   const globalTaskIris = new Set(globalTaskNodes.map((n) => String(n["@id"])));
   const skillIris = new Set(nodes.filter((n) => n["@type"] === "bootstrap:Skill").map((n) => String(n["@id"])));
-  const processPrefix = `${doc}#process/`;
+  const processPrefix = `${base}process/`;
   const asGlobalTask = (iri: string): string | undefined => {
     if (processIris.has(iri) || !iri.startsWith(processPrefix) || iri.slice(processPrefix.length).includes("/")) return undefined;
     const g = id("globalTask", iri.slice(processPrefix.length));
@@ -444,11 +552,11 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
       const resolved = [...new Set(([] as string[]).concat(v as string | string[]).map((iri) => asGlobalTask(iri) ?? iri))].sort();
       const kept = resolved.filter((iri) => {
         if (processIris.has(iri) || skillIris.has(iri) || globalTaskIris.has(iri)) return true;
-        const isSkill = iri.startsWith(`${doc}#skill/`);
+        const isSkill = iri.startsWith(`${base}skill/`);
         problems.push(
           isSkill
-            ? `${String(n["@id"]).slice(doc.length)}: requires ${iri.slice(doc.length)}, which no skills Subgraph here holds`
-            : `${String(n["@id"]).slice(doc.length)}: calls ${iri.slice(doc.length)}, which no diagram here defines`,
+            ? `${String(n["@id"]).slice(base.length)}: requires ${iri.slice(base.length)}, which no skills Subgraph here holds`
+            : `${String(n["@id"]).slice(base.length)}: calls ${iri.slice(base.length)}, which no diagram here defines`,
         );
         return false;
       });
@@ -469,6 +577,14 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
   const byType = new Map<string, number>();
   for (const n of nodes) byType.set(String(n["@type"]), (byType.get(String(n["@type"])) ?? 0) + 1);
 
+  // One tombstone per pre-#958 fragment, for one release: a link minted into
+  // `<doc>#<kind>/<id>` before the move finds the subject's new path. Untyped,
+  // so it is never counted, framed or given a page.
+  const tombstones = nodes.map((n) => {
+    const iri = String(n["@id"]);
+    return { "@id": `${doc}#${iri.slice(base.length).replace("#flow/", "/flow/")}`, deprecated: true, isReplacedBy: iri, sameAs: iri };
+  });
+
   let prov: Record<string, unknown> = {};
   if (opts.provenance) {
     const git = (...a: string[]) => spawnSync("git", a, { cwd: root, encoding: "utf-8" });
@@ -488,6 +604,10 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
       dcterms: "http://purl.org/dc/terms/",
       prov: "http://www.w3.org/ns/prov#",
       owl: "http://www.w3.org/2002/07/owl#",
+      xsd: "http://www.w3.org/2001/XMLSchema#",
+      deprecated: { "@id": "owl:deprecated", "@type": "xsd:boolean" },
+      isReplacedBy: { "@id": "dcterms:isReplacedBy", "@type": "@id" },
+      sameAs: { "@id": "owl:sameAs", "@type": "@id" },
       foaf: "http://xmlns.com/foaf/0.1/",
       label: "rdfs:label",
       comment: "rdfs:comment",
@@ -528,7 +648,7 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
     ...prov,
     // Sorted by `@id`, by code unit rather than locale, so directory order on
     // the machine that built it never reaches the file (bootstrap-graph-emission).
-    "@graph": nodes.sort((a, b) => (String(a["@id"]) < String(b["@id"]) ? -1 : String(a["@id"]) > String(b["@id"]) ? 1 : 0)),
+    "@graph": [...nodes, ...tombstones].sort((a, b) => (String(a["@id"]) < String(b["@id"]) ? -1 : String(a["@id"]) > String(b["@id"]) ? 1 : 0)),
     // Not RDF facts about bootstrap, but what the build saw: counted, never
     // silently dropped. Declared in the context as `@json` literals, so an RDF
     // reader carries them as opaque values and a person or a check reads them.
@@ -561,7 +681,14 @@ if (import.meta.main) {
   });
   mkdirSync(dirname(out), { recursive: true });
   writeFileSync(out, `${JSON.stringify(doc, null, 2)}\n`);
+  // Each subject's own document and page, beside the graph, so its IRI loads.
+  const subjects = subjectDocuments(doc, basename(out));
+  for (const [rel, body] of subjects) {
+    const file = join(dirname(out), rel);
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, body);
+  }
   const problems = doc["problems"] as string[];
-  console.log(`✓ ${out}: ${(doc["@graph"] as unknown[]).length} nodes ${JSON.stringify(doc["counts"])}`);
+  console.log(`✓ ${out}: ${(doc["@graph"] as unknown[]).length} nodes ${JSON.stringify(doc["counts"])}, ${subjects.size} subject files`);
   for (const p of problems) console.log(`  · ${p}`);
 }

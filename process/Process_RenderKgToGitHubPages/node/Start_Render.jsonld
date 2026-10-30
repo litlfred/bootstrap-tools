@@ -1,0 +1,14 @@
+{
+  "@context": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.context.jsonld",
+  "@id": "https://litlfred.github.io/bootstrap-tools/process/Process_RenderKgToGitHubPages/node/Start_Render.jsonld",
+  "isPartOf": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld",
+  "@graph": [
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/process/Process_RenderKgToGitHubPages/node/Start_Render",
+      "@type": "bootstrap:ProcessNode",
+      "label": "A Knowledge Graph, a publication root URL, GitHub Pages as the target",
+      "type": "bpmn:startEvent",
+      "isPartOf": "https://litlfred.github.io/bootstrap-tools/process/Process_RenderKgToGitHubPages"
+    }
+  ]
+}

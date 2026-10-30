@@ -1,0 +1,19 @@
+{
+  "@context": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.context.jsonld",
+  "@id": "https://litlfred.github.io/bootstrap-tools/directory/bootstrap-tools-schemas.jsonld",
+  "isPartOf": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld",
+  "@graph": [
+    {
+      "@id": "https://litlfred.github.io/bootstrap-tools/directory/bootstrap-tools-schemas",
+      "@type": "bootstrap:Subgraph",
+      "label": "bootstrap-tools-schemas",
+      "title": "Bootstrap's shapes, in Zod",
+      "description": "The Zod source of every schema bootstrap publishes, bootstrap's defined terms and graph typologies, and the small readers the tools share: a declaration reader over bootstrap's own shape, release addresses, and the declared-order check.",
+      "type": [
+        "bootstrap:graphTypology/schemas"
+      ],
+      "source": "https://litlfred.github.io/bootstrap-tools/schemas/",
+      "isPartOf": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld"
+    }
+  ]
+}
