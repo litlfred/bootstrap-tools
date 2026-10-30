@@ -19,6 +19,20 @@ export const GraphExportNodeSchema = z
   })
   .passthrough();
 
+/**
+ * An old `<doc>#<kind>/<id>` fragment, kept for one release after subjects
+ * became paths (litlfred/cat-harness-tools#958): it names the path that
+ * replaced it and has no type, page or subgraph of its own.
+ */
+export const GraphExportTombstoneSchema = z
+  .object({
+    "@id": z.string().url(),
+    deprecated: z.literal(true),
+    isReplacedBy: z.string().url(),
+    sameAs: z.string().url(),
+  })
+  .strict();
+
 export const GraphExportSchema = z
   .object({
     "@context": z.record(z.string(), z.unknown()),
@@ -32,7 +46,8 @@ export const GraphExportSchema = z
     /** PROV, only when built with `--provenance`: the publish build, never the tests. */
     generatedAtTime: z.string().optional(),
     wasDerivedFrom: z.string().optional(),
-    "@graph": z.array(GraphExportNodeSchema),
+    /** Subjects, and for one release a tombstone per pre-#958 `#fragment` (litlfred/cat-harness-tools#958). */
+    "@graph": z.array(z.union([GraphExportNodeSchema, GraphExportTombstoneSchema])),
     /** Subgraphs declared but whose contents were not read — never an unexplained empty. */
     omitted: z.array(z.string().min(1)),
     counts: z.record(z.string(), z.number().int().nonnegative()),

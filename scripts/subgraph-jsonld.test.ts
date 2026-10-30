@@ -74,7 +74,7 @@ describe("named subgraphs — one IRI, two files, projected from one graph", () 
             for (const k of Object.keys(m)) expect(["@id", "@type", "name", "title"]).toContain(k);
           }
         }
-        expect(seen.sort()).toEqual((graph["@graph"] as Doc[]).map((n) => String(n["@id"])).sort());
+        expect(seen.sort()).toEqual((graph["@graph"] as Doc[]).filter((n) => n["@type"] !== undefined).map((n) => String(n["@id"])).sort());
       });
 
       test("a hydrated file holds the transitive membership whole: every index member below it, inline", () => {
@@ -160,7 +160,7 @@ describe("named subgraphs — one IRI, two files, projected from one graph", () 
     // A declared directory of a kind the graph does not read is said, not framed empty.
     expect(b.omitted).toEqual(["code"]);
     const root2 = JSON.parse(b.files.get("subgraph/demo/index.jsonld")!) as Doc;
-    expect((root2["hasMember"] as Doc[]).map((m) => m["@id"])).toEqual(["https://owner.github.io/demo/demo.jsonld#directory/code"]);
+    expect((root2["hasMember"] as Doc[]).map((m) => m["@id"])).toEqual(["https://owner.github.io/demo/directory/code"]);
   });
 
   test("a node whose subgraph cannot be determined is a problem, never left out", () => {

@@ -13,9 +13,10 @@ import { GENERATED_BY } from "./generated-by.ts";
 
 const BOOTSTRAP = join(import.meta.dir, "..", "..", "bootstrap");
 const DOC = "https://example.org/site/bootstrap/bootstrap.jsonld";
+const BASE = "https://example.org/site/bootstrap/";
 const build = (provenance = false) => exportGraph(BOOTSTRAP, { docIri: DOC, provenance });
 type Node = { "@id": string; "@type": string; [k: string]: unknown };
-const nodes = () => build()["@graph"] as Node[];
+const nodes = () => (build()["@graph"] as Node[]).filter((n) => n["@type"] !== undefined);
 
 describe("bootstrap's graph, from bootstrap's files, in standard terms", () => {
   test("parses against its schema, with and without provenance", () => {
@@ -41,7 +42,7 @@ describe("bootstrap's graph, from bootstrap's files, in standard terms", () => {
       .filter((f) => f.endsWith(".md") && f !== "README.md")
       .map((f) => /^name:\s*(.+)$/m.exec(readFileSync(join(BOOTSTRAP, "skills", f), "utf-8"))?.[1]?.trim() ?? f.slice(0, -3))
       .sort();
-    const inGraph = nodes().filter((n) => n["@type"] === "bootstrap:Skill").map((n) => n["@id"].split("#skill/")[1]).sort();
+    const inGraph = nodes().filter((n) => n["@type"] === "bootstrap:Skill").map((n) => n["@id"].split("/skill/")[1]).sort();
     expect(inGraph).toEqual(onDisk);
   });
 
@@ -109,13 +110,13 @@ describe("a process says what it is for, what it calls, and where it is drawn", 
   });
 
   test("the processes a process calls are its call activities' calledElement, each a Process node", () => {
-    const init = processes().find((p) => p["@id"].endsWith("#process/Process_InitializeHarness"))!;
+    const init = processes().find((p) => p["@id"].endsWith("/process/Process_InitializeHarness"))!;
     expect(init["requires"]).toEqual(
-      ["Process_CompleteInitialization", "Process_Discussion", "Process_LogMessage"].map((x) => `${DOC}#process/${x}`),
+      ["Process_CompleteInitialization", "Process_Discussion", "Process_LogMessage"].map((x) => `${BASE}process/${x}`),
     );
     const calls = nodes().filter((n) => n["type"] === "bpmn:callActivity");
     expect(calls.length).toBeGreaterThan(0);
-    for (const c of calls) expect(String(c["calledElement"])).toContain("#process/");
+    for (const c of calls) expect(String(c["calledElement"])).toContain("/process/");
   });
 
   test("a process is depicted by the SVG drawn beside its .bpmn", () => {
@@ -137,7 +138,7 @@ describe("a process says what it is for, what it calls, and where it is drawn", 
     expect(a["description"]).toBe("Does A. Then more.");
     expect("requires" in a).toBe(false);
     expect("calledElement" in graph.find((n) => n["@id"].endsWith("/node/C"))!).toBe(false);
-    expect(g["problems"]).toEqual(["#process/P_A: calls #process/P_Missing, which no diagram here defines", "#process/P_A/node/C: calls #process/P_Missing, which no diagram here defines"]);
+    expect(g["problems"]).toEqual(["process/P_A: calls process/P_Missing, which no diagram here defines", "process/P_A/node/C: calls process/P_Missing, which no diagram here defines"]);
   });
 
   test("a global task is a Task that requires its Skill, and a call to it by bare id resolves to it from another file", () => {
@@ -164,20 +165,20 @@ describe("a process says what it is for, what it calls, and where it is drawn", 
     }
     const g = exportGraph(root, { docIri: DOC, bootstrapRoot: BOOTSTRAP });
     const graph = g["@graph"] as Node[];
-    const gt = graph.find((n) => n["@id"] === `${DOC}#globalTask/GT_Seed`)!;
+    const gt = graph.find((n) => n["@id"] === `${BASE}globalTask/GT_Seed`)!;
     expect(gt["@type"]).toBe("bootstrap:Task");
     expect(gt["type"]).toBe("bpmn:globalUserTask");
     expect(gt["label"]).toBe("Seed the plan");
     expect(gt["description"]).toBe("Seed it.");
-    expect(gt["requires"]).toBe(`${DOC}#skill/seed`);
-    expect(graph.find((n) => n["@id"] === `${DOC}#globalTask/GT_Bare`)!["type"]).toBe("bpmn:globalTask");
+    expect(gt["requires"]).toBe(`${BASE}skill/seed`);
+    expect(graph.find((n) => n["@id"] === `${BASE}globalTask/GT_Bare`)!["type"]).toBe("bpmn:globalTask");
     for (const p of ["A", "B"]) {
-      expect(graph.find((n) => n["@id"] === `${DOC}#process/P_${p}/node/C`)!["calledElement"]).toBe(`${DOC}#globalTask/GT_Seed`);
-      expect(graph.find((n) => n["@id"] === `${DOC}#process/P_${p}`)!["requires"]).toEqual([`${DOC}#globalTask/GT_Seed`]);
+      expect(graph.find((n) => n["@id"] === `${BASE}process/P_${p}/node/C`)!["calledElement"]).toBe(`${BASE}globalTask/GT_Seed`);
+      expect(graph.find((n) => n["@id"] === `${BASE}process/P_${p}`)!["requires"]).toEqual([`${BASE}globalTask/GT_Seed`]);
     }
     // No Process node for the file that holds no process, and a call to
     // neither a process nor a global task is still a problem.
-    expect(graph.filter((n) => n["@type"] === "bootstrap:Process").map((n) => n["@id"])).toEqual([`${DOC}#process/P_A`, `${DOC}#process/P_B`]);
+    expect(graph.filter((n) => n["@type"] === "bootstrap:Process").map((n) => n["@id"])).toEqual([`${BASE}process/P_A`, `${BASE}process/P_B`]);
     expect((g["problems"] as string[]).filter((p) => p.includes("GT_Missing")).length).toBe(4);
     expect(GraphExportSchema.safeParse(g).success).toBe(true);
   });
@@ -202,9 +203,9 @@ describe("a process says what it is for, what it calls, and where it is drawn", 
         '</bpmn:laneSet><bpmn:task id="T1"/><bpmn:task id="T2"/><bpmn:task id="T3"/></bpmn:process></bpmn:definitions>',
     );
     const g = exportGraph(root, { docIri: DOC, bootstrapRoot: BOOTSTRAP });
-    const role = (r: string) => (g["@graph"] as Node[]).find((n) => n["@id"] === `${DOC}#role/${r}`)!;
-    expect(role("r-new")["flowNodeRef"]).toEqual([`${DOC}#process/P_A/node/T1`]);
-    expect(role("r-old")["flowNodeRef"]).toEqual([`${DOC}#process/P_A/node/T2`, `${DOC}#process/P_A/node/T3`]);
+    const role = (r: string) => (g["@graph"] as Node[]).find((n) => n["@id"] === `${BASE}role/${r}`)!;
+    expect(role("r-new")["flowNodeRef"]).toEqual([`${BASE}process/P_A/node/T1`]);
+    expect(role("r-old")["flowNodeRef"]).toEqual([`${BASE}process/P_A/node/T2`, `${BASE}process/P_A/node/T3`]);
     expect(g["problems"]).toEqual([
       'processes/a.bpmn#L_Old: names Role "r-old" with the retired <processes:role ref>; use partitionElementRef',
       'processes/a.bpmn#L_Dangling: partitionElementRef "r-old" names no <bpmn:resource> in this file',
@@ -212,7 +213,7 @@ describe("a process says what it is for, what it calls, and where it is drawn", 
   });
 
   test("a task REQUIRES its Skill (dcterms:requires); the Skill names no task", () => {
-    const tasks = nodes().filter((n) => n["@type"] === "bootstrap:ProcessNode" && String(n["requires"] ?? "").includes("#skill/"));
+    const tasks = nodes().filter((n) => n["@type"] === "bootstrap:ProcessNode" && String(n["requires"] ?? "").includes("/skill/"));
     expect(tasks.length).toBeGreaterThan(0);
     expect(nodes().some((n) => "skill" in n)).toBe(false);
     expect((build()["@context"] as Record<string, unknown>)["requires"]).toEqual({ "@id": "dcterms:requires", "@type": "@id" });
