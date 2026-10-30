@@ -10,6 +10,8 @@ Bootstrap promises an agent that it needs nothing installed: *"a file you read, 
 
 bootstrap-tools depends on bootstrap, on `zod`, on `liquidjs` (the README templates), on `@playwright/test` and `bpmn-js` (to draw a Process), and on the runtime, and on nothing else (owner, 2026-09-29). `bun run check:tools-closure` fails on any import that leaves this directory or names another package; tests may also use `bun:test` and `ajv`. When you need something from a harness, move the small piece down, or have the harness call this toolset instead.
 
+The outside libraries this toolset imports are recorded, but not here. cat-harness-tools holds them as `software-library` nodes under `libraries/held/bootstrap-tools/`, keyed by `layer: "bootstrap-tools"`, because the kind is cat-harness's and this toolset may not name it (owner, 2026-10-30, #44). Do not add a `libraries/` here. After a dependency change, the next re-pin of this toolset in cat-harness-tools runs `libraries:derive`.
+
 ## 3. A generated schema is a published contract
 
 The JSON Schemas in `bootstrap/schemas/` are generated from `schemas/*.ts` and published at their `$id`. Changing the Zod changes what a third party accepts. Two known traps:
