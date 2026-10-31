@@ -21,8 +21,9 @@ export const GraphExportNodeSchema = z
 
 /**
  * An old `<doc>#<kind>/<id>` fragment, kept for one release after subjects
- * became paths (litlfred/cat-harness-tools#958): it names the path that
- * replaced it and has no type, page or subgraph of its own.
+ * became paths: it names the path that replaced it and has no type, page or
+ * subgraph of its own. Why they moved:
+ * https://github.com/litlfred/cat-harness-tools/issues/958
  */
 export const GraphExportTombstoneSchema = z
   .object({
@@ -46,7 +47,7 @@ export const GraphExportSchema = z
     /** PROV, only when built with `--provenance`: the publish build, never the tests. */
     generatedAtTime: z.string().optional(),
     wasDerivedFrom: z.string().optional(),
-    /** Subjects, and for one release a tombstone per pre-#958 `#fragment` (litlfred/cat-harness-tools#958). */
+    /** Subjects, and for one release a tombstone per pre-path `#fragment` (https://github.com/litlfred/cat-harness-tools/issues/958). */
     "@graph": z.array(z.union([GraphExportNodeSchema, GraphExportTombstoneSchema])),
     /** Subgraphs declared but whose contents were not read — never an unexplained empty. */
     omitted: z.array(z.string().min(1)),
