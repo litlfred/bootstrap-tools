@@ -78,6 +78,17 @@ export const TEXT_STYLE = {
   externalStyle: { fontSize: 15, lineHeight: 1.2 },
 } as const;
 
+/**
+ * The names of pools and lanes. bpmn-js draws them, turned on their side, in
+ * a strip a fixed 30 wide, so at the 16px of {@link TEXT_STYLE} a name gets
+ * one line and anything longer spills across the strip's edge (owner,
+ * 2026-10-31, on dth-pc PC-BP-06: *"cluttered swimlane title...expand so text
+ * is legible"*). At 13px with tight leading two lines fit the strip; the lane
+ * must then be tall enough for the name in two lines, which
+ * `bpmn:detangle --write` arranges from {@link DrawnLayout.headers}.
+ */
+export const HEADER_STYLE = { fontSize: 13, lineHeight: 1.05 } as const;
+
 /** A box in diagram coordinates. */
 export interface DrawnBox {
   id: string;
@@ -97,6 +108,19 @@ export interface DrawnBox {
  */
 export interface DrawnLayout {
   labels: (DrawnBox & { text: string })[];
+  /**
+   * The text drawn INSIDE each shape (tasks, sub-processes, call activities),
+   * as the box it actually occupies, keyed by the shape's id. A text box
+   * larger than its shape is text spilling out (owner, 2026-10-31, after the
+   * 16px change: generated 140 × 80 tasks no longer hold their names).
+   */
+  texts?: DrawnBox[];
+  /**
+   * Each pool's and lane's name, as laid out in its header strip before it is
+   * turned: `width` runs along the lane (at most `room`, the lane's height)
+   * and `height` across the 30-wide strip. Taller than 30 means it spills.
+   */
+  headers?: { id: string; width: number; height: number; room: number }[];
   edges: { id: string; points: { x: number; y: number }[] }[];
 }
 
@@ -122,14 +146,13 @@ export async function openRenderer(viewerBundle: string): Promise<Renderer> {
   await page.addScriptTag({ path: viewerBundle });
   return {
     render: (xml) =>
-      page.evaluate(async ({ bpmnXml, textRenderer }) => {
+      page.evaluate(async ({ bpmnXml, textRenderer, headerStyle }) => {
         const container = document.getElementById("canvas")!;
         container.innerHTML = "";
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const Viewer = (window as any).BpmnJS;
         const viewer = new Viewer({ container, textRenderer });
         const result = await viewer.importXML(bpmnXml);
-        const { svg } = await viewer.saveSVG({ format: true });
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const all: any[] = viewer.get("elementRegistry").getAll();
         const labels = all
@@ -138,9 +161,41 @@ export async function openRenderer(viewerBundle: string): Promise<Renderer> {
         const edges = all
           .filter((e) => Array.isArray(e.waypoints))
           .map((e) => ({ id: e.id, points: e.waypoints.map((p: { x: number; y: number }) => ({ x: p.x, y: p.y })) }));
+        const registry = viewer.get("elementRegistry");
+        // Pool and lane names at HEADER_STYLE: re-laid with bpmn-js's own
+        // text renderer, in the same 30-wide strip, then turned as bpmn-js turns them.
+        const texter = viewer.get("textRenderer");
+        const headers: { id: string; width: number; height: number; room: number }[] = [];
+        for (const e of all) {
+          if (!/^bpmn:(Participant|Lane)$/.test(e.type) || !e.businessObject?.name) continue;
+          if (e.di?.isHorizontal === false) continue;
+          const old = registry.getGraphics(e)?.querySelector(".djs-visual > text.djs-label") as SVGTextElement | null;
+          if (!old) continue;
+          const t = texter.createText(e.businessObject.name, {
+            box: { width: e.height, height: 30 },
+            align: "center-middle",
+            padding: 2,
+            style: { ...headerStyle, fill: old.style.fill || "black" },
+          }) as SVGTextElement;
+          t.setAttribute("class", "djs-label");
+          const tf = old.getAttribute("transform");
+          if (tf) t.setAttribute("transform", tf);
+          old.replaceWith(t);
+          const b = t.getBBox();
+          headers.push({ id: e.id, width: b.width, height: b.height, room: e.height });
+        }
+        const texts = all
+          .filter((e) => e.type !== "label" && !e.waypoints && e.businessObject?.name && !/Participant|Lane/.test(e.type))
+          .flatMap((e) => {
+            const t = registry.getGraphics(e)?.querySelector("text.djs-label") as SVGGraphicsElement | null;
+            if (!t) return [];
+            const b = t.getBBox();
+            return b.width > 0 ? [{ id: e.id, x: e.x + b.x, y: e.y + b.y, width: b.width, height: b.height }] : [];
+          });
+        const { svg } = await viewer.saveSVG({ format: true });
         viewer.destroy();
-        return { svg, warnings: (result.warnings ?? []).map((w: Error) => w.message), layout: { labels, edges } };
-      }, { bpmnXml: xml, textRenderer: TEXT_STYLE }),
+        return { svg, warnings: (result.warnings ?? []).map((w: Error) => w.message), layout: { labels, edges, texts, headers } };
+      }, { bpmnXml: xml, textRenderer: TEXT_STYLE, headerStyle: HEADER_STYLE }),
     close: () => browser.close(),
   };
 }
