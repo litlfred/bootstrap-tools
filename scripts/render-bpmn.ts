@@ -60,10 +60,52 @@ export function chromiumExecutable(): string | undefined {
   return undefined;
 }
 
+/**
+ * The text size every diagram is drawn at, in diagram units (owner,
+ * 2026-10-31, on the content-change-review page: *"make the font a bit bigger,
+ * the spacing a bit more compact so dont need to zoom as much"*).
+ *
+ * bpmn-js draws 12px by default. A diagram the page shrinks to fit shrinks
+ * that too, so a 2600-wide pool in a 1200px band showed its labels at about
+ * 5.5px. 14px inside shapes and 13px for the labels outside them (events,
+ * gateways, flows) reads at 12px when the diagram is drawn up to
+ * `bpmn-authoring`'s width budget, 1400, and shown in a 1200px band. The
+ * budget and this size are one rule: change them together.
+ */
+export const TEXT_STYLE = {
+  defaultStyle: { fontSize: 14, lineHeight: 1.2 },
+  externalStyle: { fontSize: 13, lineHeight: 1.2 },
+} as const;
+
+/** A box in diagram coordinates. */
+export interface DrawnBox {
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * Where bpmn-js actually drew the text that sits OUTSIDE a shape: every
+ * external label (event, gateway, data object, sequence flow), at the size
+ * {@link TEXT_STYLE} gives it. A file's DI may carry no `BPMNLabel` bounds at
+ * all, in which case bpmn-js places the label itself, so only the drawn
+ * position can say whether two labels collide. `edges` are the drawn flows'
+ * waypoints, for a label sitting on a line.
+ */
+export interface DrawnLayout {
+  labels: (DrawnBox & { text: string })[];
+  edges: { id: string; points: { x: number; y: number }[] }[];
+}
+
 /** A headless page with bpmn-js loaded. One per batch: launching per file dominates the runtime. */
 export interface Renderer {
-  /** bpmn-js's raw SVG for `xml`, and its import warnings. Throws when bpmn-js cannot import it. */
-  render(xml: string): Promise<{ svg: string; warnings: string[] }>;
+  /**
+   * bpmn-js's raw SVG for `xml`, its import warnings, and where it drew the
+   * labels and flows. Throws when bpmn-js cannot import it.
+   */
+  render(xml: string): Promise<{ svg: string; warnings: string[]; layout: DrawnLayout }>;
   close(): Promise<void>;
 }
 
@@ -79,17 +121,25 @@ export async function openRenderer(viewerBundle: string): Promise<Renderer> {
   await page.addScriptTag({ path: viewerBundle });
   return {
     render: (xml) =>
-      page.evaluate(async (bpmnXml) => {
+      page.evaluate(async ({ bpmnXml, textRenderer }) => {
         const container = document.getElementById("canvas")!;
         container.innerHTML = "";
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const Viewer = (window as any).BpmnJS;
-        const viewer = new Viewer({ container });
+        const viewer = new Viewer({ container, textRenderer });
         const result = await viewer.importXML(bpmnXml);
         const { svg } = await viewer.saveSVG({ format: true });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const all: any[] = viewer.get("elementRegistry").getAll();
+        const labels = all
+          .filter((e) => e.type === "label" && e.businessObject?.name)
+          .map((e) => ({ id: e.labelTarget?.id ?? e.id, text: String(e.businessObject.name), x: e.x, y: e.y, width: e.width, height: e.height }));
+        const edges = all
+          .filter((e) => Array.isArray(e.waypoints))
+          .map((e) => ({ id: e.id, points: e.waypoints.map((p: { x: number; y: number }) => ({ x: p.x, y: p.y })) }));
         viewer.destroy();
-        return { svg, warnings: (result.warnings ?? []).map((w: Error) => w.message) };
-      }, xml),
+        return { svg, warnings: (result.warnings ?? []).map((w: Error) => w.message), layout: { labels, edges } };
+      }, { bpmnXml: xml, textRenderer: TEXT_STYLE }),
     close: () => browser.close(),
   };
 }
@@ -184,7 +234,7 @@ export async function besideSource(
   processFile: Map<string, string>,
 ): Promise<{ svg: string } | { error: string }> {
   const xml = readFileSync(file, "utf-8");
-  let raw: { svg: string; warnings: string[] };
+  let raw: Awaited<ReturnType<Renderer["render"]>>;
   try {
     raw = await r.render(xml);
   } catch (e) {
