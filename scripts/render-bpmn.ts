@@ -97,6 +97,13 @@ export interface DrawnBox {
  */
 export interface DrawnLayout {
   labels: (DrawnBox & { text: string })[];
+  /**
+   * The text drawn INSIDE each shape (tasks, sub-processes, call activities),
+   * as the box it actually occupies, keyed by the shape's id. A text box
+   * larger than its shape is text spilling out (owner, 2026-10-31, after the
+   * 16px change: generated 140 × 80 tasks no longer hold their names).
+   */
+  texts?: DrawnBox[];
   edges: { id: string; points: { x: number; y: number }[] }[];
 }
 
@@ -138,8 +145,17 @@ export async function openRenderer(viewerBundle: string): Promise<Renderer> {
         const edges = all
           .filter((e) => Array.isArray(e.waypoints))
           .map((e) => ({ id: e.id, points: e.waypoints.map((p: { x: number; y: number }) => ({ x: p.x, y: p.y })) }));
+        const registry = viewer.get("elementRegistry");
+        const texts = all
+          .filter((e) => e.type !== "label" && !e.waypoints && e.businessObject?.name && !/Participant|Lane/.test(e.type))
+          .flatMap((e) => {
+            const t = registry.getGraphics(e)?.querySelector("text.djs-label") as SVGGraphicsElement | null;
+            if (!t) return [];
+            const b = t.getBBox();
+            return b.width > 0 ? [{ id: e.id, x: e.x + b.x, y: e.y + b.y, width: b.width, height: b.height }] : [];
+          });
         viewer.destroy();
-        return { svg, warnings: (result.warnings ?? []).map((w: Error) => w.message), layout: { labels, edges } };
+        return { svg, warnings: (result.warnings ?? []).map((w: Error) => w.message), layout: { labels, edges, texts } };
       }, { bpmnXml: xml, textRenderer: TEXT_STYLE }),
     close: () => browser.close(),
   };
