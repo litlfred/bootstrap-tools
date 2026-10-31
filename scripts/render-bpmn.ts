@@ -67,14 +67,15 @@ export function chromiumExecutable(): string | undefined {
  *
  * bpmn-js draws 12px by default. A diagram the page shrinks to fit shrinks
  * that too, so a 2600-wide pool in a 1200px band showed its labels at about
- * 5.5px. 14px inside shapes and 13px for the labels outside them (events,
- * gateways, flows) reads at 12px when the diagram is drawn up to
- * `bpmn-authoring`'s width budget, 1400, and shown in a 1200px band. The
- * budget and this size are one rule: change them together.
+ * 5.5px. 16px inside shapes and 15px for the labels outside them (events,
+ * gateways, flows) read at about 14px when the diagram is drawn up to
+ * `bpmn-detangle`'s width budget, 1400, and shown in a 1200px band (owner,
+ * 2026-10-31, after seeing 14px: *"maybe make tasks a bit taller and font a
+ * bit bigger?"*). The budget and this size are one rule: change them together.
  */
 export const TEXT_STYLE = {
-  defaultStyle: { fontSize: 14, lineHeight: 1.2 },
-  externalStyle: { fontSize: 13, lineHeight: 1.2 },
+  defaultStyle: { fontSize: 16, lineHeight: 1.2 },
+  externalStyle: { fontSize: 15, lineHeight: 1.2 },
 } as const;
 
 /** A box in diagram coordinates. */
