@@ -155,9 +155,18 @@ export async function openRenderer(viewerBundle: string): Promise<Renderer> {
         const result = await viewer.importXML(bpmnXml);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const all: any[] = viewer.get("elementRegistry").getAll();
+        const reg = viewer.get("elementRegistry");
+        // Where the label's TEXT is, not its DI bounds: bpmn-js wraps an
+        // outside label at its own width, so a DI box narrower or shorter
+        // than the text says nothing about what the text runs into.
         const labels = all
           .filter((e) => e.type === "label" && e.businessObject?.name)
-          .map((e) => ({ id: e.labelTarget?.id ?? e.id, text: String(e.businessObject.name), x: e.x, y: e.y, width: e.width, height: e.height }));
+          .map((e) => {
+            const t = reg.getGraphics(e)?.querySelector("text") as SVGTextElement | null;
+            const b = t?.getBBox();
+            const box = b && b.width > 0 ? { x: e.x + b.x, y: e.y + b.y, width: b.width, height: b.height } : { x: e.x, y: e.y, width: e.width, height: e.height };
+            return { id: e.labelTarget?.id ?? e.id, text: String(e.businessObject.name), ...box };
+          });
         const edges = all
           .filter((e) => Array.isArray(e.waypoints))
           .map((e) => ({ id: e.id, points: e.waypoints.map((p: { x: number; y: number }) => ({ x: p.x, y: p.y })) }));
