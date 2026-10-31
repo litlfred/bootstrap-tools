@@ -84,9 +84,10 @@
  * `skill/<name>`, `process/<id>`, `process/<id>/node/<id>`, `globalTask/<id>`,
  * `role/<id>`, `directory/<id>`, `asset/<id>`. A sequence flow stays a
  * fragment of its process's page, `process/<id>#flow/<id>`. This is the rule
- * cat-harness-tools' `scripts/lib/subject-iri.ts` writes for every other
- * layer (cat-harness skill `kg-export.md`, "Subject IRIs — a path, not a
- * `#fragment`"; litlfred/cat-harness-tools#603, #958).
+ * the layers above write for their own subjects (their skill `kg-export.md`,
+ * "Subject IRIs — a path, not a `#fragment`"), recorded at
+ * https://github.com/litlfred/cat-harness-tools/issues/603 and
+ * https://github.com/litlfred/cat-harness-tools/issues/958.
  *
  * {@link subjectDocuments} gives each subject its own `<kind>/<id>.jsonld` and
  * `<kind>/<id>.html` beside the document, so the bare IRI dereferences on
