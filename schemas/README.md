@@ -13,6 +13,7 @@ Part of [Bootstrap tools](../README.md) 0.1.0, declared as `bootstrap-tools-sche
 
 | file | what it is | used by |
 |---|---|---|
+| [`declaration.test.ts`](declaration.test.ts) | a file |  |
 | [`declaration.ts`](declaration.ts) | a file |  |
 | [`declared-order.ts`](declared-order.ts) | a file |  |
 | [`discussion.test.ts`](discussion.test.ts) | a file |  |
