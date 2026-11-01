@@ -21,3 +21,7 @@ jobs:
     with:
       # On a draft PR: prepare and typecheck only; the full tier runs on ready_for_review.
       draft-fast-tier: true
+      # One job a side, not four (Q-CIS-2 A, fix 1). This layer's tests and
+      # gates are about 6 minutes of work in all (four shards of 1.4-1.9 min,
+      # measured 2026-11-01), while each extra job waits for a runner.
+      gate-shards: 1
