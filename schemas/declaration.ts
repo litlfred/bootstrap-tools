@@ -68,8 +68,8 @@ export function readKnowledgeGraphDeclaration(dir: string): KnowledgeGraphDeclar
  * `*.json` a build wrote (`build/qa-refresh.json`, stamped with a commit and
  * per-writer seconds), which made that report an input of every writer that
  * lists the checkout's graphs, so none of them could be skipped when it was
- * rebuilt (bean fwtz, 2026-11-01). The same list as cat-harness-tools'
- * `NOT_INSTANCE_DIRS`; this layer may not import it.
+ * rebuilt (bean fwtz, 2026-11-01). The same list as `NOT_INSTANCE_DIRS` in
+ * https://github.com/litlfred/cat-harness-tools (scripts/); this layer may not import it.
  */
 export const BUILD_OUTPUT_DIRS: readonly string[] = ["build", "_kg", "_site", "dist"];
 
