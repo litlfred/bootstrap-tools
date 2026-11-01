@@ -49,6 +49,7 @@ Part of [Bootstrap tools](../README.md) 0.1.0, declared as `bootstrap-tools-scri
 | [`readme-toc.ts`](readme-toc.ts) | a file |  |
 | [`rehearse-standalone.ts`](rehearse-standalone.ts) | a file |  |
 | [`render-bpmn.ts`](render-bpmn.ts) | a file |  |
+| [`render-fonts.conf`](render-fonts.conf) | a file |  |
 | [`schema-semver.test.ts`](schema-semver.test.ts) | a file |  |
 | [`schema-semver.ts`](schema-semver.ts) | a file |  |
 | [`site.test.ts`](site.test.ts) | a file |  |
