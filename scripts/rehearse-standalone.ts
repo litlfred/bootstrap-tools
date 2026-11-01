@@ -49,7 +49,10 @@ export const REHEARSED: ReadonlyArray<readonly [string, string[]]> = [
   ["every link on bootstrap-tools' README page lands", ["run", "scripts/readme-book.ts", "--root", ".", "--check"]],
   ["bootstrap's JSON Schemas and JSON-LD stage at their IRIs", ["run", "scripts/site.ts", "--root", "../bootstrap", "--check"]],
   ["both instances' named subgraphs frame", ["run", "scripts/subgraph-jsonld.ts", "--check", "--root", "../bootstrap", "--root", "."]],
-  ["the graph exports", ["run", "scripts/export-graph.ts", "--base-url", "https://example.invalid/bootstrap/", "--out", "/dev/null"]],
+  // Into the rehearsal's own directory, not /dev/null: the export writes its context beside
+  // `--out` (`<out>.context.jsonld`), and `/dev/null.context.jsonld` is EACCES for any user
+  // but root, so the step failed on every CI runner while passing as root.
+  ["the graph exports", ["run", "scripts/export-graph.ts", "--base-url", "https://example.invalid/bootstrap/", "--out", "../graph-export.jsonld"]],
   ["unit tests", ["test", "."]],
 ];
 
