@@ -243,6 +243,7 @@ Part of [Bootstrap tools](#readme) 0.1.0, declared as `bootstrap-tools-schemas`,
 
 | file | what it is | used by |
 |---|---|---|
+| [`declaration.test.ts`](schemas/declaration.test.ts) | a file |  |
 | [`declaration.ts`](schemas/declaration.ts) | a file |  |
 | [`declared-order.ts`](schemas/declared-order.ts) | a file |  |
 | [`discussion.test.ts`](schemas/discussion.test.ts) | a file |  |
