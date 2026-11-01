@@ -18,6 +18,7 @@ Part of [Bootstrap tools](../README.md) 0.1.0, declared as `bootstrap-tools-sche
 | [`discussion.test.ts`](discussion.test.ts) | a file |  |
 | [`discussion.ts`](discussion.ts) | a file |  |
 | [`graph-export.ts`](graph-export.ts) | a file |  |
+| [`graph-paths.test.ts`](graph-paths.test.ts) | a file |  |
 | [`graph.test.ts`](graph.test.ts) | a file |  |
 | [`graph.ts`](graph.ts) | a file |  |
 | [`model-registry.ts`](model-registry.ts) | a file |  |
