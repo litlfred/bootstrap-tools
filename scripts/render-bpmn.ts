@@ -135,6 +135,32 @@ export interface Renderer {
 }
 
 /**
+ * The font text is MEASURED in while drawing, so a picture is the same bytes
+ * on every machine. bpmn-js wraps a name where its measured width runs out,
+ * and "Arial" resolves to whatever the machine has: real Arial on one, Liberation
+ * Sans on another. Their widths differ by a fraction of a pixel, which moved one
+ * line break in smart-base's 61-task SGAuthoring.DAKLifecycle and made CI call
+ * a drawing made elsewhere stale (2026-11-01). Arimo (`@fontsource/arimo`,
+ * OFL) is the metric-compatible design both are cut from, bundled here and
+ * named "Arial" inside the page only. The SVG still says `Arial, sans-serif`.
+ */
+export function measuringFont(): string {
+  const face = (weight: number): string => {
+    const file = Bun.resolveSync(`@fontsource/arimo/files/arimo-latin-${weight}-normal.woff2`, import.meta.dir);
+    return `@font-face{font-family:"Arial";font-style:normal;font-weight:${weight};` +
+      `src:url(data:font/woff2;base64,${readFileSync(file).toString("base64")}) format("woff2");}`;
+  };
+  try {
+    return face(400) + face(700);
+  } catch (e) {
+    // Not installed (a mount without this layer's dependencies): measure in
+    // the machine's own Arial, as before, and say so.
+    console.warn(`· render-bpmn: @fontsource/arimo not found (${(e as Error).message.split("\n")[0]}); text measured in the machine's Arial, so pictures may differ by machine`);
+    return "";
+  }
+}
+
+/**
  * Launch the renderer. `CHROMIUM_PATH` wins when set; otherwise the
  * `PLAYWRIGHT_BROWSERS_PATH` probe, then Playwright's own.
  */
@@ -142,7 +168,8 @@ export async function openRenderer(viewerBundle: string): Promise<Renderer> {
   const executablePath = process.env.CHROMIUM_PATH || chromiumExecutable();
   const browser = await chromium.launch(executablePath ? { executablePath } : {});
   const page: Page = await browser.newPage();
-  await page.setContent(`<!doctype html><html><body><div id="canvas"></div></body></html>`);
+  await page.setContent(`<!doctype html><html><head><style>${measuringFont()}</style></head><body><div id="canvas"></div></body></html>`);
+  await page.evaluate(() => Promise.all(["16px Arial", "bold 16px Arial"].map((f) => document.fonts.load(f))));
   await page.addScriptTag({ path: viewerBundle });
   return {
     render: (xml) =>
