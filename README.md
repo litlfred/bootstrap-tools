@@ -248,6 +248,7 @@ Part of [Bootstrap tools](#readme) 0.1.0, declared as `bootstrap-tools-schemas`,
 | [`discussion.test.ts`](schemas/discussion.test.ts) | a file |  |
 | [`discussion.ts`](schemas/discussion.ts) | a file |  |
 | [`graph-export.ts`](schemas/graph-export.ts) | a file |  |
+| [`graph-paths.test.ts`](schemas/graph-paths.test.ts) | a file |  |
 | [`graph.test.ts`](schemas/graph.test.ts) | a file |  |
 | [`graph.ts`](schemas/graph.ts) | a file |  |
 | [`model-registry.ts`](schemas/model-registry.ts) | a file |  |

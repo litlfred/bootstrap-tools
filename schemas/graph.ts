@@ -188,10 +188,18 @@ export const GraphTypologySchema = z
   .describe(BOOTSTRAP_TERMS.GraphTypology);
 
 
+/**
+ * A path a declaration names: relative, inside the declaring directory. No
+ * leading slash or backslash, no drive letter, no `..` segment (bean `dnrj`).
+ * bootstrap's graph.schema.json carries the same pattern, so the generator
+ * must emit it.
+ */
+const RELATIVE_INSIDE = /^(?![/\\]|[A-Za-z]:)(?!.*(?:^|[/\\])\.\.(?:[/\\]|$)).+$/;
+
 export const SubgraphSchema = z
   .object({
     id: z.string().min(1).describe("The Subgraph's name, unique within its Knowledge Graph."),
-    path: z.string().min(1).describe("The directory, relative to the declaration."),
+    path: z.string().min(1).regex(RELATIVE_INSIDE).describe("The directory, relative to the declaration."),
     graphTypologies: z.array(GraphTypologySchema).min(1).describe("The Graph Typologies it holds."),
     title: z.string().optional().describe("A short name for people, shown as its README's heading."),
     description: z.string().optional().describe("What it holds, in a sentence or two, shown under that heading."),
@@ -202,7 +210,7 @@ export const SubgraphSchema = z
 export const AssetSchema = z
   .object({
     id: z.string().min(1),
-    src: z.string().min(1).describe("The file, relative to the declaration."),
+    src: z.string().min(1).regex(RELATIVE_INSIDE).describe("The file, relative to the declaration."),
     role: z.string().min(1).describe("The part the file plays, such as `instance-readme`."),
   })
   .passthrough()
