@@ -38,6 +38,7 @@
     "pages:status": "bun run scripts/pages-status.ts"
   },
   "dependencies": {
+    "@fontsource/arimo": "^5.3.0",
     "@playwright/test": "1.63.0",
     "bpmn-js": "18.31.0",
     "liquidjs": "^10.29.0",
