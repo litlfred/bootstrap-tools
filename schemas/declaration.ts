@@ -63,6 +63,16 @@ export function readKnowledgeGraphDeclaration(dir: string): KnowledgeGraphDeclar
  * directory directly under it that does. One level, because that is where an
  * instance's declaration sits; a nested instance is its own checkout's to list.
  */
+/**
+ * Top-level build-output directories, never instances. Scanning them read every
+ * `*.json` a build wrote (`build/qa-refresh.json`, stamped with a commit and
+ * per-writer seconds), which made that report an input of every writer that
+ * lists the checkout's graphs, so none of them could be skipped when it was
+ * rebuilt (bean fwtz, 2026-11-01). The same list as cat-harness-tools'
+ * `NOT_INSTANCE_DIRS`; this layer may not import it.
+ */
+export const BUILD_OUTPUT_DIRS: readonly string[] = ["build", "_kg", "_site", "dist"];
+
 export function knowledgeGraphsIn(repoRoot: string): { root: string; decl: KnowledgeGraphDeclaration }[] {
   const out: { root: string; decl: KnowledgeGraphDeclaration }[] = [];
   const add = (dir: string) => {
@@ -72,7 +82,7 @@ export function knowledgeGraphsIn(repoRoot: string): { root: string; decl: Knowl
   add(repoRoot);
   for (const entry of readdirSync(repoRoot).sort()) {
     const dir = join(repoRoot, entry);
-    if (entry.startsWith(".") || entry === "node_modules" || !existsSync(dir) || !statSync(dir).isDirectory()) continue;
+    if (entry.startsWith(".") || entry === "node_modules" || BUILD_OUTPUT_DIRS.includes(entry) || !existsSync(dir) || !statSync(dir).isDirectory()) continue;
     add(dir);
   }
   return out;
