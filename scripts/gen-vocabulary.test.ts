@@ -28,7 +28,7 @@ describe("bootstrap's vocabulary is exactly its terms (owner, 2026-09-30)", () =
   });
 
   test("its @id is the slash namespace itself, so each term is a path below it", () => {
-    // cat-harness-tools#1378 (owner, Q-SLASH-1 A): `…/v0/ns/`, never `…/v0/ns#`.
+    // The slash-IRI decision (owner, 2026-11-02): `…/v0/ns/`, never `…/v0/ns#`.
     expect(doc["@id"]).toBe(`${bootstrapRelease().agent}ns/`);
     expect(doc["@context"]["bootstrap"]).toBe(doc["@id"]);
   });
