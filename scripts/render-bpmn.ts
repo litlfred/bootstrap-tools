@@ -166,7 +166,12 @@ export function measuringFont(): string {
  */
 export async function openRenderer(viewerBundle: string): Promise<Renderer> {
   const executablePath = process.env.CHROMIUM_PATH || chromiumExecutable();
-  const browser = await chromium.launch(executablePath ? { executablePath } : {});
+  // Hinting changes text widths, and so where bpmn-js wraps a name. The
+  // runner's own fontconfig is not trusted for it: render-fonts.conf keeps the
+  // machine's fonts but always draws unhinted. A sandbox honours the
+  // fontconfig and a CI runner the flag (bootstrap-tools#67), so both are set.
+  const env = { ...process.env, FONTCONFIG_FILE: join(import.meta.dir, "render-fonts.conf") } as Record<string, string>;
+  const browser = await chromium.launch({ ...(executablePath ? { executablePath } : {}), env, args: ["--font-render-hinting=none"] });
   const page: Page = await browser.newPage();
   await page.setContent(`<!doctype html><html><head><style>${measuringFont()}</style></head><body><div id="canvas"></div></body></html>`);
   await page.evaluate(() => Promise.all(["16px Arial", "bold 16px Arial"].map((f) => document.fonts.load(f))));
