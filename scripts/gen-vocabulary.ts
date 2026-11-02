@@ -9,7 +9,7 @@
  *
  * ## Why this exists
  *
- * Every IRI bootstrap's files mint in its namespace (`<iriBase>v<major>/ns#…`)
+ * Every IRI bootstrap's files mint in its namespace (`<iriBase>v<major>/ns/…`)
  * must dereference to a definition. Until 2026-09-30 the document at that
  * address was produced by a harness (`ns-export --layer bootstrap`), and it
  * held what the HARNESS minted under bootstrap's prefix: 18 IRIs, 9 of them no
@@ -64,8 +64,8 @@ export function termLabel(key: string): string {
 
 /** The vocabulary document for a release. */
 export function vocabulary(r: ReleaseIris): Record<string, unknown> {
-  const docIri = releaseIri(r, "ns", "agent");
-  const ns = `${docIri}#`;
+  const docIri = releaseIri(r, "ns/", "agent");
+  const ns = docIri;
   const graphSchema = releaseIri(r, "schemas/graph.schema.json", "agent");
   const definedBy = (ref: string) => (ref.startsWith("#") ? `${graphSchema}${ref}` : ref);
   const terms = (Object.entries(BOOTSTRAP_TERMS) as [keyof typeof BOOTSTRAP_TERMS, string][]).map(([key, definition]) => ({
@@ -139,7 +139,7 @@ if (import.meta.main) {
       console.error(`✗ ${out} is stale — run bun run bootstrap-tools/scripts/gen-vocabulary.ts`);
       process.exit(1);
     }
-    console.log(`✓ bootstrap/ns.jsonld is current: ${n} terms, ${k} graph typologies, at ${releaseIri(r, "ns", "agent")}`);
+    console.log(`✓ bootstrap/ns.jsonld is current: ${n} terms, ${k} graph typologies, at ${releaseIri(r, "ns/", "agent")}`);
   } else {
     writeFileSync(out, text);
     console.log(`${prev === text ? "=" : "✓"} bootstrap/ns.jsonld — ${n} terms, ${k} graph typologies`);
