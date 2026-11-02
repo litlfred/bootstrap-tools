@@ -28,6 +28,13 @@ describe("check-node-iris", () => {
     expect(checkNodeIris(root, BASE, AGENT)).toEqual([]);
   });
 
+  test("a slash vocabulary names its directory: `processes/ns.jsonld` may say `processes/ns/` (#1378)", () => {
+    const root = kg({ "processes/ns.jsonld": { "@id": `${AGENT}processes/ns/` } });
+    expect(checkNodeIris(root, BASE, AGENT)).toEqual([]);
+    const other = kg({ "processes/ns.jsonld": { "@id": `${AGENT}processes/other/` } });
+    expect(checkNodeIris(other, BASE, AGENT).length).toBe(1);
+  });
+
   test("an identifier naming another path fails — the discussion-schema defect", () => {
     const root = kg({ "schemas/discussion.input.schema.json": { $id: `${AGENT}skills/discussion/input.schema.json` } });
     expect(checkNodeIris(root, BASE, AGENT).map((f) => f.why)).toEqual([
