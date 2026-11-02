@@ -91,9 +91,8 @@
  *
  * {@link subjectDocuments} gives each subject its own `<kind>/<id>.jsonld` and
  * `<kind>/<id>.html` beside the document, so the bare IRI dereferences on
- * GitHub Pages. For one release the document also carries a tombstone per old
- * `<doc>#<kind>/<id>` fragment (`deprecated`, `isReplacedBy` and `sameAs` the
- * new path), so a link minted before the move still finds its subject.
+ * GitHub Pages. Nothing forwards an old `<doc>#<kind>/<id>` fragment: a clean
+ * break (owner, 2026-11-02, litlfred/cat-harness-tools#1378).
  *
  * ## Pure unless asked
  *
@@ -254,7 +253,7 @@ const escapeHtml = (v: string) => v.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "
  * GitHub Pages serves at the bare `<kind>/<id>`), `<kind>/<id>/index.html` when
  * another subject sits under it (`process/P` under `process/P/node/T`), and one
  * shared `<stub>.context.jsonld`. A flow (`process/P#flow/F`) has no file: it
- * is listed on its process's document and page. A tombstone has none either.
+ * is listed on its process's document and page.
  */
 export function subjectDocuments(graph: Record<string, unknown>, docFile: string): Map<string, string> {
   const docIri = String(graph["@id"]);
@@ -578,13 +577,6 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
   const byType = new Map<string, number>();
   for (const n of nodes) byType.set(String(n["@type"]), (byType.get(String(n["@type"])) ?? 0) + 1);
 
-  // One tombstone per pre-#958 fragment, for one release: a link minted into
-  // `<doc>#<kind>/<id>` before the move finds the subject's new path. Untyped,
-  // so it is never counted, framed or given a page.
-  const tombstones = nodes.map((n) => {
-    const iri = String(n["@id"]);
-    return { "@id": `${doc}#${iri.slice(base.length).replace("#flow/", "/flow/")}`, deprecated: true, isReplacedBy: iri, sameAs: iri };
-  });
 
   let prov: Record<string, unknown> = {};
   if (opts.provenance) {
@@ -606,9 +598,6 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
       prov: "http://www.w3.org/ns/prov#",
       owl: "http://www.w3.org/2002/07/owl#",
       xsd: "http://www.w3.org/2001/XMLSchema#",
-      deprecated: { "@id": "owl:deprecated", "@type": "xsd:boolean" },
-      isReplacedBy: { "@id": "dcterms:isReplacedBy", "@type": "@id" },
-      sameAs: { "@id": "owl:sameAs", "@type": "@id" },
       foaf: "http://xmlns.com/foaf/0.1/",
       label: "rdfs:label",
       comment: "rdfs:comment",
@@ -649,7 +638,7 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
     ...prov,
     // Sorted by `@id`, by code unit rather than locale, so directory order on
     // the machine that built it never reaches the file (bootstrap-graph-emission).
-    "@graph": [...nodes, ...tombstones].sort((a, b) => (String(a["@id"]) < String(b["@id"]) ? -1 : String(a["@id"]) > String(b["@id"]) ? 1 : 0)),
+    "@graph": [...nodes].sort((a, b) => (String(a["@id"]) < String(b["@id"]) ? -1 : String(a["@id"]) > String(b["@id"]) ? 1 : 0)),
     // Not RDF facts about bootstrap, but what the build saw: counted, never
     // silently dropped. Declared in the context as `@json` literals, so an RDF
     // reader carries them as opaque values and a person or a check reads them.
