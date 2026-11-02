@@ -72,6 +72,40 @@ function git(cwd: string, ...args: string[]): { ok: boolean; out: string } {
   return { ok: r.status === 0, out: `${r.stdout ?? ""}${r.stderr ?? ""}`.trim() };
 }
 
+/**
+ * What a publish needs on disk, as non-cone sparse-checkout patterns, or
+ * undefined for everything.
+ *
+ * A branch that holds many sites is mostly what a publish KEEPS: on
+ * litlfred/smart-ra, gh-pages held about 690,000 files, nearly all of them
+ * STAGING/ previews, and checking them all out filled a runner's disk ("could
+ * not clone gh-pages: unable to write file STAGING/…", run 41411973742). Kept
+ * paths are never read or written here, so they are never checked out: git
+ * leaves files outside the sparse patterns as they are in the commit, and
+ * `add -A` does not stage them as deleted.
+ */
+export function sparsePatterns(o: Pick<PublishOptions, "into" | "keep">): string[] | undefined {
+  if (o.into !== undefined) return [`/${o.into.replace(/^\/+|\/+$/g, "")}/`];
+  if ((o.keep ?? []).length > 0) return ["/*", ...(o.keep ?? []).map((k) => `!/${k}/`)];
+  return undefined;
+}
+
+/**
+ * Clone the branch at depth 1 with no blobs fetched up front, then check out
+ * only `patterns` (all of it when undefined). History and the blobs of kept
+ * paths are never needed: the publish commits on top of the tip and pushes.
+ */
+function cloneForPublish(work: string, remote: string, branch: string, patterns: string[] | undefined): { ok: boolean; out: string } {
+  const clone = git(work, "clone", "--quiet", "--depth", "1", "--filter=blob:none", "--no-checkout", "--branch", branch, "--single-branch", remote, "repo");
+  if (!clone.ok) return clone;
+  const repo = join(work, "repo");
+  if (patterns !== undefined) {
+    const init = git(repo, "sparse-checkout", "set", "--no-cone", ...patterns);
+    if (!init.ok) return init;
+  }
+  return git(repo, "checkout", "--quiet", branch);
+}
+
 /** One clone-replace-commit-push cycle per attempt. */
 export function publishSite(o: PublishOptions): PublishResult {
   const site = resolve(o.site);
@@ -86,7 +120,7 @@ export function publishSite(o: PublishOptions): PublishResult {
   for (let attempt = 1; attempt <= attempts; attempt++) {
     const work = mkdtempSync(join(tmpdir(), "publish-site-"));
     try {
-      const clone = git(work, "clone", "--quiet", "--branch", branch, "--single-branch", o.remote, "repo");
+      const clone = cloneForPublish(work, o.remote, branch, sparsePatterns(o));
       if (!clone.ok) return { state: "failed", reason: `could not clone ${branch}: ${clone.out}` };
       const repo = join(work, "repo");
       if (o.into !== undefined) {
