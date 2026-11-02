@@ -314,6 +314,7 @@ Part of [Bootstrap tools](#readme) 0.1.0, declared as `bootstrap-tools-scripts`,
 | [`readme-toc.ts`](scripts/readme-toc.ts) | a file |  |
 | [`rehearse-standalone.ts`](scripts/rehearse-standalone.ts) | a file |  |
 | [`render-bpmn.ts`](scripts/render-bpmn.ts) | a file |  |
+| [`render-fonts.conf`](scripts/render-fonts.conf) | a file |  |
 | [`schema-semver.test.ts`](scripts/schema-semver.test.ts) | a file |  |
 | [`schema-semver.ts`](scripts/schema-semver.ts) | a file |  |
 | [`site.test.ts`](scripts/site.test.ts) | a file |  |
