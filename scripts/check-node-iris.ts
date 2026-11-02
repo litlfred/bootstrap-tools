@@ -21,8 +21,9 @@
  *
  *   the rest of the identifier, without its `#fragment`, must be the file's
  *   path relative to the Knowledge Graph's root — or that path without its
- *   extension (`processes/ns` for `processes/ns.jsonld`, the address a
- *   vocabulary is served at).
+ *   extension (`processes/ns` for `processes/ns.jsonld`), or that with a
+ *   trailing slash (`processes/ns/`, the address a slash vocabulary is
+ *   served at, as its directory index).
  *
  * An identifier under the instance's `iriBase` but at ANOTHER version is also
  * a finding: a document names its own release. Identifiers outside the base
@@ -85,7 +86,9 @@ export function checkNodeIris(root: string, iriBase: string, agentBase: string):
     }
     const path = iri.slice(agentBase.length).split("#")[0]!;
     const bare = rel.replace(/\.(json|jsonld)$/, "");
-    if (path !== rel && path !== bare) {
+    // A slash vocabulary (`processes/ns/`) is served as the directory index
+    // beside it, so `processes/ns.jsonld` may name `processes/ns/` (#1378).
+    if (path !== rel && path !== bare && path !== `${bare}/`) {
       findings.push({ file: rel, iri, why: `names \`${path}\`, but the file sits at \`${rel}\`` });
     }
   }
