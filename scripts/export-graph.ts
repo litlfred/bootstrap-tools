@@ -85,14 +85,12 @@
  * `role/<id>`, `directory/<id>`, `asset/<id>`. A sequence flow stays a
  * fragment of its process's page, `process/<id>#flow/<id>`. This is the rule
  * the layers above write for their own subjects (their skill `kg-export.md`,
- * "Subject IRIs — a path, not a `#fragment`"), recorded at
- * https://github.com/litlfred/cat-harness-tools/issues/603 and
- * https://github.com/litlfred/cat-harness-tools/issues/958.
+ * "Subject IRIs — a path, not a `#fragment`").
  *
  * {@link subjectDocuments} gives each subject its own `<kind>/<id>.jsonld` and
  * `<kind>/<id>.html` beside the document, so the bare IRI dereferences on
  * GitHub Pages. Nothing forwards an old `<doc>#<kind>/<id>` fragment: a clean
- * break (owner, 2026-11-02, litlfred/cat-harness-tools#1378).
+ * break (the slash-IRI decision, owner, 2026-11-02).
  *
  * ## Pure unless asked
  *
