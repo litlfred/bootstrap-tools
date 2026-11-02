@@ -13,7 +13,7 @@
  *
  * | audience | form | example (bootstrap `0.1.1`) |
  * |---|---|---|
- * | an agent or program — a namespace, a schema `$id`, a BPMN `xmlns` | `<iriBase>v<major>/` | `…/bootstrap/v0/ns#` |
+ * | an agent or program — a namespace, a schema `$id`, a BPMN `xmlns` | `<iriBase>v<major>/` | `…/bootstrap/v0/ns/` |
  * | a person — a page to read | `<iriBase>v<major>/` | `…/bootstrap/v0/` |
  *
  * The exact release a reader gets is fixed by its PIN (`index.lock.json`, the

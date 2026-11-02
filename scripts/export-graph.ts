@@ -340,8 +340,8 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
   const decl = readKnowledgeGraphDeclaration(root);
   if (!decl) throw new Error(`${root} carries no Knowledge Graph declaration`);
   const r = bootstrapRelease(vocabularyRoot(root, opts.bootstrapRoot));
-  const ns = releaseIri(r, "ns#", "agent");
-  const processesNs = releaseIri(r, "processes/ns#", "agent");
+  const ns = releaseIri(r, "ns/", "agent");
+  const processesNs = releaseIri(r, "processes/ns/", "agent");
   const doc = opts.docIri;
   const base = subjectBase(doc);
   const id = (kind: string, rest: string) => `${base}${kind}/${escapeId(rest)}`;

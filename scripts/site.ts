@@ -235,6 +235,9 @@ export function publishedDocuments(root: string, baseUrl?: string): PublishedDoc
 /** The paths a published document is staged at: its own, and the `.json` copy of a `.jsonld` or of an extensionless JSON-LD address. */
 export function stagedPaths(d: PublishedDocument): string[] {
   if (d.kind !== "json-ld") return [d.path];
+  // A slash namespace (`…/v0/ns/`, cat-harness-tools#1378) is a directory, so
+  // the document is its index: the terms below it are paths of their own.
+  if (d.path.endsWith("/")) return [`${d.path}index.jsonld`, `${d.path}index.json`];
   if (d.path.endsWith(".jsonld")) return [d.path, d.path.replace(/\.jsonld$/, ".json")];
   if (!posix.extname(d.path)) return [d.path, `${d.path}.json`];
   return [d.path];
