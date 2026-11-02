@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, readFileSync, writeFileSync, existsSync } from 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { publishSite } from "./publish-site.ts";
+import { publishSite, sparsePatterns } from "./publish-site.ts";
 
 const g = (cwd: string, ...a: string[]) => execFileSync("git", a, { cwd, encoding: "utf-8" }).trim();
 
@@ -90,5 +90,11 @@ describe("publish-site — any runner, any git remote (bootstrap-tools#7)", () =
     expect(publishSite({ site, remote: r, keep: ["a/b"], backoff: 0 }).state).toBe("failed");
     expect(publishSite({ site, remote: r, into: "S/x", keep: ["S"], backoff: 0 }).state).toBe("failed");
     expect(read(r, "stale.html")).toBe("old\n");
+  });
+
+  test("only what a publish writes is checked out: kept paths and other previews are not", () => {
+    expect(sparsePatterns({})).toBeUndefined();
+    expect(sparsePatterns({ into: "STAGING/a/" })).toEqual(["/STAGING/a/"]);
+    expect(sparsePatterns({ keep: ["STAGING", "branches"] })).toEqual(["/*", "!/STAGING/", "!/branches/"]);
   });
 });
