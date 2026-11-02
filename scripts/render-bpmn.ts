@@ -139,7 +139,7 @@ export interface Renderer {
  * on every machine. bpmn-js wraps a name where its measured width runs out,
  * and "Arial" resolves to whatever the machine has: real Arial on one, Liberation
  * Sans on another. Their widths differ by a fraction of a pixel, which moved one
- * line break in smart-base's 61-task SGAuthoring.DAKLifecycle and made CI call
+ * line break in a downstream 61-task lifecycle process and made CI call
  * a drawing made elsewhere stale (2026-11-01). Arimo (`@fontsource/arimo`,
  * OFL) is the metric-compatible design both are cut from, bundled here and
  * named "Arial" inside the page only. The SVG still says `Arial, sans-serif`.
