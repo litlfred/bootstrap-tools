@@ -26,18 +26,18 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           path: bootstrap-tools
       # Beside the tools, read-only: this repository's graph and its named
       # subgraphs are written in bootstrap's classes, so site.ts reads
       # bootstrap's namespace from its declaration (export-graph.ts). Public,
       # so no secret.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: litlfred/bootstrap
           path: bootstrap
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
       - name: Install
         working-directory: bootstrap-tools
         run: bun install --frozen-lockfile
