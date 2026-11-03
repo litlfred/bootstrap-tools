@@ -27,7 +27,7 @@ It is **one** toolset over swappable content. Someone who wants a different gene
 | path | what it is |
 |---|---|
 | `schemas/graph.ts` | bootstrap's defined terms, in order, with what each uses and the schema that defines it; its graph typologies; the declaration shape |
-| `schemas/discussion.ts`, `requirement.ts`, `model-registry.ts`, `glossary-ledger.ts` | the Zod source of the other schemas bootstrap publishes |
+| `schemas/discussion.ts`, `requirement.ts`, `requirement-set.ts`, `model-registry.ts` | the Zod source of the other schemas bootstrap publishes |
 | `schemas/declaration.ts` | reads a Knowledge Graph declaration with bootstrap's own shape |
 | `schemas/release-iri.ts` | an instance's release addresses: `<iriBase>v<major>/`, for programs and people alike (the exact release is the pin's) |
 | `schemas/declared-order.ts` | checks that an authored order keeps its promise: each item uses only items above it |
@@ -35,8 +35,12 @@ It is **one** toolset over swappable content. Someone who wants a different gene
 | `scripts/gen-vocabulary.ts` | writes `bootstrap/ns.jsonld`, bootstrap's vocabulary: every defined term and graph typology, as RDF and SKOS, at the address its IRIs name |
 | `scripts/export-graph.ts`, `schemas/graph-export.ts` | writes `<name>.jsonld`, an instance's own graph — bootstrap's, and this repository's — in bootstrap's classes and standard properties (Dublin Core, BPMN, PROV, FOAF); a Process carries its diagram's documentation, the processes it calls and its drawing. The site publishes it, nothing commits it |
 | `scripts/subgraph-jsonld.ts`, `schemas/subgraph-export.ts` | an instance's named subgraphs, projected from that same graph: under `<root>subgraph/<name>/<path>/`, `index.jsonld` (each direct member a pointer, each child subgraph by IRI) and `index.hydrated.jsonld` (every node of the transitive membership inline); the instance root and the repository level (`<root>subgraph/`) have the index only, and every file names `<root>subgraph/v<major>/context.jsonld`. A Process carries its diagram's documentation (`summary`, `description`), the processes it calls, its `.bpmn` and its SVG. `site.ts` stages them for bootstrap and for this repository; `--check` validates a build |
+| `scripts/bootstrap-schema-page.ts` | draws `bootstrap/schemas/README.md` from the published schemas: an ASCII class box per object, the conditional rules in words, a `[src]` link per term; written in the same run as the schemas |
+| `scripts/validate-bootstrap.ts` | parses bootstrap's own documents (`models/models.json`, `bootstrap.json`, any discussion document) against their Zod (`bun run validate`) |
+| `scripts/schema-semver.ts` | the bump bootstrap's published schemas require, computed from a diff of the generated documents (`bun run semver`); see [`skills/bootstrap-contract-semver.md`](skills/bootstrap-contract-semver.md) |
+| `scripts/generated-by.ts` | the generated-by notice every file these tools write carries |
 | `scripts/publish-files.ts` | publishes bootstrap's files as they sit at its site address, never overwriting; GitHub Pages renders the `.md` |
-| `scripts/rehearse-standalone.ts` | runs these tools' checks and tests with bootstrap and bootstrap-tools copied alone as sibling clones — the split, rehearsed |
+| `scripts/rehearse-standalone.ts` | runs these tools' checks and tests with bootstrap and bootstrap-tools copied alone as sibling clones, so nothing outside the two is read |
 | `scripts/iri-sync.ts` | keeps every literal release IRI at the declared version |
 | `scripts/term-links.ts` | links each defined term in README prose to its definition |
 | `scripts/subgraph-readmes.ts`, `scripts/templates/readme/` | writes each declared directory's README from its declaration, through Liquid templates; standalone it writes only the graphs these tools `support` |
@@ -51,9 +55,9 @@ It is **one** toolset over swappable content. Someone who wants a different gene
 | `scripts/init.ts` | walks an instance's initialization steps as its declarations name them. PRIMARY and first: `schemas:staged` and `schemas:published`, the JSON Schemas and JSON-LD at their IRIs. Then directories, assets, the README and its sections, needed harnesses' instructions and the Pages site. It performs what a tool can (switching Pages on needs an authenticated `gh`) and reports each as done, not done, could not determine, or stated. A 404 is not done; a 403, 407, 5xx or no answer could not be determined |
 | `scripts/render-bpmn.ts` | draws each Process as an SVG beside its `.bpmn`, with bpmn-js in headless Chromium; the harness's site renderer uses the same drawing |
 | `scripts/git-files.ts` | the files git accounts for — tracked, plus untracked and not ignored |
-| `scripts/check-closure.ts` | fails if anything here imports beyond itself, `zod`, `liquidjs`, `@playwright/test` and the runtime. Its walk, `importClosure`, is the one import-closure walker: a harness's remote mount uses it to bring a chosen Tool with its code, and nothing writes a second (owner, 2026-10-24) |
+| `scripts/check-closure.ts` | fails if anything here imports beyond itself, `zod`, `liquidjs`, `@playwright/test` and the runtime. Its walk, `importClosure`, is the one import-closure walker: a harness's remote mount uses it to bring a chosen Tool with its code, and nothing writes a second |
 | `scripts/check-node-iris.ts` | fails if a published node's identifier is not its file's path |
-| `scripts/check-bootstrap-concepts.ts` | checks bootstrap's requirement concepts |
+| `scripts/check-bootstrap-concepts.ts` | fails if a bootstrap schema, or the Zod it is generated from, names a concept from outside bootstrap |
 
 ## Running it
 
@@ -81,12 +85,11 @@ bun run --cwd bootstrap-tools init -- --root ../bootstrap              # every i
 
 The site is how a harness's JSON Schemas and JSON-LD reach the IRIs they
 name, which is the primary initialization step; the README page rides along.
-bootstrap-tools itself declares no `iriBase` and publishes no JSON Schema of
-its own (its schemas are the Zod that bootstrap's are generated from), so its
-site carries its README page and files, and its own graph,
-`bootstrap-tools.jsonld`, with its named subgraphs under `subgraph/` — at its
-GitHub Pages address, since it declares no other. That graph is written in
-bootstrap's classes, so `pages.yml` checks bootstrap out beside the tools.
+bootstrap-tools declares no `iriBase` and publishes no JSON Schema of its own,
+so its site, at its GitHub Pages address, carries its README page, its files,
+and its own graph, `bootstrap-tools.jsonld`, with its named subgraphs under
+`subgraph/`. That graph is written in bootstrap's classes, so `pages.yml`
+checks bootstrap out beside the tools.
 
 Every site's named subgraphs start at one file, `<root>subgraph/index.jsonld`:
 <https://litlfred.github.io/bootstrap/subgraph/index.jsonld> and
@@ -96,22 +99,19 @@ subgraph's `index.hydrated.jsonld` holds every Process node inline.
 
 Both sites are published with the tools in this repository.
 `.github/workflows/pages.yml` publishes this one's on each push to `main`.
-bootstrap's is published by an agent, not by a workflow (owner, 2026-10-21):
-bootstrap carries no workflow that names these tools (owner, 2026-10-01), and
-a workflow here could only push to bootstrap with a stored key. The agent
+bootstrap carries no workflow, so its site is published by an agent: it
 checks out bootstrap and these tools side by side, runs `site.ts --root
 <bootstrap> --out <dir>`, then `publish-site.ts --site <dir> --remote
 https://github.com/litlfred/bootstrap.git` with its own git credentials, which
 commits the staged directory onto bootstrap's `gh-pages` as a full replace.
-GitHub Pages builds that
-branch with Jekyll. The `gh-pages` branch has to exist before Pages can be
-switched on to serve it (`init.ts` step `site:branch`); then Pages has to be on, serving `gh-pages` at `/`:
-`init.ts` switches it on when an authenticated `gh` is present, and
-otherwise prints the one step for a person, at
+GitHub Pages builds that branch with Jekyll.
+
+The `gh-pages` branch has to exist before Pages can serve it (`init.ts` step
+`site:branch`), and Pages has to be on, serving `gh-pages` at `/`
+(`site:enabled`): `init.ts` switches it on when an authenticated `gh` is
+present, and otherwise prints the one step for a person, at
 `https://github.com/<owner>/<repo>/settings/pages`. It never reports an
 unchecked step as done.
-
-In this repository the same commands are also root scripts (`bootstrap:schemas`, `check:tools-closure`, `check:node-iris`, `iri:sync`) and run in the gate set.
 
 ## Rendering a Knowledge Graph to GitHub Pages
 
@@ -149,4 +149,4 @@ the commit that is live and the QA result. Each step and its command are in
 
 ## Status
 
-Staged here as a sibling directory until `litlfred/bootstrap-tools` gets its first commit. The package is `private` until its first release; removing that is part of the release step. Bean `xsqm`.
+The package is `private` until its first release; removing that is part of the release step.
