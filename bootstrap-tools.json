@@ -1,5 +1,5 @@
 {
-  "_comment": "The toolset that DESCRIBES bootstrap, kept outside it so bootstrap does not have one. Re-created 2026-09-29 (bean xsqm) on the terms bean etg1 first set, after bean 319n had folded it into a harness: across two repositories, Zod in a harness would make a bootstrap release depend on that harness, which depends on bootstrap. A SIBLING, never nested in bootstrap, because nesting would put .ts inside the tree a Bootstrapping Agent is told holds none. It depends on bootstrap and on nothing above it — `check:tools-closure` fails on any import that leaves it. It is ONE toolset over swappable content: someone who wants a different visualiser or generator uses a different toolset against the same bootstrap.",
+  "_comment": "The toolset that DESCRIBES bootstrap, kept outside it so bootstrap does not have one, and outside any harness, so a bootstrap release never waits on a harness that depends on bootstrap. A SIBLING, never nested in bootstrap, because nesting would put .ts inside the tree a Bootstrapping Agent is told holds none. It depends on bootstrap and on nothing above it — `check:closure` fails on any import that leaves it. It is ONE toolset over swappable content: someone who wants a different visualiser or generator uses a different toolset against the same bootstrap.",
   "name": "bootstrap-tools",
   "repository": "litlfred/bootstrap-tools",
   "version": "0.1.0",
@@ -9,7 +9,7 @@
   "needs": [
     "bootstrap"
   ],
-  "_supports_comment": "Which content versions these tools handle, as a list of supported MAJOR versions per content graph — never a range expression (instance-versioning rule 2). Within one major a newer minor or patch only adds. At the split both started at the same version (0.1.0); from here each is versioned on its own, and a tools release may support several content majors (owner, 2026-09-29). A tool refuses a content major not listed here rather than guessing. `bootstrap-tools` is listed too, since 2026-09-30: the toolset now carries a small content graph of its own (its processes, scenarios and skills), and the tools that draw and describe a content graph draw and describe that one as well.",
+  "_supports_comment": "Which content versions these tools handle, as a list of supported MAJOR versions per content graph — never a range expression. Within one major a newer minor or patch only adds. Each repository is versioned on its own, and a tools release may support several content majors. A tool refuses a content major not listed here rather than guessing. `bootstrap-tools` is listed too: the toolset carries a small content graph of its own (its processes, scenarios and skills), which the tools draw and describe like any other.",
   "supports": {
     "bootstrap": [
       0
@@ -48,7 +48,7 @@
       "id": "bootstrap-tools-scripts",
       "path": "scripts/",
       "title": "The tools",
-      "description": "The schema generator and drawn schema page, the README writers (each directory's README, and the `kg:processes` and `kg:files` sections) with their Liquid templates, the Process renderer, the release-IRI sync, the term linker, and the checks: import closure, node identifiers, bootstrap's concepts, bootstrap's documents parsed against their Zod (`bootstrap:validate`), and the semver bump the published schemas require, computed from a diff (`bootstrap:semver`).",
+      "description": "The schema generator and drawn schema page; the vocabulary, graph and named-subgraph exporters; the README writers (each directory's README, the `kg:processes`, `kg:files`, `kg:roles` and `kg:toc` sections, and the one-page README book) with their Liquid templates; the Process renderer; the site stager, publisher and push status; initialization; the release-IRI sync and the term linker; and the checks: import closure, node identifiers, bootstrap's concepts, bootstrap's documents parsed against their Zod (`validate`), and the semver bump the published schemas require, computed from a diff (`semver`).",
       "graphTypologies": [
         "code"
       ]
@@ -57,7 +57,7 @@
       "id": "bootstrap-tools-skills",
       "path": "skills/",
       "title": "The toolset's skills",
-      "description": "The skills this toolset owns: `bootstrap-contract-semver`, what MAJOR, MINOR and PATCH mean for bootstrap's published schemas and why the bump is computed from a diff; and `render-kg-to-github-pages`, rendering a Knowledge Graph (or a list of its Subgraphs) to GitHub Pages at a publication root URL and reporting the push's status with one message.",
+      "description": "The skills this toolset owns: `bootstrap-contract-semver`, what MAJOR, MINOR and PATCH mean for bootstrap's published schemas and why the bump is computed from a diff; `render-kg-to-github-pages`, rendering a Knowledge Graph (or a list of its Subgraphs) to GitHub Pages at a publication root URL and reporting the push's status with one message; and `github-pages`, the contract the host keeps.",
       "graphTypologies": [
         "skills"
       ]
