@@ -8,13 +8,11 @@
  *
  * The `.bpmn` is the source of truth — plain BPMN 2.0 with diagram
  * interchange, so it opens in bpmn.io, Camunda Modeler or any BPMN tool. A
- * README on GitHub cannot draw BPMN, so the picture beside it is generated
- * (owner, 2026-09-29: *"display bpmn(s) etc in README.md"*).
+ * README on GitHub cannot draw BPMN, so the picture beside it is generated.
  *
  * ## Why this lives in bootstrap-tools, and what stays in the harness
  *
- * One copy of the writers, in the tools repository (owner, 2026-09-29, bean
- * `xsqm`, which allowed Playwright as a dependency for exactly this). What is
+ * One copy of the writers, in the tools repository. What is
  * here is the DRAWING — bpmn-js in a headless Chromium, made byte-stable and
  * responsive — and the copy beside the source, whose call activities link
  * only to diagrams in the same directory, since a content graph's pictures

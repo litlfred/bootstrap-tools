@@ -11,16 +11,14 @@
  * value in a code list, a fixture string in a test. Those are literal by
  * nature. This keeps them at the declared major, so a breaking release — or
  * moving the address, in a fork — is ONE edit to the declaration and one run.
- * A minor or patch release changes no address at all (owner, 2026-10-23,
- * option "B. Major in address"; `release-iri.ts`).
+ * A minor or patch release changes no address at all (`release-iri.ts`).
  *
  * ## The rewrites
  *
  * For each instance declaring `iriBase` (see `releaseIris`):
  *
- * - `<iriBase><any semver>/` → `<iriBase>v<major>/` — the full-version form
- *   every program-read address carried until 2026-10-23, the declared
- *   version's own included: no address carries a full version any more
+ * - `<iriBase><any semver>/` → `<iriBase>v<major>/` — a full-version form,
+ *   the declared version's own included: no address carries a full version
  * - `<iriBase>v<other major>/` → `<iriBase>v<major>/`
  * - with `--from <old base>` (a one-time move): `<old base><path>` →
  *   `<iriBase>v<major>/<path>`. Only for a move; `--check` never needs it.

@@ -5,12 +5,9 @@
  *
  * ## Why
  *
- * Owner, 2026-09-29: *"make QA gate for KG nodes"*, on finding that the two
- * discussion schemas' `$id` (`…/skills/discussion/input.schema.json`) named a
- * path no file sits at (`schemas/discussion.input.schema.json`). Publishing a
- * Knowledge Graph means serving its files where they sit, under its release
- * address; an identifier that names another path can then never be
- * dereferenced, and nothing noticed because nothing asked.
+ * Publishing a Knowledge Graph means serving its files where they sit, under
+ * its release address; an identifier that names another path can then never
+ * be dereferenced.
  *
  * ## The rule
  *

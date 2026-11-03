@@ -5,17 +5,15 @@
  * @module bootstrap-tools/scripts/subgraph-readmes
  * @covers code
  *
- * Owner, 2026-09-29: a large instance *"can't have all their files listed
- * directly, however they have declared subgraphs/dirs in which to naturally
- * link to sub-README generated documentation for that directory. make sure
- * sub-dir READMEs part of the KG itself"*; *"you should be able to extract
- * needed metadata info (e.g. titles, desc) from the KG itself. QA check when
- * not there"*; committed READMEs, with Liquid `{% include %}` allowed.
+ * A large instance cannot list every file in one README, so each declared
+ * directory gets its own, committed and part of the Knowledge Graph, written
+ * from the graph's own metadata (titles, descriptions), with a finding where
+ * a fact is missing.
  *
  * ## Why this lives in bootstrap-tools, and what it does not know
  *
- * One copy of the README writers, in the tools repository (owner, 2026-09-29,
- * bean `xsqm`), which the harness that hosts bootstrap calls. It knows bootstrap's declaration
+ * One copy of the README writers, in the tools repository, which the harness
+ * that hosts bootstrap calls. It knows bootstrap's declaration
  * shape and nothing above it. So it takes its instances ALREADY RESOLVED
  * ({@link InstanceInput}): a harness whose declarations carry Extensions —
  * a directory scoped to the repository, one allowed to be absent — resolves
@@ -25,8 +23,7 @@
  * content graphs this toolset declares it `supports`, at a supported major.
  * A graph above bootstrap may carry Extensions this reader does not know;
  * writing its READMEs anyway would be guessing, so it is that harness's
- * call (measured: over this repository, 15 of 85 READMEs came out different
- * without the harness's `scope`).
+ * call.
  *
  * ## What it writes, and where it will not
  *
@@ -40,7 +37,7 @@
  *
  * A README whose every line outside the region is this tool's or another
  * generator's — a page wholly generated — also opens with YAML front matter
- * holding one `generated:` key (owner, 2026-10-16, decision 4a), so the page
+ * holding one `generated:` key, so the page
  * declares itself generated where a checker looks for that. A partly authored
  * README never gets it, and a README that already opens with front matter
  * keeps that block untouched rather than gaining a second.
@@ -56,8 +53,7 @@
  *
  * ## The governing PROCESS, where the caller resolved one
  *
- * Owner, 2026-09-29: *"show highlevel (sub)process bpmn on the uploads
- * page."* A directory may name a BPMN process that governs it; the diagram is
+ * A directory may name a BPMN process that governs it; the diagram is
  * then drawn on its README, with its `.bpmn` source and a row per subprocess.
  * The template half is `templates/readme/process.liquid`, included only when
  * the caller supplies a {@link ProcessView}.

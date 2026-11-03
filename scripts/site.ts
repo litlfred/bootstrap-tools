@@ -7,13 +7,11 @@
  * @module bootstrap-tools/scripts/site
  * @covers code
  *
- * Owner, 2026-09-30: *"https://litlfred.github.io/bootstrap is 404"*. The
- * pieces existed (`publish-files.ts`, `export-graph.ts`) and nothing ran them
- * where bootstrap lives on its own. This is the one command a Pages workflow
- * runs; the workflow then hands the staged directory to
- * `actions/jekyll-build-pages`, which renders every `.md` to `.html` and
- * rewrites `.md` links to match — so this toolset still carries no Markdown
- * renderer (`check-closure.ts`).
+ * This is the one command that stages a site, run by a Pages workflow or an
+ * agent; `publish-site.ts` then commits the staged directory onto `gh-pages`,
+ * and GitHub Pages builds the branch with Jekyll, which renders every `.md` to
+ * `.html` and rewrites `.md` links to match — so this toolset carries no
+ * Markdown renderer (`check-closure.ts`).
  *
  * What lands in `--out`, in the order it is written — first writer wins,
  * because nothing already in `--out` is overwritten (`publish-files.ts`):
@@ -21,8 +19,7 @@
  * 1. for bootstrap only, its graph (`export-graph.ts`) at
  *    `<base-url>bootstrap.jsonld`, and its `.json` copy at `bootstrap.json`.
  *    That copy shares its address with the declaration, and the graph keeps
- *    it, as `bootstrap-graph-publication` says and as the harness's own site
- *    build does (`--allow-collision bootstrap.json`). The declaration is still
+ *    it, as `bootstrap-graph-publication` says. The declaration is still
  *    served, at `v<major>/bootstrap.json`, and the skip is reported;
  * 1a. its NAMED SUBGRAPHS (`subgraph-jsonld.ts`), framed from that same graph:
  *    `subgraph/index.jsonld` (the repository), `subgraph/<name>/index.jsonld`
@@ -33,29 +30,25 @@
  *    bootstrap's classes, so it is built with bootstrap's checkout beside it
  *    and is a problem, never silently absent, when that checkout is not
  *    there. Such an instance's graph document is written too, at
- *    `<name>.jsonld`, because every member's `@id` is a fragment of it. The
+ *    `<name>.jsonld`. The
  *    publication root is `--base-url`, else `iriBase`, else the declaration's
  *    GitHub Pages address;
  * 2. every DOCUMENT the instance publishes at the address it names — each
  *    JSON Schema's `$id` and each JSON-LD document's `@id` under `iriBase`
  *    ({@link publishedDocuments}). An `@id` with no extension (`…/v0/ns`,
  *    the namespace a vocabulary is) gets the document at that extensionless
- *    path, as the harness's build copies `processes/ns.jsonld` to
- *    `processes/ns`; every `.jsonld` also gets a `.json` copy, because Pages
+ *    path (`processes/ns.jsonld` also at `processes/ns`); every `.jsonld` also gets a `.json` copy, because Pages
  *    serves `.jsonld` as a download and `.json` as JSON. The `.jsonld` stays
  *    the real one;
  * 3. every file of the instance, as it sits (`publish-files.ts`), so every
  *    relative link in them still resolves — and again under `v<major>/`,
- *    because an IRI a program reads is `<iriBase>v<major>/…` (owner,
- *    2026-10-23: the major, not the full version, is in every address);
+ *    because an IRI a program reads is `<iriBase>v<major>/…`;
  * 3a. `README.md`, the book (`readme-book.ts`), with its links checked,
  *    ending in a "Published documents" section that links every address
  *    above — rendered at `<root>/README.html`. Written BEFORE the files, so it
  *    takes the root README's place: the book opens with that README;
  * 4. `index.html`, a redirect to `README.html` — the DEFAULT landing page,
- *    and only that (owner, 2026-10-01: *"the harness landing page at
- *    …/index.html is a redirect to the README.html. Will make it easier for
- *    harnesses to change landing page behaviour"*). To change it, an
+ *    and only that. To change it, an
  *    instance (or the harness staging it) puts its own `index.html` or
  *    `index.md` at its root: that file is staged as it sits and the redirect
  *    is not written, reported as skipped. A file rather than a declaration
@@ -66,13 +59,12 @@
  *    `_layouts/default.html` (`templates/site/default.html`), the theme's
  *    layout with that footer. The theme's own footer links GitHub's editor
  *    for the file on `gh-pages` — a staged copy — and for a generated page
- *    any edit is overwritten (owner, 2026-10-01: *"footer should not take
- *    them to edit page when bootstrap-tools used"*). A generated page's
+ *    any edit is overwritten. A generated page's
  *    footer names bootstrap-tools, the script, and its source; an authored
  *    page's links the editor for its SOURCE on the instance's branch.
  *
- * Every `@context` bootstrap writes is inline in its document (measured
- * 2026-09-30: no file names an external context), so publishing each document
+ * Every `@context` bootstrap writes is inline in its document (no file names
+ * an external context), so publishing each document
  * publishes its context. The one exception is built, not authored: every
  * named-subgraph file names `subgraph/v<major>/context.jsonld` by URL, and it is
  * staged with them.

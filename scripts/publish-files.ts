@@ -5,8 +5,7 @@
  *
  * @module bootstrap-tools/scripts/publish-files
  *
- * Owner, 2026-09-30 (bean `xsqm`, site publisher ruling A): "move it without
- * remark and let GitHub Pages render .md". bootstrap's own site serves only
+ * bootstrap's own site serves only
  * what bootstrap-tools generates plus bootstrap's files; a `.md` is rendered
  * by Pages, not here, so this has no Markdown dependency. A harness that
  * hosts a copy of bootstrap on a site Pages does NOT render renders the
