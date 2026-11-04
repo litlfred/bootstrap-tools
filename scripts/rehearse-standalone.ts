@@ -1,27 +1,25 @@
 #!/usr/bin/env bun
 /**
  * Rehearse the split: run bootstrap-tools against bootstrap with NOTHING else
- * present — the two as sibling checkouts in an empty directory, exactly as
- * `litlfred/bootstrap` and `litlfred/bootstrap-tools` will be.
+ * present — the two as sibling checkouts in an empty directory, as
+ * `litlfred/bootstrap` and `litlfred/bootstrap-tools` are cloned.
  *
  * @module bootstrap-tools/scripts/rehearse-standalone
  * @covers code — bootstrap-tools itself, run where only bootstrap sits beside it
  *
- * Phase 4 of bean `xsqm`. The closure gate proves no IMPORT reaches above
- * bootstrap-tools; it cannot prove a script does not READ a path above it, or
- * that a test does not lean on a file only the monorepo has. Only running
- * them where nothing else exists can. Each check that fails here is a
- * dependency the split would have broken on its first day.
+ * The closure gate proves no IMPORT reaches above bootstrap-tools; it cannot
+ * prove a script does not READ a path above it, or that a test does not lean
+ * on a file only an enclosing checkout has. Only running them where nothing
+ * else exists can. Each check that fails here is such a dependency.
  *
  * What is copied is what git tracks in each directory — a standalone clone
  * has nothing else — and each copy is made a git repository with those files
  * added, as a clone would be. `node_modules` is linked from these tools' own
- * install (or, in the monorepo, the enclosing checkout's), standing in
+ * install (or an enclosing checkout's), standing in
  * for the `bun install` a standalone clone would run.
  *
- * NOT rehearsed: `render:check`, which needs a headless Chromium; the drawing
- * is byte-compared by `render:check` in the monorepo, and nothing in it reads
- * a path outside bootstrap-tools.
+ * NOT rehearsed: `render:check`, which needs a headless Chromium and is run
+ * where one is; nothing in it reads a path outside bootstrap-tools.
  *
  * Usage: bun run bootstrap-tools/scripts/rehearse-standalone.ts [--keep]
  */

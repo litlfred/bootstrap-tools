@@ -4,27 +4,23 @@
  *
  * @covers schemas — bootstrap's declared schema directories and the Zod sources they are generated from
  *
- * Owner, 2026-09-23 (issue #1164): *"make sure no DAK/L2 smart who etc
- * refences in bootrap schemas. no external concepts."*
- *
  * Bootstrap is the layer every harness starts from. A term from one
  * derivative's world — a health-guideline model, a standards body, an
  * interchange format — written into a bootstrap schema makes every other
  * harness inherit a vocabulary it has no use for, and makes the base depend,
- * in its words, on something above it. That is the direction rule this
- * repository enforces for code (`check:partition`), applied to the schemas'
- * PROSE as well as their fields, since a description is part of the contract
- * a generated JSON Schema publishes.
+ * in its words, on something above it. The rule covers the schemas' PROSE as
+ * well as their fields, since a description is part of the contract a
+ * generated JSON Schema publishes.
  *
- * ## Beside bean `iwtn`'s test, not instead of it
+ * ## Beside `graph.test.ts`, not instead of it
  *
  * `bootstrap-tools/schemas/graph.test.ts` holds ALL of `bootstrap/` to a stricter
  * list — no layer above it may be named either (no harness or folio built on it),
  * because bootstrap is self-definitional. This check covers the narrower
  * rule, no OUTSIDE concept, and applies it to one thing that test does not
  * read: the Zod SOURCES bootstrap's schemas are generated from. Those live in
- * `bootstrap-tools/schemas/` (bean `xsqm`, reversing `319n`), and still may
- * not name an outside concept, since their text becomes the published schema.
+ * `bootstrap-tools/schemas/`, and may not name an outside concept either,
+ * since their text becomes the published schema.
  *
  * ## Which files
  *

@@ -4,11 +4,8 @@
  *
  * @module scripts/publish-site
  *
- * Owner, 2026-10-04 (bootstrap-tools#7): "dont want tight/exclusive github
- * Tools … can we also support agentic workflow". Until now this step was an
- * inline shell loop inside `.github/workflows/pages.yml`, so only a GitHub
- * runner could publish. It is now the same command for every runner — an
- * agent, a person at a terminal, or a CI job:
+ * The same command for every runner — an agent, a person at a terminal, or a
+ * CI job:
  *
  *   bun run bootstrap-tools/scripts/site.ts --root . --out _site-src
  *   bun run bootstrap-tools/scripts/publish-site.ts --site _site-src --remote <git url>
@@ -21,16 +18,17 @@
  * Rebuild, never rebase: each attempt clones the branch fresh, replaces every
  * tracked file with the staged site, and pushes.
  *
- * Two narrower replaces, for a branch that holds more than one site (owner,
- * 2026-10-10: staging previews are agent-run, bean n3h9):
+ * Two narrower replaces, for a branch that holds more than one site:
  *
  *   --into STAGING/<branch>   replace ONLY that subtree; everything else on the
  *                             branch stays (a preview never touches the root)
  *   --keep STAGING --keep branches
  *                             a full replace that keeps these top-level paths
- *                             (the root publish never deletes the previews) A push that loses a race is
- * retried from a fresh clone (3 attempts), so a concurrent publisher's commit
- * is never merged into ours or overwritten by a force push.
+ *                             (the root publish never deletes the previews)
+ *
+ * A push that loses a race is retried from a fresh clone (3 attempts), so a
+ * concurrent publisher's commit is never merged into ours or overwritten by a
+ * force push.
  */
 import { spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdtempSync, readdirSync, rmSync, statSync } from "node:fs";

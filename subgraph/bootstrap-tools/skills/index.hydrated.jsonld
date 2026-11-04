@@ -2,12 +2,12 @@
   "@context": "https://litlfred.github.io/bootstrap-tools/subgraph/v0/context.jsonld",
   "@id": "https://litlfred.github.io/bootstrap-tools/subgraph/bootstrap-tools/skills/",
   "@type": "bootstrap:Subgraph",
-  "description": "The skills this toolset owns: `bootstrap-contract-semver`, what MAJOR, MINOR and PATCH mean for bootstrap's published schemas and why the bump is computed from a diff; and `render-kg-to-github-pages`, rendering a Knowledge Graph (or a list of its Subgraphs) to GitHub Pages at a publication root URL and reporting the push's status with one message.",
+  "description": "The skills this toolset owns: `bootstrap-contract-semver`, what MAJOR, MINOR and PATCH mean for bootstrap's published schemas and why the bump is computed from a diff; `render-kg-to-github-pages`, rendering a Knowledge Graph (or a list of its Subgraphs) to GitHub Pages at a publication root URL and reporting the push's status with one message; and `github-pages`, the contract the host keeps.",
   "hasMember": [
     {
       "@id": "https://litlfred.github.io/bootstrap-tools/directory/bootstrap-tools-skills",
       "@type": "bootstrap:Subgraph",
-      "description": "The skills this toolset owns: `bootstrap-contract-semver`, what MAJOR, MINOR and PATCH mean for bootstrap's published schemas and why the bump is computed from a diff; and `render-kg-to-github-pages`, rendering a Knowledge Graph (or a list of its Subgraphs) to GitHub Pages at a publication root URL and reporting the push's status with one message.",
+      "description": "The skills this toolset owns: `bootstrap-contract-semver`, what MAJOR, MINOR and PATCH mean for bootstrap's published schemas and why the bump is computed from a diff; `render-kg-to-github-pages`, rendering a Knowledge Graph (or a list of its Subgraphs) to GitHub Pages at a publication root URL and reporting the push's status with one message; and `github-pages`, the contract the host keeps.",
       "isPartOf": "https://litlfred.github.io/bootstrap-tools/bootstrap-tools.jsonld",
       "name": "bootstrap-tools-skills",
       "source": "https://litlfred.github.io/bootstrap-tools/skills/",

@@ -4,8 +4,7 @@
  * @module bootstrap-tools/scripts/readme-toc
  * @covers code
  *
- * Owner, 2026-09-30: *"generated README.md on bootstrap missing TOC probably
- * need on all harnesses"*. A hand-kept contents list is wrong the day a
+ * A hand-kept contents list is wrong the day a
  * heading is renamed, and nothing says so, because a README is the one file
  * no check reads. So the list is a README section like the others: opt-in by
  * the `<!-- kg:toc:begin -->` / `:end` pair, rewritten by `readme-sections`,

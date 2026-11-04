@@ -27,7 +27,7 @@ description: >
 | `could-not-determine` | nothing failed, but an answer was about the way here (403, 407, 5xx, no network) |
 
 The message is one line a caller posts as it stands:
-`pushed 1a2b3c4 to <root> — QA: staged ok (N files, M documents); root 200; documents M/M answer`.
+`pushed 1a2b3c4 to <root> — QA: staged ok (N files, M documents); root 200; README.html 200; documents M/M answer`.
 The commit is **which bytes are live**: the commit on the `gh-pages` branch
 the site is served from.
 
@@ -45,9 +45,8 @@ Every command below is run from bootstrap-tools, with the instance as `--root`.
 1. **Resolve the inputs.** Read the declaration; check every Subgraph id is
    one it declares; settle the root URL. An unknown id is refused, never
    rendered as a smaller site.
-2. **Make sure `gh-pages` exists and Pages serves it.** Owner, 2026-10-01:
-   *"need to create gh-pages branch before can turn on"* — Pages cannot be
-   switched on to serve a branch that does not exist. In order:
+2. **Make sure `gh-pages` exists and Pages serves it.** Pages cannot be
+   switched on to serve a branch that does not exist, so in order:
    - `git ls-remote --heads origin gh-pages`; if absent, push an orphan
      placeholder (`index.html` + `.nojekyll`);
    - Pages on, Source = branch `gh-pages`, folder `/`:
@@ -55,32 +54,29 @@ Every command below is run from bootstrap-tools, with the instance as `--root`.
      when `gh` is signed in, otherwise the manual step (Settings → Pages →
      Deploy from a branch → `gh-pages`, `/ (root)`).
    `bun run scripts/init.ts --root <instance>` runs both as `site:branch` and
-   `site:enabled`. This provisioning belongs to this Tool's subprocess, not to
-   the general publication step that calls it.
+   `site:enabled`. This provisioning belongs to this process, not to the
+   publication step that calls it.
 3. **Stage the rendering.**
    `bun run scripts/site.ts --root <instance> --out <dir> [--subgraph <id>]…`:
    every JSON Schema and JSON-LD document at the IRI it names, the files as
    they sit, the README page as `README.md` — served at `<root>/README.html`
-   — and `index.html`, a redirect to it (owner, 2026-10-01: *"the harness
-   landing page at …/index.html is a redirect to the README.html. Will make
-   it easier for harnesses to change landing page behaviour"*). The redirect
-   is only the default: an instance that carries its own `index.html` or
-   `index.md` at its root gets that as its landing page instead. Every
-   generated page opens with a notice naming bootstrap-tools and the script
-   that wrote it, and its footer links the generator and its source rather
-   than GitHub's editor — the theme's own footer would send a reader to edit
-   the `gh-pages` copy, which the next publish overwrites
-   (bootstrap's `publish-documents` and `publish-site` say why).
+   — and `index.html`, a redirect to it. The redirect is only the default:
+   an instance that carries its own `index.html` or `index.md` at its root
+   gets that as its landing page instead. Every generated page opens with a
+   notice naming bootstrap-tools and the script that wrote it, and its footer
+   links the generator and its source rather than GitHub's editor, which
+   would edit the `gh-pages` copy the next publish overwrites.
 4. **Check what was staged.** `site.ts --check` and
    `bun run scripts/readme-book.ts --root <instance> --check`. Any problem
    stops here: the report says `not-pushed` and names the problem, and nothing
    is deployed. A push of a tree known to be broken is not a push to report.
-5. **Deploy.** Commit the staged tree onto `gh-pages` as a full replace — the
-   instance's Pages workflow does it on a push to `main`, or by hand; an
-   instance that carries no workflow of its own (bootstrap) is published by
-   one in the toolset, on a schedule or by hand. GitHub
-   Pages builds the branch (Jekyll, unless `.nojekyll`). A rejected push is
-   rebuilt and retried, never rebased. The `gh-pages` commit is the message.
+5. **Deploy.** Commit the staged tree onto `gh-pages` as a full replace with
+   `bun run scripts/publish-site.ts --site <dir> --remote <git url>`: the
+   instance's Pages workflow runs it on a push to `main`, and an agent runs it
+   with its own git credentials for an instance that carries no workflow
+   (bootstrap). GitHub Pages builds the branch (Jekyll, unless `.nojekyll`).
+   A rejected push is rebuilt and retried, never rebased. The `gh-pages`
+   commit is the one the message names.
 6. **Check what is served, and report.**
    `bun run scripts/pages-status.ts --root <instance> [--url <root>] [--sha <commit>] [--subgraph <id>]…`
    asks the root URL and every document address, and prints the message;

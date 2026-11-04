@@ -5,18 +5,14 @@
  * @module bootstrap-tools/scripts/validate-bootstrap
  * @covers schemas, models — bootstrap's declared documents, read through the Zod their published JSON Schemas are generated from
  *
- * Owner, 2026-09-29 (bean `81tw`): *"need Zod usage in bootstrap tools as part
- * of validation in rendering pipeline"*.
- *
- * ## Why this is not the same gate as `bootstrap:schemas:check`
+ * ## Why this is not the same gate as `schemas:check`
  *
  * That gate asks whether the published JSON Schemas still match the Zod they
  * are generated from — it judges the SCHEMAS. Nothing judged the DOCUMENTS
  * those schemas describe: `bootstrap/models/models.json` could drift out of
  * `ModelRegistrySchema` and every gate would stay green, because the one reader
  * that parses it (`parseModelRegistry`) runs only when a model is chosen. So
- * this runs in the same CI step, after the generator, and parses each document
- * bootstrap actually carries.
+ * this parses each document bootstrap actually carries, after the generator.
  *
  * ## Which documents, and the three states
  *
@@ -28,32 +24,25 @@
  * - every `.json` under bootstrap whose top-level `$schema` names one of the
  *   two discussion `$id`s — `DiscussionInputSchema` / `DiscussionOutputSchema`.
  *   Discovered by what the file SAYS it is, never by filename. Zero is a
- *   determined answer today (no producer exists, measured 2026-09-21), and is
- *   reported as a count rather than as a pass over nothing. The `$schema` key
- *   is removed before parsing, because both forms of the schema are strict and
- *   would reject the very key the file was found by — a tension `z634` did not
- *   have to face while nothing produced these documents, and one to settle
- *   when something does.
+ *   determined answer (no producer exists yet), and is reported as a count
+ *   rather than as a pass over nothing. The `$schema` key is removed before
+ *   parsing, because both forms of the schema are strict and would reject the
+ *   very key the file was found by — a tension to settle once something
+ *   produces these documents.
  *
  * ## What it does NOT validate, and why
  *
- * Nothing it can reach, since 2026-09-30. The GRAPH document,
- * `bootstrap.jsonld`, was the gap: its Zod lived in a harness, which these
- * tools may not import. It is now written here (`export-graph.ts`, shape
- * `GraphExportSchema`, bean `xsqm`), so it is BUILT in memory and parsed like
- * the rest. It is built rather than read because it is never committed; the
- * site build writes it.
+ * Nothing it can reach. The GRAPH document, `bootstrap.jsonld`, is never
+ * committed (the site build writes it), so it is BUILT in memory
+ * (`export-graph.ts`, shape `GraphExportSchema`) and parsed like the rest.
  *
  * A document that cannot be read or parsed as JSON is a FAILURE, not a skip,
  * and a run that found no document at all exits non-zero — a validator over
  * nothing reports clean over exactly what it exists to guard.
  *
- * Ported onto main's bootstrap-tools from PR #1514 (bean `81tw`, superseded
- * by `xsqm`).
- *
  * Usage:
- *   bun run bootstrap:validate                  # validate the bootstrap beside these tools
- *   bun run bootstrap:validate --root <dir>     # ...or the bootstrap checkout at <dir>
+ *   bun run validate                    # validate the bootstrap beside these tools
+ *   bun run validate -- --root <dir>    # ...or the bootstrap checkout at <dir>
  */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";

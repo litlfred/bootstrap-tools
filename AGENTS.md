@@ -4,13 +4,13 @@ What this toolset *is* is [`README.md`](README.md). Three rules govern work here
 
 ## 1. Nothing you add here may make `bootstrap` need a tool
 
-Bootstrap promises an agent that it needs nothing installed: *"a file you read, not something you run"*. So the direction is one-way: **bootstrap-tools reads and writes bootstrap; bootstrap never imports from here.** A change that would put an import, a dependency, a `package.json` or a build step into `bootstrap/` is the wrong change. The owner: *"bootstrap should not know zod at all."*
+Bootstrap promises an agent that it needs nothing installed: *"a file you read, not something you run"*. So the direction is one-way: **bootstrap-tools reads and writes bootstrap; bootstrap never imports from here.** A change that would put an import, a dependency, a `package.json` or a build step into `bootstrap/` is the wrong change: bootstrap does not know Zod at all.
 
 ## 2. Nothing here may import above bootstrap
 
-bootstrap-tools depends on bootstrap, on `zod`, on `liquidjs` (the README templates), on `@playwright/test` and `bpmn-js` (to draw a Process), and on the runtime, and on nothing else (owner, 2026-09-29). `bun run check:tools-closure` fails on any import that leaves this directory or names another package; tests may also use `bun:test` and `ajv`. When you need something from a harness, move the small piece down, or have the harness call this toolset instead.
+bootstrap-tools depends on bootstrap, on `zod`, on `liquidjs` (the README templates), on `@playwright/test` and `bpmn-js` (to draw a Process), and on the runtime, and on nothing else. `bun run check:closure` fails on any import that leaves this directory or names another package; tests may also use `bun:test` and `ajv`. When you need something from a harness, move the small piece down, or have the harness call this toolset instead.
 
-The outside libraries this toolset imports are recorded, but not here. cat-harness-tools holds them as `software-library` nodes under `libraries/held/bootstrap-tools/`, keyed by `layer: "bootstrap-tools"`, because the kind is cat-harness's and this toolset may not name it (owner, 2026-10-30, #44). Do not add a `libraries/` here. After a dependency change, the next re-pin of this toolset in cat-harness-tools runs `libraries:derive`.
+The outside libraries this toolset imports are recorded, but not here. cat-harness-tools holds them as `software-library` nodes under `libraries/held/bootstrap-tools/`, keyed by `layer: "bootstrap-tools"`, because the kind is cat-harness's and this toolset may not name it. Do not add a `libraries/` here. After a dependency change, the next re-pin of this toolset in cat-harness-tools runs `libraries:derive`.
 
 ## 3. A generated schema is a published contract
 
@@ -21,13 +21,13 @@ The JSON Schemas in `bootstrap/schemas/` are generated from `schemas/*.ts` and p
 
 A published node's identifier must be its file's path under the release address; `bun run check:node-iris` fails otherwise.
 
-After a change here: `bun run bootstrap:schemas`, then `bun test bootstrap-tools`. The `--check` twins are in the gate set.
+After a change here: `bun run schemas`, then `bun test .`. The `--check` twins are in the gate set.
 
 ## Running a tool as a process step
 
-Each script is a step an agent can perform in a process lane: the agent runs it, reads its output, and reports. Nothing here requires a CI service; a GitHub Actions workflow may be described but is not enabled unless the owner asks (owner, 2026-09-29: *"assume primarily agentic"*, and no paid runs without an explicit request).
+Each script is a step an agent can perform in a process lane: the agent runs it, reads its output, and reports. Nothing here requires a CI service. A GitHub Actions workflow may be described, but is not enabled, and nothing runs that is billed, unless the owner asks.
 
-Which lane runs what — the lanes are the roles of the hosting harness's `kg-separation.bpmn` while the pair is staged, and of the content repository's own review once it is not:
+Which lane runs what:
 
 | step | command (from this directory) | lane | fails when |
 |---|---|---|---|
@@ -42,15 +42,15 @@ Which lane runs what — the lanes are the roles of the hosting harness's `kg-se
 | unit tests | `bun test .` | build pipeline | any fails |
 | status of a push to GitHub Pages, and its message | `bun run pages:status -- --root <instance> [--url <root>] [--sha <commit>]` | Site Publisher (`processes/render-kg-to-github-pages.bpmn`) | exit 1 not pushed, 3 could not determine |
 
-The last row is a step of this toolset's own Process, not of the hosting harness's: `render-kg-to-github-pages.bpmn`, with its Skill and Roles here, renders a Knowledge Graph (or a list of its Subgraphs) to GitHub Pages at a publication root URL. A harness above may name it as one way of publishing; nothing here names that harness.
+The last row is a step of this toolset's own Process, `processes/render-kg-to-github-pages.bpmn`, whose Skill and Roles are here: it renders a Knowledge Graph (or a list of its Subgraphs) to GitHub Pages at a publication root URL. A harness above may name it as one way of publishing; nothing here names that harness.
 
 A step that fails is reported with its output and the command to reproduce it; the agent does not "fix" a check by editing what the check reads unless that is the change under review.
 
 ## CI — the README checks are enabled; the rest is described
 
-Owner, 2026-10-01: *"each repo owns its README"* — no hosting harness regenerates or checks it any more, so each repository's own CI fails when its README is stale. Here that is `.github/workflows/check.yml`: this repository's READMEs, checked with bootstrap-tools standing alone, because their output must not depend on what sits beside them (a term outside bootstrap links to bootstrap's published schema page, never to a sibling path). bootstrap's READMEs and schemas are checked from here too, by `.github/workflows/check-bootstrap.yml`, with bootstrap checked out beside the tools: bootstrap carries no workflow, because one would name this toolset (owner, 2026-10-02). It runs on a schedule, by hand, and after each publish of bootstrap's site, never on a bootstrap PR.
+Each repository's own CI fails when its README is stale. Here that is `.github/workflows/check.yml`: this repository's READMEs, checked with bootstrap-tools standing alone, because their output must not depend on what sits beside them (a term outside bootstrap links to bootstrap's published schema page, never to a sibling path). bootstrap carries no workflow, because one would name this toolset, so its READMEs and schemas are checked from here, by `.github/workflows/check-bootstrap.yml`, with bootstrap checked out beside the tools. It runs on a schedule and by hand, never on a bootstrap push or PR. `.github/workflows/harness-pr-checks.yml` runs the hosting harness's shared layer checks on every PR here.
 
-The fuller check below is still only described. When the owner asks for it, this is the whole of it: one more job in `check-bootstrap.yml`, calling the tools at a pinned version. It is written here rather than committed so that nothing more runs, and nothing more is billed, until someone decides it should.
+The fuller check of bootstrap below is only described. When the owner asks for it, this is the whole of it: one more job in `check-bootstrap.yml`, calling the tools at a pinned version. It is not committed, so nothing more runs or is billed until someone decides it should.
 
 ```yaml
 # litlfred/bootstrap-tools — a further job for check-bootstrap.yml (NOT ENABLED)
@@ -71,9 +71,9 @@ jobs:
             && bun run check:concepts && bun run readmes:check && bun test .
 ```
 
-The tools are checked out at a **tag**, never a branch: a content check that changes under the content without a commit to it cannot be reproduced. Rendering the diagrams needs a browser and is left to the agent's run, not this workflow, until someone asks.
+The tools are checked out at a **tag**, never a branch: a content check that changes under the content without a commit to it cannot be reproduced. Rendering the diagrams needs a browser and is left to the agent's run, not this workflow.
 
-No npm package is published either: `package.json` is `"private": true`. The parent consumes the tools by path while the pair is staged, and a published package is a decision for the first release (`kg-separation` stage 12).
+No npm package is published: `package.json` is `"private": true` until the first release.
 
 ## The skills this layer publishes
 

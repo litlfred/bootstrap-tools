@@ -11,9 +11,7 @@
  *
  * A reader that lists every process of a Knowledge Graph, or wants "every
  * node of `processes/`", should need one fetch per subgraph, not the whole
- * graph document and a filter. Without these files bootstrap's processes and
- * this toolset's could not be listed that way at all: the instance's graph
- * was one document, and no subgraph was addressable.
+ * graph document and a filter.
  *
  * ## The files
  *

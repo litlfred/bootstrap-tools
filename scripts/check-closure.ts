@@ -7,12 +7,8 @@
  *
  * bootstrap-tools exists to be released and run without anything above
  * bootstrap: its Zod is bootstrap's contract, and a bootstrap release must not
- * wait on a harness (owner, 2026-09-29, bean `xsqm`). Before it was re-created,
- * the same code reached 19 files / 11,577 lines of the harness above it through three
- * imports nobody had looked at (measured). A boundary nothing checks is the
- * boundary that erodes first: every gate in this repository that guarded a
- * boundary without failing on a planted violation turned out not to guard it
- * (`4j3h`, `q2wn`, `p11x`), so this one is tested with planted violations too.
+ * wait on a harness. A boundary nothing checks is the boundary that erodes
+ * first, so this gate is tested with planted violations.
  *
  * ## The rule
  *
@@ -21,15 +17,14 @@
  * - a BARE import must be `zod`, `liquidjs`, `@playwright/test`, a `node:`
  *   builtin, or — in a test file only — `bun:test` or `ajv`. `liquidjs` is the
  *   README writers' template engine and Playwright drives the Chromium that
- *   draws a Process (Phase 2 of bean `xsqm`: the owner ruled one copy of the
- *   writers, here, and allowed both as dependencies). bpmn-js is loaded into
- *   that browser as a file, never imported.
+ *   draws a Process. bpmn-js is loaded into that browser as a file, never
+ *   imported.
  *
  * Imports are read with comments and string literals of other statements
  * stripped, so a docblock that quotes an import is not one.
  *
  * ```sh
- * bun run check:tools-closure
+ * bun run check:closure
  * ```
  *
  * ## One walker: the transitive resolver the gate and a mount share
@@ -39,11 +34,9 @@
  * gate is one caller (every file of the package, followed only inside it);
  * a remote mount that brings a chosen Tool is another (its definition and
  * implementation, followed across the mounted instances); the staging cone is
- * a third. Owner, 2026-10-24 (bean `mo75` G3,
- * https://github.com/litlfred/cat-harness-tools/issues/744): *one*
- * closure walker, refactored out of this gate, rather than a second one
- * written beside it — two walkers are two answers to "what does this code
- * load", and the one a gate does not exercise is the one that drifts.
+ * a third. There is one walker, not one per caller: two walkers are two
+ * answers to "what does this code load", and the one a gate does not exercise
+ * is the one that drifts.
  *
  * The walker reads through a {@link ClosureHost}, so a caller can walk a tree
  * it has not checked out (a remote mount reads the pin), and it never decides

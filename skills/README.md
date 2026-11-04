@@ -7,7 +7,7 @@ generated: "scripts/subgraph-readmes.ts of the bootstrap toolset (https://github
 
 # The toolset's skills
 
-The skills this toolset owns: `bootstrap-contract-semver`, what MAJOR, MINOR and PATCH mean for bootstrap's published schemas and why the bump is computed from a diff; and `render-kg-to-github-pages`, rendering a [Knowledge Graph](https://litlfred.github.io/bootstrap/schemas/#knowledge-graph) (or a list of its [Subgraphs](https://litlfred.github.io/bootstrap/schemas/#subgraph)) to GitHub Pages at a publication root URL and reporting the push's status with one message.
+The skills this toolset owns: `bootstrap-contract-semver`, what MAJOR, MINOR and PATCH mean for bootstrap's published schemas and why the bump is computed from a diff; `render-kg-to-github-pages`, rendering a [Knowledge Graph](https://litlfred.github.io/bootstrap/schemas/#knowledge-graph) (or a list of its [Subgraphs](https://litlfred.github.io/bootstrap/schemas/#subgraph)) to GitHub Pages at a publication root URL and reporting the push's status with one message; and `github-pages`, the contract the host keeps.
 
 Part of [Bootstrap tools](../README.md) 0.1.0, declared as `bootstrap-tools-skills`, holding `skills`.
 

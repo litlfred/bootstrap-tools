@@ -4,10 +4,8 @@
  *
  * @module bootstrap-tools/scripts/schema-semver
  *
- * Owner, 2026-09-29 (bean `81tw`), choosing "bootstrap contract semver": the
- * bump is COMPUTED by the pipeline from the generated schemas, in the spirit of
- * the instance-versioning proposal: *"a version bump COMPUTED by diffing the exported
- * graph rather than asserted"*. The rules are the skill
+ * The bump is COMPUTED from the generated schemas, never asserted. The rules
+ * are the skill
  * `bootstrap-contract-semver`; this is those rules as code.
  *
  * ## The question is "does anything that validated before now fail?"
@@ -36,12 +34,9 @@
  * reading this script exists to prevent.
  *
  * Usage:
- *   bun run bootstrap:semver                 # against origin/main
- *   bun run bootstrap:semver --base <ref>    # against any commit-ish
- *   bun run bootstrap:semver --root <dir>    # the bootstrap checkout at <dir>
- *
- * Ported onto main's bootstrap-tools from PR #1514 (bean `81tw`, superseded
- * by `xsqm`).
+ *   bun run semver                     # against origin/main
+ *   bun run semver -- --base <ref>     # against any commit-ish
+ *   bun run semver -- --root <dir>     # the bootstrap checkout at <dir>
  */
 import { spawnSync } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";

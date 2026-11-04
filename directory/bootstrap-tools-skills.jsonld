@@ -8,7 +8,7 @@
       "@type": "bootstrap:Subgraph",
       "label": "bootstrap-tools-skills",
       "title": "The toolset's skills",
-      "description": "The skills this toolset owns: `bootstrap-contract-semver`, what MAJOR, MINOR and PATCH mean for bootstrap's published schemas and why the bump is computed from a diff; and `render-kg-to-github-pages`, rendering a Knowledge Graph (or a list of its Subgraphs) to GitHub Pages at a publication root URL and reporting the push's status with one message.",
+      "description": "The skills this toolset owns: `bootstrap-contract-semver`, what MAJOR, MINOR and PATCH mean for bootstrap's published schemas and why the bump is computed from a diff; `render-kg-to-github-pages`, rendering a Knowledge Graph (or a list of its Subgraphs) to GitHub Pages at a publication root URL and reporting the push's status with one message; and `github-pages`, the contract the host keeps.",
       "type": [
         "bootstrap:graphTypology/skills"
       ],

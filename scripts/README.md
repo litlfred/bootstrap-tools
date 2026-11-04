@@ -7,7 +7,7 @@ generated: "scripts/subgraph-readmes.ts of the bootstrap toolset (https://github
 
 # The tools
 
-The schema generator and drawn schema page, the README writers (each directory's README, and the `kg:processes` and `kg:files` sections) with their Liquid templates, the [Process](https://litlfred.github.io/bootstrap/schemas/#process) renderer, the release-IRI sync, the term linker, and the checks: import closure, node identifiers, bootstrap's concepts, bootstrap's documents parsed against their Zod (`bootstrap:validate`), and the semver bump the published schemas require, computed from a diff (`bootstrap:semver`).
+The schema generator and drawn schema page; the vocabulary, graph and named-subgraph exporters; the README writers (each directory's README, the `kg:processes`, `kg:files`, `kg:roles` and `kg:toc` sections, and the one-page README book) with their Liquid templates; the [Process](https://litlfred.github.io/bootstrap/schemas/#process) renderer; the site stager, publisher and push status; initialization; the release-IRI sync and the term linker; and the checks: import closure, node identifiers, bootstrap's concepts, bootstrap's documents parsed against their Zod (`validate`), and the semver bump the published schemas require, computed from a diff (`semver`).
 
 Part of [Bootstrap tools](../README.md) 0.1.0, declared as `bootstrap-tools-scripts`, holding `code`.
 

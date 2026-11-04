@@ -7,11 +7,8 @@
  * @covers code
  *
  * The last step of `processes/render-kg-to-github-pages.bpmn` (skill
- * `render-kg-to-github-pages`). The other steps already had their tools —
- * `site.ts` stages, `readme-book.ts --check` checks the page, the Pages
- * workflow commits the site onto `gh-pages`, `init.ts` checks the address —
- * and nothing said, in ONE answer a caller can act on, whether the push
- * landed. This is that answer, and it runs nothing new: it stages with
+ * `render-kg-to-github-pages`): ONE answer a caller can act on, whether the
+ * push landed. It runs nothing new: it stages with
  * `stageSite` (the QA of what was pushed), asks the publication root URL and
  * each document address with `httpAnswer` (the QA of what is served), and
  * names the commit.
