@@ -8,18 +8,9 @@
  * @covers code
  * @conformsTo w3c-prov-o
  *
- * ## Why here, and not a harness's `kg-export`
- *
- * Owner, 2026-09-30 (bean `xsqm`): *"bootstrap.jsonld, should be in
- * bootstrap-tools"*. Until then a harness's general exporter wrote it
- * (`kg-export --instance ./bootstrap`, a 24k-line import cone), and every
- * property in it was the harness's (`partOf`, `inSubgraph`, `relaxable`,
- * `touchesWorkPlan` …) — bootstrap's own graph described in the vocabulary of
- * the layer above it. Now the content's tools write the content's graph.
- *
  * ## Vocabulary — pre-existing standards first
  *
- * Owner, 2026-09-30: *"emphasize pre-existing standards"*. Classes are
+ * Classes are
  * bootstrap's (`bootstrap/ns.jsonld`, exactly its defined terms). Every
  * property is a published standard's, or one of bootstrap's own diagram
  * extensions; none is minted for this document:
@@ -61,13 +52,13 @@
  * `globalScriptTask`, `globalManualTask`, `globalBusinessRuleTask`) is a root
  * element of `<bpmn:definitions>`, outside every process, which a call
  * activity names by its bare id in `calledElement` exactly as it names a
- * process (owner, 2026-10-20, "a1 b1 c1": one shared `.bpmn` per layer that
- * holds no process, a bare id, sharing within one layer). Each is a
+ * process (one shared `.bpmn` per layer that holds no process; a bare id;
+ * shared only within its layer). Each is a
  * `bootstrap:Task` node, `#globalTask/<id>`, whose `type` is its BPMN kind
  * and whose `requires` is the Skill its extension names, so the Skill is
  * named once, on the task, and never copied onto its callers. A call
  * resolves to a process first, then to a global task; a call to neither is
- * a problem, as before.
+ * a problem.
  *
  * ## The vocabulary is always bootstrap's
  *
@@ -83,14 +74,11 @@
  * A subject is `<doc dir>/<kind>/<id>`, not a `#fragment` of this document:
  * `skill/<name>`, `process/<id>`, `process/<id>/node/<id>`, `globalTask/<id>`,
  * `role/<id>`, `directory/<id>`, `asset/<id>`. A sequence flow stays a
- * fragment of its process's page, `process/<id>#flow/<id>`. This is the rule
- * the layers above write for their own subjects (their skill `kg-export.md`,
- * "Subject IRIs — a path, not a `#fragment`").
+ * fragment of its process's page, `process/<id>#flow/<id>`.
  *
  * {@link subjectDocuments} gives each subject its own `<kind>/<id>.jsonld` and
  * `<kind>/<id>.html` beside the document, so the bare IRI dereferences on
- * GitHub Pages. Nothing forwards an old `<doc>#<kind>/<id>` fragment: a clean
- * break (the slash-IRI decision, owner, 2026-11-02).
+ * GitHub Pages. No `<doc>#<kind>/<id>` fragment is forwarded.
  *
  * ## Pure unless asked
  *

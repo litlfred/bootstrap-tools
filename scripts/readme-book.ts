@@ -6,12 +6,9 @@
  * @module bootstrap-tools/scripts/readme-book
  * @covers code
  *
- * Owner, 2026-09-30: *"it should render main and all the subdir READMEs as one
- * large doc w/ TOC"*. It is the `README.html` of the site `site.ts` stages
- * (owner, 2026-10-01: the README page lands at `<root>/README.html`, and the
- * root's `index.html` redirects to it), so a person landing at the site
- * address reads the whole of the repository's
- * prose in one place, with nothing to click through to find the next part.
+ * It is the `README.html` of the site `site.ts` stages (the root's
+ * `index.html` redirects to it), so a person landing at the site address
+ * reads the whole of the repository's prose in one place.
  *
  * What changes on the way in, and why each is needed for the page to work:
  *

@@ -1,8 +1,7 @@
 /**
  * Link every defined term in a piece of Markdown prose to its definition.
  *
- * Owner, 2026-09-29: *"terms in readme like Skills, Process, Role, etc should
- * be links in README.md s"*. A capitalized defined term is a link wherever it
+ * A capitalized defined term is a link wherever it
  * appears in prose, not only at its first use, so a reader landing mid-page
  * can still reach the definition in one click.
  *
@@ -19,7 +18,7 @@
  * Pure: text in, text out. Callers decide where each term's link goes,
  * because the right relative path depends on where the README is.
  *
- * @module content/pipeline/term-links
+ * @module bootstrap-tools/scripts/term-links
  */
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";

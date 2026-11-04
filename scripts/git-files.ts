@@ -4,9 +4,9 @@
  *
  * @module bootstrap-tools/scripts/git-files
  *
- * The same rule a harness applies to its git corpus, restated here in a dozen lines
- * rather than imported, because importing it reached the harness (bean
- * `xsqm`: bootstrap-tools depends on bootstrap and nothing above it).
+ * The same rule a harness applies to its git corpus, restated here in a dozen
+ * lines rather than imported, because bootstrap-tools depends on bootstrap and
+ * nothing above it.
  *
  * Two answers that must not collapse: `undefined` means git could not answer
  * (not a work tree, no git) and the caller falls back or reports "could not

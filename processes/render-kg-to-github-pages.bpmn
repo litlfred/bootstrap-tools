@@ -14,15 +14,15 @@
     <bpmn:participant id="Participant_Process_RenderKgToGitHubPages" name="Render a Knowledge Graph to GitHub Pages" processRef="Process_RenderKgToGitHubPages"/>
   </bpmn:collaboration>
   <bpmn:process id="Process_RenderKgToGitHubPages" name="Render a Knowledge Graph to GitHub Pages" isExecutable="false">
-    <bpmn:documentation>Render a Knowledge Graph — the whole of it, or a list of its Subgraphs — to GitHub Pages at a publication root URL, and report the push: a STATUS (pushed, not pushed, could not determine) and one MESSAGE carrying the deployed commit and the QA result. Owner, 2026-09-30: "render content of a KG (or list of subgraphs within) for publication to a CDN at a given publication root URL … independent of staging vs publication … just rendering … output is status of push to CDN + message", and "the rendering bpmn is ok in bootstrap-tools … so 'render KG to githubpages' works and self described".
+    <bpmn:documentation>Render a Knowledge Graph — the whole of it, or a list of its Subgraphs — to GitHub Pages at a publication root URL, and report the push: a STATUS (pushed, not pushed, could not determine) and one MESSAGE carrying the deployed commit and the QA result.
 
 STAGING AND RELEASE ARE THE SAME PROCESS. A preview is this with a root under the release root; a release is this with the release root. What differs between them — who may start it, what must be reviewed first, what else lives on the same host — belongs to whatever calls this, never in here.
 
-EVERY STEP IS ONE OF THESE TOOLS: site.ts stages, site.ts --check and readme-book.ts --check check the staging, the instance's Pages workflow deploys, pages-status.ts checks what is served and writes the message. The skill render-kg-to-github-pages has each command.
+EVERY STEP IS ONE OF THESE TOOLS: site.ts stages, site.ts --check and readme-book.ts --check check the staging, publish-site.ts deploys, pages-status.ts checks what is served and writes the message. The skill render-kg-to-github-pages has each command.
 
 THREE STATES, NOT TWO. A check that could not look (a 403 from a proxy, no network) is could-not-determine, and never reported as pushed.
 
-NO work-plan element on any activity, and isExecutable is false: this is bootstrap-tools' own diagram, in bootstrap's diagram vocabulary, and bootstrap's diagrams carry no work plan.</bpmn:documentation>
+isExecutable is false and no activity carries a work-plan element: this diagram is in bootstrap's diagram vocabulary, which has none.</bpmn:documentation>
     <bpmn:laneSet id="LaneSet_Process_RenderKgToGitHubPages">
       <bpmn:lane id="Lane_SitePublisher" name="Site Publisher" partitionElementRef="site-publisher">
         <bpmn:documentation>An agent running these tools, or a Pages workflow running the same commands. It never reports a push it did not check.</bpmn:documentation>
@@ -52,7 +52,7 @@ NO work-plan element on any activity, and isExecutable is false: this is bootstr
     </bpmn:task>
 
     <bpmn:task id="A_Provision" name="Make sure gh-pages exists and Pages serves it">
-      <bpmn:documentation>Provisioning the target, owned by this Tool's subprocess rather than by the general step (owner, 2026-10-01: "need to create gh-pages branch before can turn on"). In order: (1) an orphan gh-pages branch exists — git ls-remote --heads origin gh-pages; if absent, push a placeholder (index.html + .nojekyll); (2) Pages is on, Source = the gh-pages branch at / — gh api -X POST repos/&lt;o&gt;/&lt;r&gt;/pages -f source[branch]=gh-pages -f source[path]=/ when gh is signed in, otherwise the exact manual step (Settings → Pages → Deploy from a branch → gh-pages, / (root)). Each half is done, not done, or could not be determined; never assumed.</bpmn:documentation>
+      <bpmn:documentation>Provisioning the target, owned by this process rather than by the publication step that calls it. Pages cannot serve a branch that does not exist, so in order: (1) an orphan gh-pages branch exists — git ls-remote --heads origin gh-pages; if absent, push a placeholder (index.html + .nojekyll); (2) Pages is on, Source = the gh-pages branch at / — gh api -X POST repos/&lt;o&gt;/&lt;r&gt;/pages -f source[branch]=gh-pages -f source[path]=/ when gh is signed in, otherwise the exact manual step (Settings → Pages → Deploy from a branch → gh-pages, / (root)). Each half is done, not done, or could not be determined; never assumed.</bpmn:documentation>
       <bpmn:extensionElements><bootstrap.processes:skill ref="render-kg-to-github-pages"/></bpmn:extensionElements>
     </bpmn:task>
 
@@ -69,7 +69,7 @@ NO work-plan element on any activity, and isExecutable is false: this is bootstr
     <bpmn:exclusiveGateway id="GW_Staged" name="Staged tree passes?"/>
 
     <bpmn:task id="A_Deploy" name="Deploy the rendering">
-      <bpmn:documentation>Commit the staged tree onto gh-pages as a full replace (the instance's Pages workflow on a push to main, or by hand); GitHub Pages then builds it from the branch. Rebuild and retry on a rejected push; never rebase the branch. The gh-pages commit SHA is the message the report names.</bpmn:documentation>
+      <bpmn:documentation>publish-site.ts commits the staged tree onto gh-pages as a full replace (run by the instance's Pages workflow on a push to main, or by an agent with its own git credentials); GitHub Pages then builds it from the branch. Rebuild and retry on a rejected push; never rebase the branch. The report names the gh-pages commit SHA.</bpmn:documentation>
       <bpmn:extensionElements><bootstrap.processes:skill ref="render-kg-to-github-pages"/></bpmn:extensionElements>
     </bpmn:task>
 

@@ -7,10 +7,7 @@
  * @module bootstrap-tools/scripts/init
  * @covers code
  *
- * Owner, 2026-09-30: *"bootstrap tools on init should create ghpages if tools
- * available"*, and *"then dispatch agent to try to make sure all initialize
- * steps are done … to try to move through initialization steps as named by
- * the harness(es)"*. This is the tool half. The process half is bootstrap's
+ * This is the tool half. The process half is bootstrap's
  * `processes/complete-initialization.bpmn`, with the skills
  * `initialization-steps` and `publish-site`: an agent following it may run
  * this command where tools are available, and does the same steps by reading
@@ -26,21 +23,20 @@
  * |---|---|---|
  * | `declaration` | the file itself: `<name>.json` parses | no |
  * | `needs:<name>` | `needs` — the dependency is beside it, and parses | no |
- * | `instructions:<name>` | FR-4 — `<name>/docs/bootstrap/initialization.md`, when the dependency has one | no: *stated* |
+ * | `instructions:<name>` | `<name>/docs/bootstrap/initialization.md`, when the dependency has one | no: *stated* |
  * | `schemas:staged` | each JSON Schema `$id` and JSON-LD `@id` under `iriBase` — PRIMARY | checked: the site stages each at its IRI |
  * | `schemas:published` | the same IRIs — PRIMARY | no: the Pages workflow publishes them; this checks they answer |
  * | `directory:<id>` | `directories[]` — the path exists | no |
  * | `asset:<id>` | `assets[]` — the file exists | no |
- * | `readme` | FR-8 — the root has a `README.md` | no |
+ * | `readme` | the root has a `README.md` | no |
  * | `readme-sections` | the README's own markers — every opted-in section is current | yes |
  * | `site:workflow` | `repository` — a workflow commits the site onto gh-pages: the instance's own, or one in this toolset that checks it out | no |
- * | `site:branch` | `repository` — a gh-pages branch exists (2026-10-01: it must, before Pages can be on) | no: says how |
+ * | `site:branch` | `repository` — a gh-pages branch exists (it must, before Pages can be on) | no: says how |
  * | `site:enabled` | `repository` — Pages is on, serving gh-pages | yes, with `gh`, once the branch exists |
  * | `site:live` | `iriBase`, else the Pages address — the address answers, and so does its `README.html` | no |
  *
  * The two `schemas:` steps come first after the declarations are read, and
- * lead the printed summary: owner, 2026-09-30, *"json(ld) is primary step in
- * initializing KG harness"*. The site is the vehicle, the documents at their
+ * lead the printed summary: the site is the vehicle, the documents at their
  * addresses the goal. A 404 is `not-done`; a 403, 407, 5xx or no answer is
  * `could-not-determine` ({@link httpAnswer}).
  *

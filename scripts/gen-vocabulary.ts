@@ -10,20 +10,15 @@
  * ## Why this exists
  *
  * Every IRI bootstrap's files mint in its namespace (`<iriBase>v<major>/ns/…`)
- * must dereference to a definition. Until 2026-09-30 the document at that
- * address was produced by a harness (`ns-export --layer bootstrap`), and it
- * held what the HARNESS minted under bootstrap's prefix: 18 IRIs, 9 of them no
- * bootstrap term (`Directory`, `KGraph`, seven `*Graph` classes,
- * `performerVaries`), while 13 of bootstrap's 22 terms had no IRI at all.
- * Owner, 2026-09-30 (bean `xsqm`): the vocabulary is exactly bootstrap's
- * terms, and bootstrap-tools generates it — so a content repository's
+ * must dereference to a definition. The vocabulary is exactly bootstrap's
+ * terms, and bootstrap-tools generates it, so a content repository's
  * vocabulary never waits on, or says what, a harness says.
  *
  * ## What it holds
  *
  * RDFS and SKOS both, as published vocabularies do: `rdfs:label`/`rdfs:comment`
  * for a reader arriving by RDFS, `skos:prefLabel`/`skos:definition` for one
- * arriving by SKOS — the same text at both, which the harness's tests hold.
+ * arriving by SKOS — the same text at both.
  *
  * - Each of `BOOTSTRAP_TERMS`, in order, as `rdfs:Class` + `skos:Concept`:
  *   its definition, what it uses (`dcterms:requires`, from

@@ -12,13 +12,11 @@ tested-by:
 
 # GitHub Pages' contract
 
-**A host plays a Role, and this is the Role's contract** (owner, 2026-10-16:
-roles played by mechanical Actors "each [have] a contract (responsibilities)
-that it must perform … those are the skills it can perform … (and can be tested
-against)"). It decides nothing. What it must do is below.
+**A host plays a Role, and this is the Role's contract**: what it must do,
+and what it is tested against. It decides nothing.
 [`pages-status`](../scripts/pages-status.ts) is the test: it asks the
 publication root URL and each document address, and reports `pushed`,
-`not-pushed` or could-not-determine.
+`not-pushed` or `could-not-determine`.
 
 It sits in the `GitHub Pages` lane of
 [`render-kg-to-github-pages`](../processes/render-kg-to-github-pages.bpmn). The
