@@ -20,9 +20,9 @@
  *
  * Two narrower replaces, for a branch that holds more than one site:
  *
- *   --into STAGING/<branch>   replace ONLY that subtree; everything else on the
+ *   --into branches/<branch>   replace ONLY that subtree; everything else on the
  *                             branch stays (a preview never touches the root)
- *   --keep STAGING --keep branches
+ *   --keep branches/ --keep branches
  *                             a full replace that keeps these top-level paths
  *                             (the root publish never deletes the previews)
  *
@@ -76,8 +76,8 @@ function git(cwd: string, ...args: string[]): { ok: boolean; out: string } {
  *
  * A branch that holds many sites is mostly what a publish KEEPS: on
  * litlfred/smart-ra, gh-pages held about 690,000 files, nearly all of them
- * STAGING/ previews, and checking them all out filled a runner's disk ("could
- * not clone gh-pages: unable to write file STAGING/…", run 41411973742). Kept
+ * branches/ previews, and checking them all out filled a runner's disk ("could
+ * not clone gh-pages: unable to write file branches/…", run 41411973742). Kept
  * paths are never read or written here, so they are never checked out: git
  * leaves files outside the sparse patterns as they are in the commit, and
  * `add -A` does not stage them as deleted.
