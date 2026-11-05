@@ -71,6 +71,7 @@ export function readKnowledgeGraphDeclaration(dir: string): KnowledgeGraphDeclar
  * rebuilt (bean fwtz, 2026-11-01). The same list as `NOT_INSTANCE_DIRS` in
  * https://github.com/litlfred/cat-harness-tools (scripts/); this layer may not import it.
  */
+// input-site: inert #29752765 — the build-output directories instance discovery leaves out; it reads none of them
 export const BUILD_OUTPUT_DIRS: readonly string[] = ["build", "_kg", "_site", "dist"];
 
 export function knowledgeGraphsIn(repoRoot: string): { root: string; decl: KnowledgeGraphDeclaration }[] {
