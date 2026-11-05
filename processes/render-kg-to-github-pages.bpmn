@@ -16,7 +16,7 @@
   <bpmn:process id="Process_RenderKgToGitHubPages" name="Render a Knowledge Graph to GitHub Pages" isExecutable="false">
     <bpmn:documentation>Render a Knowledge Graph — the whole of it, or a list of its Subgraphs — to GitHub Pages at a publication root URL, and report the push: a STATUS (pushed, not pushed, could not determine) and one MESSAGE carrying the deployed commit and the QA result.
 
-STAGING AND RELEASE ARE THE SAME PROCESS. A preview is this with a root under the release root; a release is this with the release root. What differs between them — who may start it, what must be reviewed first, what else lives on the same host — belongs to whatever calls this, never in here.
+branches/ AND RELEASE ARE THE SAME PROCESS. A preview is this with a root under the release root; a release is this with the release root. What differs between them — who may start it, what must be reviewed first, what else lives on the same host — belongs to whatever calls this, never in here.
 
 EVERY STEP IS ONE OF THESE TOOLS: site.ts stages, site.ts --check and readme-book.ts --check check the staging, publish-site.ts deploys, pages-status.ts checks what is served and writes the message. The skill render-kg-to-github-pages has each command.
 
