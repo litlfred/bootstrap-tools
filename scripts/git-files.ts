@@ -20,6 +20,7 @@ import { join } from "node:path";
 
 export function gitFiles(dir: string): string[] | undefined {
   if (!existsSync(dir)) return undefined;
+  // input-site: tree #7e7c88ec — `git ls-files --cached --others --exclude-standard`: the working tree and index under `dir`
   const r = spawnSync("git", ["ls-files", "-z", "--cached", "--others", "--exclude-standard"], {
     cwd: dir,
     encoding: "utf-8",
@@ -47,6 +48,7 @@ export function gitFiles(dir: string): string[] | undefined {
 export function committedFiles(dir: string): { files: string[]; untracked: string[] } | undefined {
   if (!existsSync(dir)) return undefined;
   const run = (args: string[]) =>
+    // input-site: tree #481c0381 — `git ls-files` (`--cached`, then `--others --exclude-standard`): the working tree and index under `dir`
     spawnSync("git", ["ls-files", "-z", ...args], { cwd: dir, encoding: "utf-8", maxBuffer: 64 * 1024 * 1024 });
   const cached = run(["--cached"]);
   const others = run(["--others", "--exclude-standard"]);

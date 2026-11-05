@@ -566,9 +566,11 @@ export function exportGraph(root: string, opts: ExportOptions): Record<string, u
 
   let prov: Record<string, unknown> = {};
   if (opts.provenance) {
+    // input-site: inert #a2a2ce83 — `git rev-parse HEAD` only under `--provenance`, stamped into the graph as prov:wasDerivedFrom; it never reaches the exit code, and no check passes `--provenance`
     const git = (...a: string[]) => spawnSync("git", a, { cwd: root, encoding: "utf-8" });
     const sha = git("rev-parse", "HEAD");
     prov = {
+      // input-site: inert #9c02f284 — the publish timestamp is written into the graph and never reaches the exit code; no check passes `--provenance`
       generatedAtTime: new Date().toISOString(),
       ...(sha.status === 0 ? { wasDerivedFrom: `git:${sha.stdout.trim()}` } : {}),
     };
