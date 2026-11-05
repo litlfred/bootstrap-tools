@@ -32,7 +32,7 @@ The commit is **which bytes are live**: the commit on the `gh-pages` branch
 the site is served from.
 
 **Staging and release are not two processes.** A preview is this process
-with a root under the release root (`…/STAGING/<slug>/`, say) and a release is
+with a root under the release root (`…/branches/<slug>/`, say) and a release is
 it with the release root. Anything that differs between them (who may
 start it, what must be reviewed first) belongs to the process that
 *calls* this one, never in here.
