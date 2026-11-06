@@ -22,6 +22,8 @@ Part of [Bootstrap tools](../README.md) 0.1.0, declared as `bootstrap-tools-scri
 | [`check-node-iris.ts`](check-node-iris.ts) | a file |  |
 | [`export-graph.test.ts`](export-graph.test.ts) | a file |  |
 | [`export-graph.ts`](export-graph.ts) | a file |  |
+| [`gate-own.test.ts`](gate-own.test.ts) | a file |  |
+| [`gate-own.ts`](gate-own.ts) | a file |  |
 | [`gen-bootstrap-schemas.ts`](gen-bootstrap-schemas.ts) | a file |  |
 | [`gen-vocabulary.test.ts`](gen-vocabulary.test.ts) | a file |  |
 | [`gen-vocabulary.ts`](gen-vocabulary.ts) | a file |  |
