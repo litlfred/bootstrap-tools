@@ -3,14 +3,14 @@ Feature: bootstrap's files, published as they sit
   Background:
     Given a temporary bootstrap holding README.md, schemas/x.json, bootstrap.json and a .git directory
 
-  @test:scripts/publish-files.test.ts::every_file_lands_at_its_own_relative_path,_byte_for_byte;_nothing_is_rendered
+  @test:scripts/publish-files.test.ts::publishesFilesVerbatim
   Scenario: every file lands at its own relative path, byte for byte; nothing is rendered
     When its files are published to an empty site directory
     Then the files written are exactly README.md, bootstrap.json and schemas/x.json
     And schemas/x.json holds the same bytes
     And no .html file is written
 
-  @test:scripts/publish-files.test.ts::never_overwrites:_a_file_already_at_the_address_wins,_and_is_REPORTED
+  @test:scripts/publish-files.test.ts::neverOverwritesAndReports
   Scenario: never overwrites: a file already at the address wins, and is REPORTED
     Given a site directory that already holds its own bootstrap.json
     When the files are published to it

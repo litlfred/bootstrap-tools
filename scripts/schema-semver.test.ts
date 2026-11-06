@@ -39,29 +39,29 @@ const edit = (f: (s: Record<string, any>) => void): Record<string, unknown> => {
 };
 
 describe("major — something that validated can now fail", () => {
-  test("a field made required", () => expect(bump(edit((s) => s.required.push("kind")))).toBe("major"));
-  test("a field removed from a closed object", () => expect(bump(edit((s) => delete s.properties.note))).toBe("major"));
-  test("an enum narrowed", () => expect(bump(edit((s) => (s.properties.kind.enum = ["a"])))).toBe("major"));
-  test("a lower bound raised", () => expect(bump(edit((s) => (s.properties.name.minLength = 3)))).toBe("major"));
-  test("a pattern added", () => expect(bump(edit((s) => (s.properties.note.pattern = "^x")))).toBe("major"));
-  test("strictness tightened: additionalProperties: false added", () => {
+  test("fieldMadeRequiredIsMajor", () => expect(bump(edit((s) => s.required.push("kind")))).toBe("major"));
+  test("closedFieldRemovedIsMajor", () => expect(bump(edit((s) => delete s.properties.note))).toBe("major"));
+  test("enumNarrowedIsMajor", () => expect(bump(edit((s) => (s.properties.kind.enum = ["a"])))).toBe("major"));
+  test("lowerBoundRaisedIsMajor", () => expect(bump(edit((s) => (s.properties.name.minLength = 3)))).toBe("major"));
+  test("patternAddedIsMajor", () => expect(bump(edit((s) => (s.properties.note.pattern = "^x")))).toBe("major"));
+  test("strictnessTightenedIsMajor", () => {
     const open = edit((s) => delete s.additionalProperties);
     expect(classify(text(open), text(BASE)).bump).toBe("major");
   });
-  test("a conditional added", () => expect(bump(edit((s) => (s.allOf = [{ if: {}, then: {} }])))).toBe("major"));
-  test("the $id changed", () => expect(bump(edit((s) => (s.$id = "https://example.org/y.schema.json")))).toBe("major"));
-  test("a published schema removed", () => expect(classify(text(BASE), null).bump).toBe("major"));
-  test("an unrecognised keyword changed is graded breaking, not harmless", () =>
+  test("conditionalAddedIsMajor", () => expect(bump(edit((s) => (s.allOf = [{ if: {}, then: {} }])))).toBe("major"));
+  test("idChangedIsMajor", () => expect(bump(edit((s) => (s.$id = "https://example.org/y.schema.json")))).toBe("major"));
+  test("schemaRemovedIsMajor", () => expect(classify(text(BASE), null).bump).toBe("major"));
+  test("unknownKeywordChangeIsMajor", () =>
     expect(bump(edit((s) => (s.properties.note.dependentRequired = { a: ["b"] })))).toBe("major"));
 });
 
 describe("minor — only widens", () => {
-  test("an optional field added", () => expect(bump(edit((s) => (s.properties.extra = { type: "string" })))).toBe("minor"));
-  test("a required field relaxed", () => expect(bump(edit((s) => (s.required = [])))).toBe("minor"));
-  test("an enum widened", () => expect(bump(edit((s) => s.properties.kind.enum.push("c")))).toBe("minor"));
-  test("strictness relaxed", () => expect(bump(edit((s) => delete s.additionalProperties))).toBe("minor"));
-  test("a new schema published", () => expect(classify(null, text(BASE)).bump).toBe("minor"));
-  test("a field added AND made required is major, not minor", () =>
+  test("optionalFieldAddedIsMinor", () => expect(bump(edit((s) => (s.properties.extra = { type: "string" })))).toBe("minor"));
+  test("requiredRelaxedIsMinor", () => expect(bump(edit((s) => (s.required = [])))).toBe("minor"));
+  test("enumWidenedIsMinor", () => expect(bump(edit((s) => s.properties.kind.enum.push("c")))).toBe("minor"));
+  test("strictnessRelaxedIsMinor", () => expect(bump(edit((s) => delete s.additionalProperties))).toBe("minor"));
+  test("schemaPublishedIsMinor", () => expect(classify(null, text(BASE)).bump).toBe("minor"));
+  test("requiredFieldAddedIsMajor", () =>
     expect(
       bump(
         edit((s) => {
@@ -73,30 +73,30 @@ describe("minor — only widens", () => {
 });
 
 describe("patch and none", () => {
-  test("a description rewritten", () => expect(bump(edit((s) => (s.properties.name.description = "The name.")))).toBe("patch"));
-  test("a release IRI moving to the next version is not a change to what validates", () => {
+  test("descriptionRewrittenIsPatch", () => expect(bump(edit((s) => (s.properties.name.description = "The name.")))).toBe("patch"));
+  test("releaseIriBumpIsNone", () => {
     const v1 = edit((s) => (s.$id = "https://example.org/b/0.1.0/x.schema.json"));
     const v2 = edit((s) => (s.$id = "https://example.org/b/0.2.0/x.schema.json"));
     expect(classify(text(v1), text(v2)).bump).toBe("none");
   });
-  test("a release IRI moving from the full version to the major (owner, 2026-10-23) is not a change either", () => {
+  test("releaseIriToMajorIsNone", () => {
     const v1 = edit((s) => (s.$id = "https://example.org/b/0.1.0/x.schema.json"));
     const v2 = edit((s) => (s.$id = "https://example.org/b/v0/x.schema.json"));
     expect(classify(text(v1), text(v2)).bump).toBe("none");
   });
-  test("key order and indentation are not a change", () => {
+  test("keyOrderIsNone", () => {
     const reordered = JSON.stringify(Object.fromEntries(Object.entries(BASE).reverse()));
     expect(classify(text(BASE), reordered).bump).toBe("none");
   });
-  test("the fold takes the highest", () =>
+  test("foldTakesHighest", () =>
     expect(requiredBump([...diffSchema(BASE, edit((s) => (s.title = "Y"))), { bump: "minor", at: "/", why: "x" }])).toBe("minor"));
 });
 
 describe("could not determine — never patch", () => {
-  test("an unreadable base", () => expect(classify({ unreadable: "no such ref" }, text(BASE)).bump).toBe("could not determine"));
-  test("a base that does not parse", () => expect(classify("{ nope", text(BASE)).bump).toBe("could not determine"));
-  test("a head that does not parse", () => expect(classify(text(BASE), "{ nope").bump).toBe("could not determine"));
-  test("a ref that does not resolve, read through git", () => {
+  test("unreadableBaseUndetermined", () => expect(classify({ unreadable: "no such ref" }, text(BASE)).bump).toBe("could not determine"));
+  test("unparsableBaseUndetermined", () => expect(classify("{ nope", text(BASE)).bump).toBe("could not determine"));
+  test("unparsableHeadUndetermined", () => expect(classify(text(BASE), "{ nope").bump).toBe("could not determine"));
+  test("unresolvedRefUndetermined", () => {
     const repo = join(import.meta.dir, "..", "..");
     const r = readAtRef(repo, "refs/heads/definitely-not-a-branch-81tw", "bootstrap/schemas/graph.schema.json");
     expect(typeof r === "object" && r !== null && "unreadable" in r).toBe(true);

@@ -3,34 +3,34 @@ Feature: an instance's release addresses, and the sync that keeps literal copies
   Background:
     Given the release addresses of iriBase "https://example.org/kg/" at version "2.3.4"
 
-  @test:schemas/release-iri.test.ts::agents_and_people_both_read_the_major;_the_full_version_is_in_no_address
+  @test:schemas/release-iri.test.ts::iriCarriesMajorOnly
   Scenario: agents and people both read the major; the full version is in no address
     Then the agent address and the human address are both "https://example.org/kg/v2/"
     And the version is "2.3.4"
     And the agent address of "schemas/x.schema.json" is "https://example.org/kg/v2/schemas/x.schema.json"
     And the human address of "/guide.html" is "https://example.org/kg/v2/guide.html"
 
-  @test:schemas/release-iri.test.ts::no_iriBase_is_no_release;_an_iriBase_without_a_semver_version_is_refused
+  @test:schemas/release-iri.test.ts::refusesMissingIriBaseOrVersion
   Scenario: no iriBase is no release; an iriBase without a semver version is refused
     Then a declaration with version "1.0.0" and no iriBase has no release addresses
     And an iriBase with version "v1" throws
     And an iriBase with no version throws
 
-  @test:schemas/release-iri.test.ts::bootstrap_declares_one,_at_the_address_its_own_repository_owns
+  @test:schemas/release-iri.test.ts::bootstrapReleaseIriOwnRepo
   Scenario: bootstrap declares one, at the address its own repository owns
     When bootstrap's release is read
     Then its iriBase is "https://litlfred.github.io/bootstrap/"
     And its agent address is the iriBase followed by "v" and its major
     And its agent address does not contain its full version
 
-  @test:schemas/release-iri.test.ts::same_major_reads,_another_major_does_not
+  @test:schemas/release-iri.test.ts::sameMajorCompatibleOnly
   Scenario: same major reads, another major does not
     Then "model-registry/1.9.0" is compatible with model-registry major 1
     And "model-registry/2.0.0" is not
     And "model-registry/v1" is not
     And "other/1.0.0" is not
 
-  @test:schemas/release-iri.test.ts::every_full_version_—_the_declared_one_too_—_and_a_stale_major_move_to_the_declared_major;_the_current_major_stays
+  @test:schemas/release-iri.test.ts::rewritesVersionsToDeclaredMajor
   Scenario: every full version — the declared one too — and a stale major move to the declared major; the current major stays
     Given text with addresses under 2.3.3, v1, 2.3.4 and v2
     When iri-sync rewrites it
@@ -38,13 +38,13 @@ Feature: an instance's release addresses, and the sync that keeps literal copies
     And the 2.3.3, v1 and 2.3.4 addresses now read v2
     And the v2 address is unchanged
 
-  @test:schemas/release-iri.test.ts::a_tree_already_at_the_major_is_left_alone,_so_--check_passes_on_it
+  @test:schemas/release-iri.test.ts::leavesMajorTreeAlone
   Scenario: a tree already at the major is left alone, so --check passes on it
     Given text whose addresses are already at v2
     When iri-sync rewrites it
     Then the text is unchanged with 0 changes
 
-  @test:schemas/release-iri.test.ts::--from_moves_an_old_base's_identifiers,_and_leaves_the_bare_base_alone
+  @test:schemas/release-iri.test.ts::fromMovesOldBaseOnly
   Scenario: --from moves an old base's identifiers, and leaves the bare base alone
     Given text with an identifier under "https://old.example/b/" and the bare old base
     When iri-sync rewrites it from the old base
@@ -52,13 +52,13 @@ Feature: an instance's release addresses, and the sync that keeps literal copies
     And the bare old base is unchanged
     And it reports 1 change
 
-  @test:schemas/release-iri.test.ts::another_base_is_never_touched
+  @test:schemas/release-iri.test.ts::neverTouchesOtherBase
   Scenario: another base is never touched
     Given text with an address under "https://example.org/other/1.0.0/"
     When iri-sync rewrites it
     Then the text is unchanged with 0 changes
 
-  @test:schemas/release-iri.test.ts::listed_majors_are_supported,_others_refused;_no_range_syntax
+  @test:schemas/release-iri.test.ts::supportsListedMajorsOnly
   Scenario: listed majors are supported, others refused; no range syntax
     Given a toolset that supports bootstrap majors 0 and 2
     Then it supports bootstrap content "0.9.1" and "2.0.0"

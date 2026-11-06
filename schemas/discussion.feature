@@ -4,29 +4,29 @@ Feature: the generated bootstrap discussion schemas, against the contract they r
     Given the generated discussion input and output JSON Schemas read from bootstrap/schemas
     And a corpus of output documents and a corpus of input documents, each labelled with whether it must validate
 
-  @test:schemas/discussion.test.ts::keep_their_published_`$id`_—_it_is_a_contract,_cited_from_five_languages'_catalogues
+  @test:schemas/discussion.test.ts::keepsPublishedSchemaIds
   Scenario: keep their published `$id` — it is a contract, cited from five languages' catalogues
     Then the input schema's $id is "https://litlfred.github.io/bootstrap/v0/schemas/discussion.input.schema.json"
     And the output schema's $id is "https://litlfred.github.io/bootstrap/v0/schemas/discussion.output.schema.json"
 
-  @test:schemas/discussion.test.ts::carry_the_two_conditionals_Zod_cannot_export
+  @test:schemas/discussion.test.ts::carriesTwoConditionals
   Scenario: carry the two conditionals Zod cannot export
     Then the output schema's allOf holds exactly 2 entries
 
-  @test:schemas/discussion.test.ts::ARE_strict,_at_every_depth_—_bean_`z634`,_decided_2026-09-21
+  @test:schemas/discussion.test.ts::strictAtEveryDepth
   Scenario: ARE strict, at every depth — bean `z634`, decided 2026-09-21
     When the occurrences of additionalProperties false are counted in each schema
     Then the input schema has 3
     And the output schema has 4
 
-  @test:schemas/discussion.test.ts::the_Zod_is_strict_too,_or_the_two_forms_disagree_about_what_validates
+  @test:schemas/discussion.test.ts::zodRejectsUnknownKeys
   Scenario: the Zod is strict too, or the two forms disagree about what validates
     Given the Zod schemas RepositoryRefSchema, ParticipantSchema, DiscussionInputSchema, ExchangeEntrySchema and DiscussionOutputObjectSchema
     When each parses an object carrying only a key it does not declare
     Then each reports an unrecognized_keys issue
 
-  @test:schemas/discussion.test.ts::output_corpus_>_${c.valid_?_"accepts"_:_"REJECTS"}:_${c.why}
-  Scenario Outline: output corpus > ${c.valid ? "accepts" : "REJECTS"}: ${c.why}
+  @test:schemas/discussion.test.ts::outputCorpusVerdict
+  Scenario Outline: output corpus > accepts or REJECTS: <why>
     Given the output case "<why>"
     When it is validated against the generated output JSON Schema
     Then the verdict is <valid>
@@ -44,8 +44,8 @@ Feature: the generated bootstrap discussion schemas, against the contract they r
       | ...and the same document with the key spelled right is accepted | true |
       | STRICTNESS reaches NESTED objects too — a participant with a stray key | false |
 
-  @test:schemas/discussion.test.ts::input_corpus_>_${c.valid_?_"accepts"_:_"REJECTS"}:_${c.why}
-  Scenario Outline: input corpus > ${c.valid ? "accepts" : "REJECTS"}: ${c.why}
+  @test:schemas/discussion.test.ts::inputCorpusVerdict
+  Scenario Outline: input corpus > accepts or REJECTS: <why>
     Given the input case "<why>"
     When it is validated against the generated input JSON Schema
     Then the verdict is <valid>
@@ -59,8 +59,8 @@ Feature: the generated bootstrap discussion schemas, against the contract they r
       | a repository must say which part it plays | false |
       | STRICTNESS: an extra top-level key is rejected rather than ignored | false |
 
-  @test:schemas/discussion.test.ts::output_—_${c.why}
-  Scenario Outline: output — ${c.why}
+  @test:schemas/discussion.test.ts::zodAgreesWithOutputSchema
+  Scenario Outline: output — <why>
     Given the output case "<why>"
     When it is parsed with the Zod DiscussionOutputSchema and validated against the generated output JSON Schema
     Then both reach the same verdict
@@ -78,8 +78,8 @@ Feature: the generated bootstrap discussion schemas, against the contract they r
       | ...and the same document with the key spelled right is accepted |
       | STRICTNESS reaches NESTED objects too — a participant with a stray key |
 
-  @test:schemas/discussion.test.ts::input_—_${c.why}
-  Scenario Outline: input — ${c.why}
+  @test:schemas/discussion.test.ts::zodAgreesWithInputSchema
+  Scenario Outline: input — <why>
     Given the input case "<why>"
     When it is parsed with the Zod DiscussionInputSchema and validated against the generated input JSON Schema
     Then both reach the same verdict

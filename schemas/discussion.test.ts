@@ -171,7 +171,7 @@ const INPUT_CASES: Array<{ why: string; doc: unknown; valid: boolean }> = [
 ];
 
 describe("the generated bootstrap schemas", () => {
-  test("keep their published `$id` — it is a contract, cited from five languages' catalogues", () => {
+  test("keepsPublishedSchemaIds", () => {
     const current = (id: unknown) => String(id);
     expect(current(INPUT.$id)).toBe(
       "https://litlfred.github.io/bootstrap/v0/schemas/discussion.input.schema.json",
@@ -181,13 +181,13 @@ describe("the generated bootstrap schemas", () => {
     );
   });
 
-  test("carry the two conditionals Zod cannot export", () => {
+  test("carriesTwoConditionals", () => {
     // Without this the rest of the suite still passes on the VALID cases, so
     // this asserts the mechanism as well as its effect.
     expect(OUTPUT.allOf).toHaveLength(2);
   });
 
-  test("ARE strict, at every depth — bean `z634`, decided 2026-09-21", () => {
+  test("strictAtEveryDepth", () => {
     // This test asserted the OPPOSITE until 2026-09-21, and the reversal is
     // the bean rather than a change of mind. The port that created these
     // documents stripped `additionalProperties` because the hand-written ones
@@ -209,7 +209,7 @@ describe("the generated bootstrap schemas", () => {
     expect(count(OUTPUT)).toBe(4);
   });
 
-  test("the Zod is strict too, or the two forms disagree about what validates", () => {
+  test("zodRejectsUnknownKeys", () => {
     // `z.object()` STRIPS an unknown key and parses successfully; only
     // `.strict()` rejects it. So making the JSON Schema strict without the Zod
     // would publish a contract the source of truth does not hold — caught by
@@ -242,7 +242,7 @@ describe("the generated bootstrap schemas", () => {
   describe("output corpus", () => {
     const validate = ajv.compile(OUTPUT);
     for (const c of OUTPUT_CASES) {
-      test(`${c.valid ? "accepts" : "REJECTS"}: ${c.why}`, () => {
+      test(`outputCorpusVerdict[${c.why}]`, () => {
         expect(validate(c.doc)).toBe(c.valid);
       });
     }
@@ -251,7 +251,7 @@ describe("the generated bootstrap schemas", () => {
   describe("input corpus", () => {
     const validate = ajv.compile(INPUT);
     for (const c of INPUT_CASES) {
-      test(`${c.valid ? "accepts" : "REJECTS"}: ${c.why}`, () => {
+      test(`inputCorpusVerdict[${c.why}]`, () => {
         expect(validate(c.doc)).toBe(c.valid);
       });
     }
@@ -263,13 +263,13 @@ describe("the generated bootstrap schemas", () => {
     // the `$id` must reach the same verdict on every case above.
     const validateOut = ajv.compile(OUTPUT);
     for (const c of OUTPUT_CASES) {
-      test(`output — ${c.why}`, () => {
+      test(`zodAgreesWithOutputSchema[${c.why}]`, () => {
         expect(DiscussionOutputSchema.safeParse(c.doc).success).toBe(validateOut(c.doc) as boolean);
       });
     }
     const validateIn = ajv.compile(INPUT);
     for (const c of INPUT_CASES) {
-      test(`input — ${c.why}`, () => {
+      test(`zodAgreesWithInputSchema[${c.why}]`, () => {
         expect(DiscussionInputSchema.safeParse(c.doc).success).toBe(validateIn(c.doc) as boolean);
       });
     }

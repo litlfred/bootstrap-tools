@@ -27,13 +27,13 @@ const LEAKS = [/\bWHO\b/, /\bDAK\b/, /\bSMART\b/i, /cat-harness/, /folio/i, /sma
 
 
 describe("bootstrap's terms are its own", () => {
-  test("no definition names anything above bootstrap", () => {
+  test("noDefinitionNamesAbove", () => {
     const leaking = Object.entries(BOOTSTRAP_TERMS).filter(([, d]) => LEAKS.some((re) => re.test(d)));
     expect(leaking).toEqual([]);
   });
 
 
-  test("the generated schema carries every term as a definition", () => {
+  test("schemaCarriesEveryTerm", () => {
     const schema = JSON.parse(readFileSync(join(BOOTSTRAP, "schemas", "graph.schema.json"), "utf-8"));
     expect(Object.keys(schema.$defs).sort()).toEqual(Object.keys(BOOTSTRAP_TERMS).sort());
     for (const [name, def] of Object.entries(BOOTSTRAP_TERMS)) expect(schema.$defs[name].description).toBe(def);
@@ -61,19 +61,19 @@ describe("the terms are ordered: each definition uses only terms above it", () =
   };
   const order = names.map((n) => n.key);
   for (const [i, key] of order.entries()) {
-    test(`${key} uses no later term and not itself`, () => {
+    test(`termUsesNoLaterTerm[${key}]`, () => {
       const later = uses(BOOTSTRAP_TERMS[key as keyof typeof BOOTSTRAP_TERMS]).filter((u) => order.indexOf(u) >= i);
       expect(later).toEqual([]);
     });
   }
 
   // The AUTHORED relation is the source; the matcher above is its guard.
-  test("the authored uses lists keep the declared order (checkDeclaredOrder)", () => {
+  test("authoredUsesKeepOrder", () => {
     const steps = order.map((id) => ({ id, needs: BOOTSTRAP_TERM_USES[id as keyof typeof BOOTSTRAP_TERM_USES] }));
     expect(checkDeclaredOrder(steps)).toEqual([]);
   });
 
-  test("each authored uses list names exactly the terms its definition's text uses", () => {
+  test("usesListMatchesDefinitionText", () => {
     const disagree = order.flatMap((key) => {
       const k = key as keyof typeof BOOTSTRAP_TERMS;
       const said = new Set(uses(BOOTSTRAP_TERMS[k]));
@@ -85,7 +85,7 @@ describe("the terms are ordered: each definition uses only terms above it", () =
     expect(disagree).toEqual([]);
   });
 
-  test("checkDeclaredOrder names a forward, a self and a missing use", () => {
+  test("checkOrderNamesForwardSelfMissing", () => {
     expect(
       checkDeclaredOrder([
         { id: "a", needs: ["b"] },
@@ -98,7 +98,7 @@ describe("the terms are ordered: each definition uses only terms above it", () =
     ]);
   });
 
-  test("every term names the schema that defines it", () => {
+  test("everyTermNamesItsSchema", () => {
     for (const key of order) {
       const by = BOOTSTRAP_TERM_DEFINED_BY[key as keyof typeof BOOTSTRAP_TERM_DEFINED_BY];
       expect(by, key).toMatch(/^(#|https?:\/\/)/);
@@ -110,7 +110,7 @@ describe("bootstrap/README.md is self-definitional", () => {
   const readme = readFileSync(join(BOOTSTRAP, "README.md"), "utf-8");
   const links = [...readme.matchAll(/\]\(([^)]+)\)/g)].map((m) => m[1]!);
 
-  test("every link stays inside bootstrap/ — except the generated-by notice's, to bootstrap-tools", () => {
+  test("readmeLinksStayInside", () => {
     // The one name bootstrap may carry from outside itself, and only as the
     // answer to "what wrote this?" (generated-by.ts; owner 2026-09-30, and
     // 2026-10-01: the notice links bootstrap-tools).
@@ -118,7 +118,7 @@ describe("bootstrap/README.md is self-definitional", () => {
     expect(links.filter((l) => !tools(l) && (l.startsWith("../") || l.startsWith("/") || /^[a-z]+:/.test(l)))).toEqual([]);
   });
 
-  test("every relative link and image resolves to a file in bootstrap/", () => {
+  test("readmeRelativeLinksResolve", () => {
     // What a reader of the README actually hits: the diagram pictures and the
     // file list are generated (kg:processes, kg:files), so a generator that
     // wrote a path to nothing would pass its own currency check. This is the
@@ -130,11 +130,11 @@ describe("bootstrap/README.md is self-definitional", () => {
     expect(broken).toEqual([]);
   });
 
-  test("names nothing above bootstrap", () => {
+  test("readmeNamesNothingAbove", () => {
     expect(LEAKS.filter((re) => re.test(readme)).map(String)).toEqual([]);
   });
 
-  test("each defined term is linked to its definition once, at its first use", () => {
+  test("termLinkedOnceAtFirstUse", () => {
     // No Tool: "no tools in bootstrap" (owner, 2026-09-29); a Harness defines it.
     for (const term of ["KnowledgeGraph", "Subgraph", "Harness", "Actor", "Role", "Process", "Skill"]) {
       const target = `schemas/graph.schema.json#/$defs/${term}`;
@@ -142,7 +142,7 @@ describe("bootstrap/README.md is self-definitional", () => {
     }
   });
 
-  test("every defined term in the prose is a link (owner, 2026-09-29)", () => {
+  test("everyProseTermIsLink", () => {
     // Hand-written prose only: the generated regions (`<!-- kg:… -->`) are
     // linked by their generator.
     const text = readme.slice(0, readme.indexOf("<!-- kg:") >= 0 ? readme.indexOf("<!-- kg:") : undefined);
@@ -150,7 +150,7 @@ describe("bootstrap/README.md is self-definitional", () => {
     expect(unlinkedTerms(text, targets)).toEqual([]);
   });
 
-  test("each term also links to its drawing, and the drawing's heading exists", () => {
+  test("termLinksDrawingWithHeading", () => {
     // The `[src]` link above opens JSON; a person reads the drawn page. Both
     // are asserted, because a link to a heading that was renamed lands at the
     // top of the page with nothing to say it missed.
@@ -176,7 +176,7 @@ describe("bootstrap/README.md is self-definitional", () => {
 });
 
 describe("FR-7: bootstrap holds no program code", () => {
-  test("no file in bootstrap/ is a program", () => {
+  test("noProgramFileInBootstrap", () => {
     const code: string[] = [];
     const walk = (d: string) => {
       for (const f of readdirSync(d)) {
@@ -246,7 +246,7 @@ describe("nothing in bootstrap/ names anything above it (bean iwtn)", () => {
   };
   walk(BOOTSTRAP);
 
-  test("only the listed structural names remain", () => {
+  test("onlyListedStructuralNames", () => {
     const found: string[] = [];
     for (const p of files) {
       let text = readFileSync(p, "utf-8");
@@ -273,12 +273,12 @@ describe("bootstrap's graph typologies are its own (bean r3gy, D1)", () => {
   };
   const own = Object.keys(BOOTSTRAP_GRAPH_TYPOLOGIES);
 
-  test("every kind bootstrap's declaration uses is defined in bootstrap", () => {
+  test("everyUsedKindDefined", () => {
     const used = new Set(decl.directories.flatMap((d) => d.graphTypologies));
     expect([...used].filter((k) => !own.includes(k))).toEqual([]);
   });
 
-  test("every kind bootstrap defines, it uses — no definition for a kind it does not hold", () => {
+  test("everyDefinedKindUsed", () => {
     const used = new Set(decl.directories.flatMap((d) => d.graphTypologies));
     expect(own.filter((k) => !used.has(k))).toEqual([]);
   });
@@ -291,7 +291,7 @@ describe("every $schema a bootstrap file carries is a Node Kind its declaration 
   };
   const kinds = decl.nodeSchemas ?? {};
 
-  test("each file's $schema is declared in bootstrap.json's nodeSchemas", () => {
+  test("schemaTagDeclaredInNodeSchemas", () => {
     const undeclared: string[] = [];
     const walk = (d: string) => {
       for (const f of readdirSync(d)) {
@@ -308,7 +308,7 @@ describe("every $schema a bootstrap file carries is a Node Kind its declaration 
     expect(undeclared).toEqual([]);
   });
 
-  test("a local Node Schema exists inside bootstrap and fixes that very tag", () => {
+  test("localNodeSchemaFixesTag", () => {
     const bad: string[] = [];
     for (const [tag, where] of Object.entries(kinds)) {
       if (/^[a-z][a-z0-9+.-]*:\/\//i.test(where)) continue; // a published standard
@@ -323,12 +323,12 @@ describe("every $schema a bootstrap file carries is a Node Kind its declaration 
     expect(bad).toEqual([]);
   });
 
-  test("the tag that used to name the platform is bootstrap's own; the ledger's left with the ledger", () => {
+  test("registryTagOwnLedgerTagGone", () => {
     expect(kinds["model-registry/1.0.0"]).toBe("schemas/model-registry.schema.json");
     expect(kinds["glossary-ledger/1.0.0"]).toBeUndefined();
   });
 
-  test("the declaration shape knows the field", () => {
+  test("declarationShapeKnowsNodeSchemas", () => {
     expect(KnowledgeGraphDeclarationSchema.safeParse(decl).success).toBe(true);
   });
 });

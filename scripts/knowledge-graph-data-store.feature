@@ -4,13 +4,13 @@ Feature: bootstrap's knowledge-graph-data-store contract, held against a git rep
     Given stores made as fresh git repositories, each holding its files in one commit by a fixed writer identity
     And a declaration whose bytes a reformatting would change, and instructions with mixed line endings
 
-  @test:scripts/knowledge-graph-data-store.test.ts::the_declaration_and_the_instructions_at_the_predetermined_path_come_back_byte_for_byte
+  @test:scripts/knowledge-graph-data-store.test.ts::servesDeclarationByteForByte
   Scenario: the declaration and the instructions at the predetermined path come back byte for byte
     Given a store holding demo.json and docs/bootstrap/initialization.md
     When both are read at HEAD
     Then each comes back byte for byte as committed
 
-  @test:scripts/knowledge-graph-data-store.test.ts::a_read_AT_A_REF_returns_what_was_committed_there,_not_what_came_later
+  @test:scripts/knowledge-graph-data-store.test.ts::readsAtRef
   Scenario: a read AT A REF returns what was committed there, not what came later
     Given a store holding demo.json, whose first commit is noted
     And a later commit that changes demo.json
@@ -18,25 +18,25 @@ Feature: bootstrap's knowledge-graph-data-store contract, held against a git rep
     Then the first read returns the original bytes
     And the HEAD read returns the changed content
 
-  @test:scripts/knowledge-graph-data-store.test.ts::the_files_the_declaration_lists_are_served_under_the_same_rule
+  @test:scripts/knowledge-graph-data-store.test.ts::servesListedFiles
   Scenario: the files the declaration lists are served under the same rule
     Given a store whose declaration lists a skills directory holding skills/x.md
     When skills/x.md is read at HEAD
     Then it comes back byte for byte as committed
 
-  @test:scripts/knowledge-graph-data-store.test.ts::an_uncommitted_path_is_ABSENT_—_not_an_empty_file,_and_not_a_read_that_merely_failed
+  @test:scripts/knowledge-graph-data-store.test.ts::uncommittedPathAbsent
   Scenario: an uncommitted path is ABSENT — not an empty file, and not a read that merely failed
     Given a store holding demo.json and an empty empty.json
     Then empty.json is served as zero bytes
     And other.json is reported absent
     And asking git to show other.json fails with a message that it does not exist
 
-  @test:scripts/knowledge-graph-data-store.test.ts::a_file_on_disk_but_never_committed_is_absent_from_the_store
+  @test:scripts/knowledge-graph-data-store.test.ts::untrackedFileAbsent
   Scenario: a file on disk but never committed is absent from the store
     Given a store holding demo.json, and draft.json written to disk but not committed
     Then draft.json is reported absent
 
-  @test:scripts/knowledge-graph-data-store.test.ts::a_reader_is_told_absent_and_present-but-unreadable_apart:_initSteps_says_which
+  @test:scripts/knowledge-graph-data-store.test.ts::absentVersusUnreadable
   Scenario: a reader is told absent and present-but-unreadable apart: initSteps says which
     Given a store "nothing" holding only a README
     When initSteps runs on it offline in a dry run
@@ -46,7 +46,7 @@ Feature: bootstrap's knowledge-graph-data-store contract, held against a git rep
     Then its only step is declaration, not-done, whose detail says it is not a Knowledge Graph declaration
     And that detail differs from the absent store's
 
-  @test:scripts/knowledge-graph-data-store.test.ts::a_`needs`_entry_is_read_from_../<name>/<name>.json,_and_its_instructions_from_the_predetermined_path
+  @test:scripts/knowledge-graph-data-store.test.ts::readsSiblingNeeds
   Scenario: a `needs` entry is read from ../<name>/<name>.json, and its instructions from the predetermined path
     Given a store "demo" that needs "base", and a sibling store "base" holding base.json and its instructions
     Then base.json is served from the base store as committed
@@ -54,13 +54,13 @@ Feature: bootstrap's knowledge-graph-data-store contract, held against a git rep
     Then needs:base is done, with the base store's directory as its detail
     And instructions:base is stated
 
-  @test:scripts/knowledge-graph-data-store.test.ts::a_sibling_that_is_not_there_is_absent,_and_reported_so_—_never_skipped
+  @test:scripts/knowledge-graph-data-store.test.ts::missingSiblingReported
   Scenario: a sibling that is not there is absent, and reported so — never skipped
     Given a store "demo" that needs "base", with no base beside it
     When initSteps runs on demo offline in a dry run
     Then needs:base is not-done, with a detail saying there is no base.json
 
-  @test:scripts/knowledge-graph-data-store.test.ts::a_committed_declaration_is_read_back_by_a_later_reader,_with_who_wrote_it_and_when
+  @test:scripts/knowledge-graph-data-store.test.ts::committedDeclarationReadBack
   Scenario: a committed declaration is read back by a later reader, with who wrote it and when
     Given a store holding demo.json committed at 2026-10-20T09:00:00+00:00
     When a fresh clone of it is made

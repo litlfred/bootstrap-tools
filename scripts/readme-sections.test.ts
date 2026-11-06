@@ -11,12 +11,12 @@ const tmp = mkdtempSync(join(tmpdir(), "readme-sections-"));
 afterAll(() => rmSync(tmp, { recursive: true, force: true }));
 
 describe("README sections, written standalone", () => {
-  test("only between a section's own markers, in the harness's form", () => {
+  test("writesOnlyBetweenMarkers", () => {
     const readme = "intro\n<!-- kg:files:begin -->\nold\n<!-- kg:files:end -->\noutro\n";
     expect(inject(readme, "new body\n", "kg:files")).toBe("intro\n<!-- kg:files:begin -->\n\nnew body\n\n<!-- kg:files:end -->\noutro\n");
   });
 
-  test("a README that has not opted in is left exactly as it is", () => {
+  test("leavesUnoptedReadme", () => {
     expect(inject("no markers here\n", "x", "kg:files")).toBe("no markers here\n");
   });
 });
@@ -40,22 +40,22 @@ describe("a term link outside bootstrap is the published page, whatever sits bes
     return { base, tools: t, bootstrap: b };
   };
 
-  test("sibling clones: the tools' README links the published page", () => {
+  test("siblingClonesLinkPublished", () => {
     const { base, tools } = mk(join(tmp, "split"), "split");
     expect(bootstrapTermTargets(base, tools, ["Process"])[0]!.href).toBe(PUBLISHED);
   });
 
-  test("one repository holding both: still the published page, never a sibling-relative path", () => {
+  test("oneRepoLinksPublished", () => {
     const { base, tools } = mk(join(tmp, "mono"), "mono");
     expect(bootstrapTermTargets(base, tools, ["Process"])[0]!.href).toBe(PUBLISHED);
   });
 
-  test("the tools alone, with no bootstrap anywhere: the same published page", () => {
+  test("toolsAloneLinkPublished", () => {
     const { base, tools } = mk(join(tmp, "alone"), "alone");
     expect(bootstrapTermTargets(base, tools, ["Process"])[0]!.href).toBe(PUBLISHED);
   });
 
-  test("bootstrap's own README, in its own repository, links relatively", () => {
+  test("bootstrapLinksRelatively", () => {
     const { base, bootstrap } = mk(join(tmp, "own"), "split");
     expect(bootstrapTermTargets(base, bootstrap, ["Process"])[0]!.href).toBe("schemas/README.md#process");
     expect(bootstrapTermTargets(base, join(bootstrap, "schemas"), ["Process"])[0]!.href).toBe("README.md#process");

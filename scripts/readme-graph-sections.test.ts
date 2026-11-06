@@ -63,7 +63,7 @@ function instance(withPictures: boolean): string {
 const ctx = (root: string) => ({ root });
 
 describe("kg:processes", () => {
-  test("entry process first, each with its picture and who starts it", () => {
+  test("entryProcessFirst", () => {
     const root = instance(true);
     const md = processesSection.render(ctx(root)).markdown;
     expect(md.indexOf("**Main**")).toBeLessThan(md.indexOf("**Sub**"));
@@ -73,7 +73,7 @@ describe("kg:processes", () => {
     rmSync(root, { recursive: true, force: true });
   });
 
-  test("a diagram with no picture leaves the region untouched, never a broken image", () => {
+  test("noPictureLeavesRegion", () => {
     const root = instance(false);
     const out = processesSection.render(ctx(root));
     expect(out.skip).toBe(true);
@@ -81,7 +81,7 @@ describe("kg:processes", () => {
     rmSync(root, { recursive: true, force: true });
   });
 
-  test("no declaration is undetermined, not 'no Processes'", () => {
+  test("noDeclarationUndetermined", () => {
     const root = mkdtempSync(join(tmpdir(), "readme-graph-empty-"));
     expect(processesSection.render(ctx(root)).skip).toBe(true);
     expect(filesSection.render(ctx(root)).skip).toBe(true);
@@ -93,33 +93,33 @@ describe("kg:files", () => {
   const root = instance(true);
   const md = filesSection.render(ctx(root)).markdown;
 
-  test("assets and the declaration sit at the top", () => {
+  test("assetsAndDeclarationFirst", () => {
     expect(md).toContain("| [`README.md`](README.md) | Start here. |");
     expect(md).toContain("| [`demo.json`](demo.json) | Demo |");
   });
 
-  test("each file described from itself; used-by only from a recorded relation", () => {
+  test("filesDescribedFromThemselves", () => {
     expect(md).toContain("| [`do-it.md`](skills/do-it.md) | Does it. | \"Main\" |");
     expect(md).toContain("| [`sub.bpmn`](processes/sub.bpmn) | a Process: Sub | \"Main\" |");
     expect(md).toContain("| [`main.bpmn`](processes/main.bpmn) | a Process: Main |  |");
     expect(md).toContain("the picture of `main.bpmn`, generated from it");
   });
 
-  test("a global task's Skill is used by the processes that call it; its file says what it holds", () => {
+  test("globalTaskSkillUsedBy", () => {
     expect(md).toContain("| [`share-it.md`](skills/share-it.md) | Shares it. | \"Sub\" |");
     expect(md).toContain("| [`global-tasks.bpmn`](processes/global-tasks.bpmn) | 1 global task, the steps several Processes share |  |");
   });
 
-  test("directory heading uses the first sentence of its description", () => {
+  test("headingUsesFirstSentence", () => {
     expect(md).toContain("**`processes/`**: The diagrams.");
   });
 
-  test("a results tree collapses to one row with its count", () => {
+  test("resultsTreeCollapses", () => {
     expect(md).toContain("| [`test/results/`](test/results/) | 2 files, in subdirectories | |");
     expect(md).not.toContain("kg-qa/a.json");
   });
 });
 
-test("firstSentence stops at the first sentence and drops bold", () => {
+test("firstSentenceDropsBold", () => {
   expect(firstSentence("**Bold** start. Second.")).toBe("Bold start.");
 });

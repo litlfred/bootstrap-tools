@@ -4,51 +4,51 @@ Feature: bootstrap:validate — bootstrap's documents, parsed against their Zod
     Given the real bootstrap checked out beside the tools
     And throwaway bootstrap-shaped trees holding the real declaration, the published discussion schemas and a model registry each scenario chooses
 
-  @test:scripts/validate-bootstrap.test.ts::every_document_bootstrap_carries_parses
+  @test:scripts/validate-bootstrap.test.ts::committedCorpusParses
   Scenario: every document bootstrap carries parses
     When the validator runs over the real bootstrap
     Then at least 2 documents are valid
     And none fails
 
-  @test:scripts/validate-bootstrap.test.ts::valid:_a_well-formed_model_registry_passes
+  @test:scripts/validate-bootstrap.test.ts::validRegistryPasses
   Scenario: valid: a well-formed model registry passes
     Given a tree whose model registry holds one well-formed model
     When the validator runs over it
     Then nothing fails
 
-  @test:scripts/validate-bootstrap.test.ts::invalid:_a_registry_entry_with_a_wrong-typed_field_fails,_and_names_where
+  @test:scripts/validate-bootstrap.test.ts::invalidRegistryNamesWhere
   Scenario: invalid: a registry entry with a wrong-typed field fails, and names where
     Given a tree whose one model has a number as its validation
     When the validator runs over it
     Then the only failure is the model registry
     And its issues mention validation
 
-  @test:scripts/validate-bootstrap.test.ts::unreadable_JSON_is_a_failure,_never_a_skip
+  @test:scripts/validate-bootstrap.test.ts::unreadableJsonFails
   Scenario: unreadable JSON is a failure, never a skip
     Given a tree whose models.json is not valid JSON
     When the validator runs over it
     Then the only failure is unreadable
 
-  @test:scripts/validate-bootstrap.test.ts::a_missing_required_document_is_a_failure
+  @test:scripts/validate-bootstrap.test.ts::missingDocumentFails
   Scenario: a missing required document is a failure
     Given a tree with models.json removed
     When the validator runs over it
     Then the only failure is absent
 
-  @test:scripts/validate-bootstrap.test.ts::a_discussion_document_is_found_by_its_`$schema`,_and_judged
+  @test:scripts/validate-bootstrap.test.ts::discussionFoundBySchema
   Scenario: a discussion document is found by its `$schema`, and judged
     Given a tree holding good.json, a well-formed discussion input, and bad.json, whose open is not a list, both carrying the discussion input schema's $id as $schema
     Then 2 discussion documents are found
     When the validator runs over it
     Then the only failure is bad.json
 
-  @test:scripts/validate-bootstrap.test.ts::a_published_discussion_schema_with_no_`$id`_makes_the_run_unrunnable,_not_clean
+  @test:scripts/validate-bootstrap.test.ts::missingSchemaIdUnrunnable
   Scenario: a published discussion schema with no `$id` makes the run unrunnable, not clean
     Given a tree whose discussion input schema is an empty object
     When the discussion schema ids are read
     Then it throws
 
-  @test:scripts/validate-bootstrap.test.ts::the_built_graph_is_judged_too_—_and_a_build_that_throws_is_a_failure,_not_a_skip
+  @test:scripts/validate-bootstrap.test.ts::builtGraphJudged
   Scenario: the built graph is judged too — and a build that throws is a failure, not a skip
     When the validator runs over the real bootstrap
     Then the built Knowledge Graph is valid
