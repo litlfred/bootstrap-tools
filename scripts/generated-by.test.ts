@@ -27,7 +27,7 @@ const GENERATED: Array<{ kind: string; files: string[] }> = [
 
 describe("every generated file in bootstrap names bootstrap-tools as its writer", () => {
   for (const { kind, files } of GENERATED) {
-    test(`generatedKindNamesWriter[${kind}]`, () => {
+    test(`generatedKindNamesWriter[${kind.replace(/\s+/g, "_")}]`, () => {
       expect(files.length).toBeGreaterThan(0); // not vacuous
       const missing = files.filter((f) => !readFileSync(join(BOOTSTRAP, f), "utf-8").includes(GENERATED_BY));
       expect(missing).toEqual([]);

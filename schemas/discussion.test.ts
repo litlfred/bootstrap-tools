@@ -242,7 +242,7 @@ describe("the generated bootstrap schemas", () => {
   describe("output corpus", () => {
     const validate = ajv.compile(OUTPUT);
     for (const c of OUTPUT_CASES) {
-      test(`outputCorpusVerdict[${c.why}]`, () => {
+      test(`outputCorpusVerdict[${c.why.replace(/\s+/g, "_")}]`, () => {
         expect(validate(c.doc)).toBe(c.valid);
       });
     }
@@ -251,7 +251,7 @@ describe("the generated bootstrap schemas", () => {
   describe("input corpus", () => {
     const validate = ajv.compile(INPUT);
     for (const c of INPUT_CASES) {
-      test(`inputCorpusVerdict[${c.why}]`, () => {
+      test(`inputCorpusVerdict[${c.why.replace(/\s+/g, "_")}]`, () => {
         expect(validate(c.doc)).toBe(c.valid);
       });
     }
@@ -263,13 +263,13 @@ describe("the generated bootstrap schemas", () => {
     // the `$id` must reach the same verdict on every case above.
     const validateOut = ajv.compile(OUTPUT);
     for (const c of OUTPUT_CASES) {
-      test(`zodAgreesWithOutputSchema[${c.why}]`, () => {
+      test(`zodAgreesWithOutputSchema[${c.why.replace(/\s+/g, "_")}]`, () => {
         expect(DiscussionOutputSchema.safeParse(c.doc).success).toBe(validateOut(c.doc) as boolean);
       });
     }
     const validateIn = ajv.compile(INPUT);
     for (const c of INPUT_CASES) {
-      test(`zodAgreesWithInputSchema[${c.why}]`, () => {
+      test(`zodAgreesWithInputSchema[${c.why.replace(/\s+/g, "_")}]`, () => {
         expect(DiscussionInputSchema.safeParse(c.doc).success).toBe(validateIn(c.doc) as boolean);
       });
     }
