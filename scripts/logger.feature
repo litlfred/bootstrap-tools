@@ -3,7 +3,7 @@ Feature: bootstrap's logger contract, held to what can be checked from bootstrap
   Background:
     Given bootstrap checked out beside the tools
 
-  @test:scripts/logger.test.ts::contractNamesFiveFields
+  @test:scripts/logger.test.ts::1._record_a_complete_message_unchanged_—_the_message_it_must_accept::contractNamesFiveFields
   Scenario: the Logger's contract names exactly the five fields log-message requires, and its optional body
     Given the fields table of skills/log-message.md and responsibility 1 of skills/logger.md
     Then the logger contract names the five fields log-message requires
