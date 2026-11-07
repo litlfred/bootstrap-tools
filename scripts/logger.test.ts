@@ -45,7 +45,7 @@ function authorFields(): { required: string[]; optional: string[] } {
 }
 
 describe("1. record a complete message unchanged — the message it must accept", () => {
-  test("the Logger's contract names exactly the five fields log-message requires, and its optional body", () => {
+  test("contractNamesFiveFields", () => {
     const contract = read("skills/logger.md");
     const line = (/1\. \*\*Record a complete message unchanged\.\*\*([\s\S]*?)\n\n/.exec(contract)?.[1] ?? "").replace(/\s+/g, " ");
     const required = /five fields `log-message` requires \(([^)]*)\)/.exec(line)?.[1];
@@ -66,14 +66,14 @@ describe("Not its responsibility: composing the message, or judging whether it i
   const flows = all(xml, (e) => local(e.name) === "sequenceFlow");
   const kindOf = new Map(all(xml, (e) => typeof e.attrs["id"] === "string").map((e) => [e.attrs["id"]!, local(e.name)]));
 
-  test("one lane in log-message names the logger role, and it holds activities only — no gateway, so it decides nothing", () => {
+  test("loggerLaneHasNoGateway", () => {
     expect(lanes.filter((l) => l.attrs["partitionElementRef"] === "logger")).toHaveLength(1);
     const held = loggerLane!.children.filter((c) => local(c.name) === "flowNodeRef").map((c) => c.text.trim());
     expect(held.length).toBeGreaterThan(0);
     for (const id of held) expect(kindOf.get(id)).toMatch(/^(task|serviceTask|scriptTask|manualTask|sendTask|receiveTask)$/);
   });
 
-  test("a message reaches the Logger only on the branch where all five fields are present", () => {
+  test("loggerOnlyOnCompleteBranch", () => {
     const held = new Set(loggerLane!.children.filter((c) => local(c.name) === "flowNodeRef").map((c) => c.text.trim()));
     const into = flows.filter((f) => held.has(f.attrs["targetRef"]!) && !held.has(f.attrs["sourceRef"]!));
     expect(into.length).toBeGreaterThan(0);
@@ -85,7 +85,7 @@ describe("Not its responsibility: composing the message, or judging whether it i
     }
   });
 
-  test("the incomplete branch ends outside the Logger's lane, saying so", () => {
+  test("incompleteEndsOutsideLogger", () => {
     const held = new Set(loggerLane!.children.filter((c) => local(c.name) === "flowNodeRef").map((c) => c.text.trim()));
     const no = flows.filter((f) => f.attrs["name"] === "no");
     expect(no).toHaveLength(1);

@@ -16,7 +16,7 @@ describe("site — what a Pages workflow publishes", () => {
   writeFileSync(join(root, "skills", "README.md"), "# skills\n\n## Every file\n");
   spawnSync("git", ["init", "-q"], { cwd: root });
 
-  test("the README page is README.md (served as README.html); the files sit beside it; nothing is overwritten", () => {
+  test("stagesReadmeAndFiles", () => {
     const out = join(top, "_site-src");
     mkdirSync(out, { recursive: true });
     writeFileSync(join(out, "_config.yml"), "title: kept\n");
@@ -33,11 +33,11 @@ describe("site — what a Pages workflow publishes", () => {
     expect(r.skipped).toContain("_config.yml");
   });
 
-  test("no declaration, no site", () => {
+  test("noDeclarationNoSite", () => {
     expect(() => stageSite(join(top, "nothing"), join(top, "out2"))).toThrow();
   });
 
-  test("every JSON Schema and JSON-LD document is staged at the address it names, with a .json copy of JSON-LD", () => {
+  test("stagesDocumentsAtIris", () => {
     const r2 = join(top, "vocab");
     mkdirSync(join(r2, "schemas"), { recursive: true });
     writeFileSync(join(r2, "vocab.json"), JSON.stringify({ name: "vocab", version: "1.2.3", iriBase: "https://x.example/vocab/", directories: [] }));
@@ -63,7 +63,7 @@ describe("site — what a Pages workflow publishes", () => {
     expect(documentsSection(docs)).toContain("[`https://x.example/vocab/v1/ns`](v1/ns) ([`.json`](v1/ns.json))");
   });
 
-  test("the default landing page redirects to README.html; an instance's own index wins", () => {
+  test("landingRedirectsToReadme", () => {
     expect(redirectPage()).toContain('<meta http-equiv="refresh" content="0; url=README.html">');
     expect(redirectPage()).toContain('<link rel="canonical" href="README.html">');
     const r3 = join(top, "landing");
@@ -78,7 +78,7 @@ describe("site — what a Pages workflow publishes", () => {
     expect(readFileSync(join(out, "index.md"), "utf-8")).toBe("# my own front page\n");
   });
 
-  test("a generated page's footer names its generator and source, never an edit page; an authored one edits its SOURCE", () => {
+  test("footerNamesGeneratorOrSource", () => {
     const repo = "https://github.com/o/r";
     const gen = `<!-- kg:subgraph:begin -->\n${generatedBanner("scripts/subgraph-readmes.ts", "the entry", "change it")}\n# x\n<!-- kg:subgraph:end -->\n`;
     expect(pageFooter("skills/README.md", gen, repo, "main")).toEqual({
@@ -91,7 +91,7 @@ describe("site — what a Pages workflow publishes", () => {
     expect(pageFooter("skills/a.md", "# authored\n", undefined, "main")).toEqual({});
   });
 
-  test("the staged layout replaces the theme footer, and _config.yml scopes each page's footer", () => {
+  test("layoutReplacesThemeFooter", () => {
     const out = join(top, "_footer");
     const r4 = join(top, "footer");
     mkdirSync(join(r4, "skills"), { recursive: true });
@@ -109,7 +109,7 @@ describe("site — what a Pages workflow publishes", () => {
     expect(config).toContain('      generated_by: ["scripts/readme-book.ts"]');
   });
 
-  test("no iriBase, no document addresses: nothing claimed", () => {
+  test("noIriBaseNoAddresses", () => {
     expect(publishedDocuments(root)).toEqual([]);
   });
 });

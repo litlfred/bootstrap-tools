@@ -13,16 +13,21 @@ Part of [Bootstrap tools](../README.md) 0.1.0, declared as `bootstrap-tools-sche
 
 | file | what it is | used by |
 |---|---|---|
+| [`declaration.feature`](declaration.feature) | a file |  |
 | [`declaration.test.ts`](declaration.test.ts) | a file |  |
 | [`declaration.ts`](declaration.ts) | a file |  |
 | [`declared-order.ts`](declared-order.ts) | a file |  |
+| [`discussion.feature`](discussion.feature) | a file |  |
 | [`discussion.test.ts`](discussion.test.ts) | a file |  |
 | [`discussion.ts`](discussion.ts) | a file |  |
 | [`graph-export.ts`](graph-export.ts) | a file |  |
+| [`graph-paths.feature`](graph-paths.feature) | a file |  |
 | [`graph-paths.test.ts`](graph-paths.test.ts) | a file |  |
+| [`graph.feature`](graph.feature) | a file |  |
 | [`graph.test.ts`](graph.test.ts) | a file |  |
 | [`graph.ts`](graph.ts) | a file |  |
 | [`model-registry.ts`](model-registry.ts) | a file |  |
+| [`release-iri.feature`](release-iri.feature) | a file |  |
 | [`release-iri.test.ts`](release-iri.test.ts) | a file |  |
 | [`release-iri.ts`](release-iri.ts) | a file |  |
 | [`requirement-set.ts`](requirement-set.ts) | a file |  |

@@ -11,7 +11,7 @@ import { rewrite } from "../scripts/iri-sync";
 const R = releaseIris({ iriBase: "https://example.org/kg/", version: "2.3.4" })!;
 
 describe("releaseIris", () => {
-  test("agents and people both read the major; the full version is in no address", () => {
+  test("iriCarriesMajorOnly", () => {
     expect(R.agent).toBe("https://example.org/kg/v2/");
     expect(R.human).toBe("https://example.org/kg/v2/");
     expect(R.version).toBe("2.3.4");
@@ -19,13 +19,13 @@ describe("releaseIris", () => {
     expect(releaseIri(R, "/guide.html", "human")).toBe("https://example.org/kg/v2/guide.html");
   });
 
-  test("no iriBase is no release; an iriBase without a semver version is refused", () => {
+  test("refusesMissingIriBaseOrVersion", () => {
     expect(releaseIris({ version: "1.0.0" })).toBeUndefined();
     expect(() => releaseIris({ iriBase: "https://example.org/kg/", version: "v1" })).toThrow();
     expect(() => releaseIris({ iriBase: "https://example.org/kg/" })).toThrow();
   });
 
-  test("bootstrap declares one, at the address its own repository owns", () => {
+  test("bootstrapReleaseIriOwnRepo", () => {
     const b = bootstrapRelease();
     expect(b.iriBase).toBe("https://litlfred.github.io/bootstrap/");
     expect(b.agent).toBe(`${b.iriBase}v${b.major}/`);
@@ -34,7 +34,7 @@ describe("releaseIris", () => {
 });
 
 describe("tagCompatible — semver within one major", () => {
-  test("same major reads, another major does not", () => {
+  test("sameMajorCompatibleOnly", () => {
     expect(tagCompatible("model-registry/1.9.0", "model-registry", 1)).toBe(true);
     expect(tagCompatible("model-registry/2.0.0", "model-registry", 1)).toBe(false);
     expect(tagCompatible("model-registry/v1", "model-registry", 1)).toBe(false);
@@ -43,7 +43,7 @@ describe("tagCompatible — semver within one major", () => {
 });
 
 describe("iri-sync rewrite", () => {
-  test("every full version — the declared one too — and a stale major move to the declared major; the current major stays", () => {
+  test("rewritesVersionsToDeclaredMajor", () => {
     const text = [
       'xmlns:a="https://example.org/kg/2.3.3/ns#"',
       'href="https://example.org/kg/v1/guide.html"',
@@ -62,18 +62,18 @@ describe("iri-sync rewrite", () => {
     );
   });
 
-  test("a tree already at the major is left alone, so --check passes on it", () => {
+  test("leavesMajorTreeAlone", () => {
     const text = 'a="https://example.org/kg/v2/ns#" b="https://example.org/kg/v2/"';
     expect(rewrite(text, R)).toEqual({ text, changes: 0 });
   });
 
-  test("--from moves an old base's identifiers, and leaves the bare base alone", () => {
+  test("fromMovesOldBaseOnly", () => {
     const r = rewrite('a="https://old.example/b/processes/ns#x" b="https://old.example/b/"', R, "https://old.example/b/");
     expect(r.text).toBe('a="https://example.org/kg/v2/processes/ns#x" b="https://old.example/b/"');
     expect(r.changes).toBe(1);
   });
 
-  test("another base is never touched", () => {
+  test("neverTouchesOtherBase", () => {
     const text = 'x="https://example.org/other/1.0.0/ns#"';
     expect(rewrite(text, R)).toEqual({ text, changes: 0 });
   });
@@ -81,7 +81,7 @@ describe("iri-sync rewrite", () => {
 
 
 describe("a toolset supports content by major version", () => {
-  test("listed majors are supported, others refused; no range syntax", async () => {
+  test("supportsListedMajorsOnly", async () => {
     const { supportsContent } = await import("./declaration.ts");
     const tools = { supports: { bootstrap: [0, 2] } };
     expect(supportsContent(tools, "bootstrap", "0.9.1")).toBe(true);

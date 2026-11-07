@@ -41,13 +41,13 @@ function fixture(opts: { workflow?: boolean; withBase?: boolean } = {}): string 
 const state = (steps: { id: string; state: string }[], id: string) => steps.find((s) => s.id === id)?.state;
 
 describe("init — the steps the declarations name, in four states", () => {
-  test("owner/repo from either form", () => {
+  test("parsesOwnerRepo", () => {
     expect(ownerRepo("litlfred/bootstrap")).toEqual({ owner: "litlfred", repo: "bootstrap" });
     expect(ownerRepo("https://github.com/litlfred/bootstrap.git")).toEqual({ owner: "litlfred", repo: "bootstrap" });
     expect(ownerRepo(undefined)).toBeUndefined();
   });
 
-  test("declared directories, needs and the README are checked, not assumed", async () => {
+  test("checksDirectoriesNeedsReadme", async () => {
     const { steps } = await initSteps(fixture(), { probe: offlineProbe, dryRun: true });
     expect(state(steps, "declaration")).toBe("done");
     expect(state(steps, "directory:skills")).toBe("done");
@@ -57,7 +57,7 @@ describe("init — the steps the declarations name, in four states", () => {
     expect(state(steps, "site:workflow")).toBe("not-done");
   });
 
-  test("site:workflow — a publisher in the TOOLSET counts only when it checks out that instance", () => {
+  test("workflowPublisherMustCheckOut", () => {
     const root = fixture();
     const tools = mkdtempSync(join(tmpdir(), "tools-"));
     mkdirSync(join(tools, ".github", "workflows"), { recursive: true });
@@ -69,13 +69,13 @@ describe("init — the steps the declarations name, in four states", () => {
     expect(pagesWorkflow(root, undefined, tools)).toBeUndefined();
   });
 
-  test("a needed harness's own instructions are STATED, never done", async () => {
+  test("neededHarnessStepsStated", async () => {
     const { steps } = await initSteps(fixture({ withBase: true }), { probe: offlineProbe, dryRun: true });
     expect(state(steps, "needs:base")).toBe("done");
     expect(state(steps, "instructions:base")).toBe("stated");
   });
 
-  test("no gh: Pages is could-not-determine, with the one manual step — never done, never silent", async () => {
+  test("noGhPagesUndetermined", async () => {
     const { steps } = await initSteps(fixture({ workflow: true }), { probe: offlineProbe, dryRun: true });
     const s = steps.find((x) => x.id === "site:enabled")!;
     expect(s.state).toBe("could-not-determine");
@@ -86,7 +86,7 @@ describe("init — the steps the declarations name, in four states", () => {
 
   const branchExists = (yes: boolean): Probe["git"] => () => ({ status: 0, stdout: yes ? "abc123\trefs/heads/gh-pages\n" : "", stderr: "" });
 
-  test("site:branch: gh-pages must exist before Pages can be on — and init never creates it on the remote", async () => {
+  test("ghPagesBranchNeverCreated", async () => {
     const probe: Probe = {
       gh: (args) => (args[0] === "auth" ? { status: 0, stdout: "", stderr: "" } : args.includes("POST") ? (() => { throw new Error("enabled before the branch exists"); })() : { status: 1, stdout: "", stderr: "HTTP 404" }),
       httpStatus: async () => 404,
@@ -100,12 +100,12 @@ describe("init — the steps the declarations name, in four states", () => {
     expect(ids.indexOf("site:branch")).toBeLessThan(ids.indexOf("site:enabled"));
   });
 
-  test("site:branch without git is could-not-determine", async () => {
+  test("branchWithoutGitUndetermined", async () => {
     const { steps } = await initSteps(fixture({ workflow: true }), { probe: offlineProbe, dryRun: true });
     expect(state(steps, "site:branch")).toBe("could-not-determine");
   });
 
-  test("with a signed-in gh, gh-pages present and Pages off, it enables Pages serving gh-pages, then checks again", async () => {
+  test("enablesPagesThenRechecks", async () => {
     const calls: string[][] = [];
     let on = false;
     const probe: Probe = {
@@ -129,7 +129,7 @@ describe("init — the steps the declarations name, in four states", () => {
     expect(state(steps, "site:live")).toBe("not-done");
   });
 
-  test("--dry-run never enables anything", async () => {
+  test("dryRunEnablesNothing", async () => {
     const probe: Probe = {
       gh: (args) => (args[0] === "auth" ? { status: 0, stdout: "", stderr: "" } : args.includes("POST") ? (() => { throw new Error("enabled in a dry run"); })() : { status: 1, stdout: "", stderr: "HTTP 404" }),
       httpStatus: async () => undefined,
@@ -139,7 +139,7 @@ describe("init — the steps the declarations name, in four states", () => {
     expect(state(steps, "site:enabled")).toBe("not-done");
   });
 
-  test("exit status: not-done outranks could-not-determine, which is never 0", () => {
+  test("exitStatusRanking", () => {
     expect(exitStatus([{ id: "a", namedBy: "x", what: "", detail: "", state: "done" }])).toBe(0);
     expect(exitStatus([{ id: "a", namedBy: "x", what: "", detail: "", state: "could-not-determine" }])).toBe(3);
     expect(
@@ -150,7 +150,7 @@ describe("init — the steps the declarations name, in four states", () => {
     ).toBe(1);
   });
 
-  test("an HTTP answer: 404 is not there; 403, 407, 5xx and silence are about the way here", () => {
+  test("httpStatusClassified", () => {
     expect(httpAnswer(200)).toBe("done");
     expect(httpAnswer(301)).toBe("done");
     expect(httpAnswer(404)).toBe("not-done");
@@ -170,7 +170,7 @@ describe("init — the steps the declarations name, in four states", () => {
     spawnSync("git", ["init", "-q"], { cwd: root });
     const probeWith = (status: (url: string) => number | undefined): Probe => ({ gh: () => undefined, httpStatus: async (u) => status(u) });
 
-    test("comes right after the declaration, before any directory, README or site step", async () => {
+    test("primaryStepAfterDeclaration", async () => {
       const { steps } = await initSteps(root, { probe: offlineProbe, dryRun: true });
       const ids = steps.map((s) => s.id);
       expect(ids.slice(0, 3)).toEqual(["declaration", "schemas:staged", "schemas:published"]);
@@ -178,21 +178,21 @@ describe("init — the steps the declarations name, in four states", () => {
       expect(state(steps, "schemas:published")).toBe("could-not-determine");
     });
 
-    test("a 404 is not published; a proxy's 403 could not be determined; 200 is done", async () => {
+    test("primaryStepHttpVerdicts", async () => {
       const at = async (code: number) => state((await initSteps(root, { probe: probeWith(() => code), dryRun: true })).steps, "schemas:published");
       expect(await at(404)).toBe("not-done");
       expect(await at(403)).toBe("could-not-determine");
       expect(await at(200)).toBe("done");
     });
 
-    test("site:live asks the README page too: a root answering over a missing README.html is not done", async () => {
+    test("liveNeedsReadmePage", async () => {
       const { steps } = await initSteps(root, { probe: probeWith((u) => (u.endsWith("README.html") ? 404 : 200)), dryRun: true });
       const live = steps.find((x) => x.id === "site:live")!;
       expect(live.state).toBe("not-done");
       expect(live.detail).toContain("README.html answered 404");
     });
 
-    test("site:live: a 403 is could-not-determine, not not-done", async () => {
+    test("live403Undetermined", async () => {
       const { steps } = await initSteps(root, { probe: probeWith(() => 403), dryRun: true });
       expect(state(steps, "site:live")).toBe("could-not-determine");
     });

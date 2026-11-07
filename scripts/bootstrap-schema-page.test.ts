@@ -34,7 +34,7 @@ const doc = {
 describe("drawing", () => {
   const page = renderSchemaPage([doc], "x.schema.json");
 
-  test("one box per object, with required marks and multiplicities", () => {
+  test("oneBoxPerObject", () => {
     expect(page).toContain("| * id     [1]     string");
     expect(page).toContain('|   mode   [0..1]  "a" | "b"');
     expect(page).toContain("| * parts  [1..*]  Part list");
@@ -42,11 +42,11 @@ describe("drawing", () => {
     expect(page).toContain("| * n  [1]  number |");
   });
 
-  test("a conditional is stated in words", () => {
+  test("conditionalStatedInWords", () => {
     expect(page).toContain('- If `mode` is "a", `parts` must be present.');
   });
 
-  test("each term is a row with its own anchor, its drawing and its [src]", () => {
+  test("termRowHasAnchorDrawingSrc", () => {
     // A table row with an explicit `<a id>`, not a heading: the staging
     // site's kramdown gave headings no ids, so a deep link needs its own.
     expect(page).toContain("| # | Term | Definition | Uses | Defined by |");
@@ -55,22 +55,22 @@ describe("drawing", () => {
 });
 
 describe("refusals — nothing is dropped silently", () => {
-  test("a rule shape it cannot state throws", () => {
+  test("throwsOnUnstatableRule", () => {
     expect(() => rules([{ if: { properties: { a: { minimum: 1 } } }, then: { required: ["b"] } }])).toThrow();
   });
 
-  test("an object with no properties throws", () => {
+  test("throwsOnObjectWithoutProperties", () => {
     const empty = { file: "e.json", schema: { title: "E", type: "object", properties: {}, $defs: { E: {} } } };
     expect(() => renderSchemaPage([empty], "e.json")).toThrow();
   });
 });
 
-test("names and anchors match GitHub's", () => {
+test("namesAndAnchorsMatchGithub", () => {
   expect(spaced("KnowledgeGraph")).toBe("Knowledge Graph");
   expect(anchor("Knowledge Graph declaration")).toBe("knowledge-graph-declaration");
 });
 
-test("the committed page is the one the committed schemas produce", () => {
+test("committedPageIsCurrent", () => {
   // Same check as `bootstrap:schemas:check`, from the files alone, so a stale
   // page fails here too without running the generator.
   const files = ["discussion.input.schema.json", "discussion.output.schema.json", "graph.schema.json", "model-registry.schema.json", "requirement.schema.json"];

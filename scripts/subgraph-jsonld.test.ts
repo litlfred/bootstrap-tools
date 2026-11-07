@@ -33,16 +33,16 @@ describe("named subgraphs — one IRI, two files, projected from one graph", () 
     describe(label, () => {
       const b = buildSubgraphs(root);
 
-      test("the audit is clean: every file validates, every child has its file, every diagram is a documented Process", () => {
+      test(`auditIsClean[${label}]`, () => {
         expect(auditSubgraphs(root, b)).toEqual([]);
       });
 
-      test("pure: two builds are byte-identical, and nothing from this machine appears", () => {
+      test(`buildIsPure[${label}]`, () => {
         expect(JSON.stringify([...buildSubgraphs(root).files])).toBe(JSON.stringify([...b.files]));
         expect(JSON.stringify([...b.files])).not.toContain(root);
       });
 
-      test("IRIs: the repository, the harness root, each directory — and the root has no hydrated file", () => {
+      test(`subgraphIris[${label}]`, () => {
         const base = publicationBase(JSON.parse(readFileSync(join(root, `${label}.json`), "utf-8")))!;
         expect(b.repoIri).toBe(`${base}subgraph/`);
         expect(b.rootIri).toBe(`${base}subgraph/${label}/`);
@@ -53,7 +53,7 @@ describe("named subgraphs — one IRI, two files, projected from one graph", () 
         expect(b.files.has(`subgraph/${label}/processes/${HYDRATED_FILE}`)).toBe(true);
       });
 
-      test("@context is the one shared URL in every file, never inline; the context file defines the subgraph terms", () => {
+      test(`sharedContextUrl[${label}]`, () => {
         for (const [p, d] of files(root)) {
           if (p === b.contextFile) continue;
           expect(d["@context"], p).toBe(b.contextUrl);
@@ -63,7 +63,7 @@ describe("named subgraphs — one IRI, two files, projected from one graph", () 
         expect("label" in ctx).toBe(false);
       });
 
-      test("every node of the graph is a direct member of exactly one subgraph, and an index member is a pointer", () => {
+      test(`nodeInExactlyOneSubgraph[${label}]`, () => {
         const graph = exportGraph(root, { docIri: `${publicationBase(JSON.parse(readFileSync(join(root, `${label}.json`), "utf-8")))}${label}.jsonld` });
         const seen: string[] = [];
         for (const [p, d] of files(root)) {
@@ -77,7 +77,7 @@ describe("named subgraphs — one IRI, two files, projected from one graph", () 
         expect(seen.sort()).toEqual((graph["@graph"] as Doc[]).filter((n) => n["@type"] !== undefined).map((n) => String(n["@id"])).sort());
       });
 
-      test("a hydrated file holds the transitive membership whole: every index member below it, inline", () => {
+      test(`hydratedHoldsMembership[${label}]`, () => {
         for (const [p, d] of files(root)) {
           if (!p.endsWith(HYDRATED_FILE)) continue;
           expect(SubgraphHydratedSchema.safeParse(d).success, p).toBe(true);
@@ -95,7 +95,7 @@ describe("named subgraphs — one IRI, two files, projected from one graph", () 
         }
       });
 
-      test("what a process reader needs: @id, Process, name, summary, description, the processes it calls, the .bpmn and the SVG", () => {
+      test(`processNodeFields[${label}]`, () => {
         const hyd = JSON.parse(b.files.get(`subgraph/${label}/processes/${HYDRATED_FILE}`)!) as Doc;
         const members = hyd["hasMember"] as Doc[];
         const processes = members.filter((m) => m["@type"] === "bootstrap:Process");
@@ -114,7 +114,7 @@ describe("named subgraphs — one IRI, two files, projected from one graph", () 
     });
   }
 
-  test("bootstrap's five diagrams and this toolset's one are all Process nodes", () => {
+  test("diagramsAreProcessNodes", () => {
     expect(buildSubgraphs(BOOTSTRAP).processes).toBe(5);
     expect(buildSubgraphs(TOOLS).processes).toBe(1);
   });
@@ -134,7 +134,7 @@ describe("named subgraphs — one IRI, two files, projected from one graph", () 
     return root;
   };
 
-  test("nesting: a directory under a declared one is a child subgraph, and its parent's hydrated file nests it", () => {
+  test("childSubgraphNested", () => {
     const root = fixture();
     const b = buildSubgraphs(root, { bootstrapRoot: BOOTSTRAP });
     expect(b.repoIri).toBe("https://owner.github.io/demo/subgraph/");
@@ -163,7 +163,7 @@ describe("named subgraphs — one IRI, two files, projected from one graph", () 
     expect((root2["hasMember"] as Doc[]).map((m) => m["@id"])).toEqual(["https://owner.github.io/demo/directory/code"]);
   });
 
-  test("a node whose subgraph cannot be determined is a problem, never left out", () => {
+  test("undeterminedSubgraphIsProblem", () => {
     const root = fixture();
     const base = "https://x.example/";
     const g = exportGraph(root, { docIri: `${base}demo.jsonld`, sourceBase: base, bootstrapRoot: BOOTSTRAP });
@@ -172,7 +172,7 @@ describe("named subgraphs — one IRI, two files, projected from one graph", () 
     expect(b.problems).toEqual([`${base}demo.jsonld#stray: no source path, and its isPartOf (${base}demo.jsonld#nowhere) is not a node of the graph — its subgraph cannot be determined`]);
   });
 
-  test("the context sits under the MAJOR version, and a missing version is a problem, never a guessed v0", () => {
+  test("contextUnderMajorVersion", () => {
     expect(contextPath("0.1.0")).toBe("v0/context.jsonld");
     expect(contextPath("2.3.4-rc.1")).toBe("v2/context.jsonld");
     expect(contextPath(undefined)).toBeUndefined();
@@ -188,7 +188,7 @@ describe("named subgraphs — one IRI, two files, projected from one graph", () 
     expect(buildSubgraphs(root, { bootstrapRoot: BOOTSTRAP }).problems.some((p) => p.includes("is not semver"))).toBe(true);
   });
 
-  test("--check's twin: a written tree is current, and an edited file is stale", () => {
+  test("checkDetectsStale", () => {
     const b = buildSubgraphs(BOOTSTRAP);
     const out = mkdtempSync(join(tmpdir(), "subgraphs-out-"));
     writeSubgraphs(out, b);
@@ -197,7 +197,7 @@ describe("named subgraphs — one IRI, two files, projected from one graph", () 
     expect(staleSubgraphs(out, b)).toEqual([`subgraph/${INDEX_FILE}`]);
   });
 
-  test("the site stages bootstrap's subgraphs from the same graph as bootstrap.jsonld", () => {
+  test("siteStagesSubgraphs", () => {
     const out = mkdtempSync(join(tmpdir(), "subgraphs-site-"));
     const r = stageSite(BOOTSTRAP, out);
     expect(r.problems).toEqual([]);
@@ -209,7 +209,7 @@ describe("named subgraphs — one IRI, two files, projected from one graph", () 
     for (const m of hyd["hasMember"] as Doc[]) expect(ids.has(m["@id"])).toBe(true);
   });
 
-  test("an instance that needs bootstrap, staged without bootstrap beside it, is a problem rather than a site without its graph", () => {
+  test("missingNeededBootstrapIsProblem", () => {
     const root = fixture();
     const r = stageSite(root, mkdtempSync(join(tmpdir(), "subgraphs-site2-")), { bootstrapRoot: join(root, "no-bootstrap-here") });
     expect(r.problems.length).toBe(1);

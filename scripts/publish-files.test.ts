@@ -17,7 +17,7 @@ describe("bootstrap's files, published as they sit", () => {
   writeFileSync(join(root, "bootstrap.json"), '{"name":"bootstrap"}\n');
   writeFileSync(join(root, ".git", "HEAD"), "ref\n");
 
-  test("every file lands at its own relative path, byte for byte; nothing is rendered", () => {
+  test("publishesFilesVerbatim", () => {
     const out = join(tmp, "site1");
     const r = publishFiles(root, out);
     expect(r.written.sort()).toEqual(["README.md", "bootstrap.json", "schemas/x.json"]);
@@ -25,7 +25,7 @@ describe("bootstrap's files, published as they sit", () => {
     expect(r.written.some((f) => f.endsWith(".html"))).toBe(false);
   });
 
-  test("never overwrites: a file already at the address wins, and is REPORTED", () => {
+  test("neverOverwritesAndReports", () => {
     const out = join(tmp, "site2");
     mkdirSync(out, { recursive: true });
     writeFileSync(join(out, "bootstrap.json"), "the graph's copy\n");

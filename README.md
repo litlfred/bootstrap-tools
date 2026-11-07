@@ -243,16 +243,21 @@ Part of [Bootstrap tools](#readme) 0.1.0, declared as `bootstrap-tools-schemas`,
 
 | file | what it is | used by |
 |---|---|---|
+| [`declaration.feature`](schemas/declaration.feature) | a file |  |
 | [`declaration.test.ts`](schemas/declaration.test.ts) | a file |  |
 | [`declaration.ts`](schemas/declaration.ts) | a file |  |
 | [`declared-order.ts`](schemas/declared-order.ts) | a file |  |
+| [`discussion.feature`](schemas/discussion.feature) | a file |  |
 | [`discussion.test.ts`](schemas/discussion.test.ts) | a file |  |
 | [`discussion.ts`](schemas/discussion.ts) | a file |  |
 | [`graph-export.ts`](schemas/graph-export.ts) | a file |  |
+| [`graph-paths.feature`](schemas/graph-paths.feature) | a file |  |
 | [`graph-paths.test.ts`](schemas/graph-paths.test.ts) | a file |  |
+| [`graph.feature`](schemas/graph.feature) | a file |  |
 | [`graph.test.ts`](schemas/graph.test.ts) | a file |  |
 | [`graph.ts`](schemas/graph.ts) | a file |  |
 | [`model-registry.ts`](schemas/model-registry.ts) | a file |  |
+| [`release-iri.feature`](schemas/release-iri.feature) | a file |  |
 | [`release-iri.test.ts`](schemas/release-iri.test.ts) | a file |  |
 | [`release-iri.ts`](schemas/release-iri.ts) | a file |  |
 | [`requirement-set.ts`](schemas/requirement-set.ts) | a file |  |
@@ -278,53 +283,75 @@ Part of [Bootstrap tools](#readme) 0.1.0, declared as `bootstrap-tools-scripts`,
 
 | file | what it is | used by |
 |---|---|---|
+| [`bootstrap-schema-page.feature`](scripts/bootstrap-schema-page.feature) | a file |  |
 | [`bootstrap-schema-page.test.ts`](scripts/bootstrap-schema-page.test.ts) | a file |  |
 | [`bootstrap-schema-page.ts`](scripts/bootstrap-schema-page.ts) | a file |  |
 | [`check-bootstrap-concepts.ts`](scripts/check-bootstrap-concepts.ts) | a file |  |
+| [`check-closure.feature`](scripts/check-closure.feature) | a file |  |
 | [`check-closure.test.ts`](scripts/check-closure.test.ts) | a file |  |
 | [`check-closure.ts`](scripts/check-closure.ts) | a file |  |
+| [`check-node-iris.feature`](scripts/check-node-iris.feature) | a file |  |
 | [`check-node-iris.test.ts`](scripts/check-node-iris.test.ts) | a file |  |
 | [`check-node-iris.ts`](scripts/check-node-iris.ts) | a file |  |
+| [`export-graph.feature`](scripts/export-graph.feature) | a file |  |
 | [`export-graph.test.ts`](scripts/export-graph.test.ts) | a file |  |
 | [`export-graph.ts`](scripts/export-graph.ts) | a file |  |
 | [`gen-bootstrap-schemas.ts`](scripts/gen-bootstrap-schemas.ts) | a file |  |
+| [`gen-vocabulary.feature`](scripts/gen-vocabulary.feature) | a file |  |
 | [`gen-vocabulary.test.ts`](scripts/gen-vocabulary.test.ts) | a file |  |
 | [`gen-vocabulary.ts`](scripts/gen-vocabulary.ts) | a file |  |
+| [`generated-by.feature`](scripts/generated-by.feature) | a file |  |
 | [`generated-by.test.ts`](scripts/generated-by.test.ts) | a file |  |
 | [`generated-by.ts`](scripts/generated-by.ts) | a file |  |
 | [`git-files.ts`](scripts/git-files.ts) | a file |  |
+| [`init.feature`](scripts/init.feature) | a file |  |
 | [`init.test.ts`](scripts/init.test.ts) | a file |  |
 | [`init.ts`](scripts/init.ts) | a file |  |
 | [`iri-sync.ts`](scripts/iri-sync.ts) | a file |  |
+| [`knowledge-graph-data-store.feature`](scripts/knowledge-graph-data-store.feature) | a file |  |
 | [`knowledge-graph-data-store.test.ts`](scripts/knowledge-graph-data-store.test.ts) | a file |  |
+| [`logger.feature`](scripts/logger.feature) | a file |  |
 | [`logger.test.ts`](scripts/logger.test.ts) | a file |  |
+| [`pages-status.feature`](scripts/pages-status.feature) | a file |  |
 | [`pages-status.test.ts`](scripts/pages-status.test.ts) | a file |  |
 | [`pages-status.ts`](scripts/pages-status.ts) | a file |  |
+| [`publish-files.feature`](scripts/publish-files.feature) | a file |  |
 | [`publish-files.test.ts`](scripts/publish-files.test.ts) | a file |  |
 | [`publish-files.ts`](scripts/publish-files.ts) | a file |  |
+| [`publish-site.feature`](scripts/publish-site.feature) | a file |  |
 | [`publish-site.test.ts`](scripts/publish-site.test.ts) | a file |  |
 | [`publish-site.ts`](scripts/publish-site.ts) | a file |  |
+| [`readme-book.feature`](scripts/readme-book.feature) | a file |  |
 | [`readme-book.test.ts`](scripts/readme-book.test.ts) | a file |  |
 | [`readme-book.ts`](scripts/readme-book.ts) | a file |  |
+| [`readme-graph-sections.feature`](scripts/readme-graph-sections.feature) | a file |  |
 | [`readme-graph-sections.test.ts`](scripts/readme-graph-sections.test.ts) | a file |  |
 | [`readme-graph-sections.ts`](scripts/readme-graph-sections.ts) | a file |  |
+| [`readme-sections.feature`](scripts/readme-sections.feature) | a file |  |
 | [`readme-sections.test.ts`](scripts/readme-sections.test.ts) | a file |  |
 | [`readme-sections.ts`](scripts/readme-sections.ts) | a file |  |
+| [`readme-toc.feature`](scripts/readme-toc.feature) | a file |  |
 | [`readme-toc.test.ts`](scripts/readme-toc.test.ts) | a file |  |
 | [`readme-toc.ts`](scripts/readme-toc.ts) | a file |  |
 | [`rehearse-standalone.ts`](scripts/rehearse-standalone.ts) | a file |  |
 | [`render-bpmn.ts`](scripts/render-bpmn.ts) | a file |  |
 | [`render-fonts.conf`](scripts/render-fonts.conf) | a file |  |
+| [`schema-semver.feature`](scripts/schema-semver.feature) | a file |  |
 | [`schema-semver.test.ts`](scripts/schema-semver.test.ts) | a file |  |
 | [`schema-semver.ts`](scripts/schema-semver.ts) | a file |  |
+| [`site.feature`](scripts/site.feature) | a file |  |
 | [`site.test.ts`](scripts/site.test.ts) | a file |  |
 | [`site.ts`](scripts/site.ts) | a file |  |
+| [`subgraph-jsonld.feature`](scripts/subgraph-jsonld.feature) | a file |  |
 | [`subgraph-jsonld.test.ts`](scripts/subgraph-jsonld.test.ts) | a file |  |
 | [`subgraph-jsonld.ts`](scripts/subgraph-jsonld.ts) | a file |  |
+| [`subgraph-readmes.feature`](scripts/subgraph-readmes.feature) | a file |  |
 | [`subgraph-readmes.test.ts`](scripts/subgraph-readmes.test.ts) | a file |  |
 | [`subgraph-readmes.ts`](scripts/subgraph-readmes.ts) | a file |  |
+| [`term-links.feature`](scripts/term-links.feature) | a file |  |
 | [`term-links.test.ts`](scripts/term-links.test.ts) | a file |  |
 | [`term-links.ts`](scripts/term-links.ts) | a file |  |
+| [`validate-bootstrap.feature`](scripts/validate-bootstrap.feature) | a file |  |
 | [`validate-bootstrap.test.ts`](scripts/validate-bootstrap.test.ts) | a file |  |
 | [`validate-bootstrap.ts`](scripts/validate-bootstrap.ts) | a file |  |
 | [`templates/`](scripts/templates/) | _nothing declares what this holds_ | |

@@ -45,7 +45,7 @@ const validModels = JSON.parse(readFileSync(join(REAL, "models", "models.json"),
 const INPUT_ID = (JSON.parse(readFileSync(join(REAL, "schemas", "discussion.input.schema.json"), "utf8")) as { $id: string }).$id;
 
 describe("the committed corpus", () => {
-  test("every document bootstrap carries parses", () => {
+  test("committedCorpusParses", () => {
     const results = run(REAL);
     expect(results.filter((r) => r.verdict === "valid").length).toBeGreaterThanOrEqual(2); // not vacuous
     expect(results.filter(isFailure)).toEqual([]);
@@ -53,7 +53,7 @@ describe("the committed corpus", () => {
 });
 
 describe("a valid and an invalid fixture", () => {
-  test("valid: a well-formed model registry passes", () => {
+  test("validRegistryPasses", () => {
     const good = {
       ...validModels,
       models: [{ id: "m", title: "M", preferredLanguages: ["en"], validation: "unverified" }],
@@ -61,7 +61,7 @@ describe("a valid and an invalid fixture", () => {
     expect(run(tree(good)).filter(isFailure)).toEqual([]);
   });
 
-  test("invalid: a registry entry with a wrong-typed field fails, and names where", () => {
+  test("invalidRegistryNamesWhere", () => {
     const bad = {
       ...validModels,
       models: [{ id: "m", title: "M", preferredLanguages: ["en"], validation: 42 }],
@@ -71,19 +71,19 @@ describe("a valid and an invalid fixture", () => {
     expect(failed[0]!.issues.join("\n")).toContain("validation");
   });
 
-  test("unreadable JSON is a failure, never a skip", () => {
+  test("unreadableJsonFails", () => {
     const root = tree(validModels);
     writeFileSync(join(root, "models", "models.json"), "{ not json");
     expect(run(root).filter(isFailure).map((r) => r.verdict)).toEqual(["unreadable"]);
   });
 
-  test("a missing required document is a failure", () => {
+  test("missingDocumentFails", () => {
     const root = tree(validModels);
     rmSync(join(root, "models", "models.json"));
     expect(run(root).filter(isFailure).map((r) => r.verdict)).toEqual(["absent"]);
   });
 
-  test("a discussion document is found by its `$schema`, and judged", () => {
+  test("discussionFoundBySchema", () => {
     const good = { $schema: INPUT_ID, open: ["harness"], askedOf: { kind: "person" } };
     const bad = { $schema: INPUT_ID, open: "not-a-list" };
     const root = tree(validModels, { "good.json": good, "bad.json": bad });
@@ -92,13 +92,13 @@ describe("a valid and an invalid fixture", () => {
     expect(failed.map((r) => r.target.path.split("/").pop())).toEqual(["bad.json"]);
   });
 
-  test("a published discussion schema with no `$id` makes the run unrunnable, not clean", () => {
+  test("missingSchemaIdUnrunnable", () => {
     const root = tree(validModels);
     writeFileSync(join(root, "schemas", "discussion.input.schema.json"), "{}");
     expect(() => discussionIds(root)).toThrow();
   });
 
-  test("the built graph is judged too — and a build that throws is a failure, not a skip", () => {
+  test("builtGraphJudged", () => {
     const real = run(bootstrapRoot()).find((r) => r.target.label === "Knowledge Graph (built)");
     expect(real?.verdict).toBe("valid");
     const broken = validateFile({

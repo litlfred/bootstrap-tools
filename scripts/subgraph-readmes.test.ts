@@ -46,27 +46,27 @@ function repo(): string {
 }
 
 describe("splice", () => {
-  test("no README: a file holding only the region", () => {
+  test("spliceCreatesRegionOnly", () => {
     expect(splice(undefined, "x")).toBe(`${BEGIN}\nx\n\n${END}\n`);
   });
-  test("markers: the region is replaced and the rest kept", () => {
+  test("spliceReplacesRegion", () => {
     expect(splice(`a\n${BEGIN}\nold\n${END}\nb`, "new")).toBe(`a\n${BEGIN}\nnew\n\n${END}\nb`);
   });
-  test("no markers: undefined, meaning leave it alone", () => {
+  test("spliceWithoutMarkersUndefined", () => {
     expect(splice("# written by a person\n", "x")).toBeUndefined();
   });
-  test("a blank line stands before the end marker, so kramdown reads a closing table as a table", () => {
+  test("blankLineBeforeEndMarker", () => {
     // folio-assistant#2529: kramdown (Jekyll, github-pages) prints a table as
     // a paragraph of pipes when an HTML line follows its last row directly.
     const table = "| file | what it is |\n|---|---|\n| [`a.md`](a.md) | A |\n";
     expect(splice(undefined, table)).toContain(`| A |\n\n${END}`);
     expect(splice(`${BEGIN}\nold\n${END}\n`, table)).toContain(`| A |\n\n${END}`);
   });
-  test("re-splicing is stable: the blank line is not doubled", () => {
+  test("respliceIsStable", () => {
     const once = splice(undefined, "| a |\n|---|\n| x |\n")!;
     expect(splice(once, "| a |\n|---|\n| x |\n")).toBe(once);
   });
-  test("an empty region is the two markers around one blank line", () => {
+  test("emptyRegionOneBlankLine", () => {
     expect(splice(undefined, "")).toBe(`${BEGIN}\n\n${END}\n`);
   });
 });
@@ -77,19 +77,19 @@ describe("plan, on a fixture", async () => {
   const inst = join(r, "demo");
   const skills = p.writes.get(join(inst, "skills", "README.md"))!;
 
-  test("heading and paragraph are the declared title and description", () => {
+  test("headingFromDeclaration", () => {
     expect(skills).toContain("# Skills");
     expect(skills).toContain("What to do.");
     expect(skills).toContain("Part of [Demo](../README.md), declared as `skills`, holding `skills`.");
   });
 
-  test("the text around the markers survives", () => {
+  test("textAroundMarkersSurvives", () => {
     expect(skills.startsWith("Intro above.")).toBe(true);
     expect(skills).toContain("Outro below.");
     expect(skills).not.toContain("\nold\n");
   });
 
-  test("the generated table ends in a blank line before the end marker — folio-assistant#2529", () => {
+  test("tableEndsInBlankLine", () => {
     const lines = skills.split("\n");
     const end = lines.indexOf(END);
     expect(end).toBeGreaterThan(1);
@@ -97,23 +97,23 @@ describe("plan, on a fixture", async () => {
     expect(lines[end - 2].startsWith("|")).toBe(true);
   });
 
-  test("files are described from themselves; a subdirectory is one row, with no count", () => {
+  test("subdirectoryIsOneRow", () => {
     expect(skills).toContain("| [`a.md`](a.md) | Does A. |");
     expect(skills).toContain("| [`pack/`](pack/) | _nothing declares what this holds_ | |");
   });
 
-  test("the counts the README no longer prints are in the plan — bean ba9e", () => {
+  test("countsInPlan", () => {
     expect(p.counts.get(join(inst, "skills", "README.md"))).toEqual({ direct: 1, subdirs: { pack: 1 } });
   });
 
-  test("a missing README is created; the heading falls back to the id", () => {
+  test("missingReadmeCreated", () => {
     const notes = p.writes.get(join(inst, "notes", "README.md"))!;
     expect(notes.startsWith(generatedFrontMatter(SCRIPT) + BEGIN)).toBe(true);
     expect(notes).toContain("# notes");
     expect(notes).toContain("_No description is declared for `notes`._");
   });
 
-  test("every gap is a finding, and a hand-written README is left untouched", () => {
+  test("gapsAreFindings", () => {
     expect(p.writes.has(join(inst, "kept", "README.md"))).toBe(false);
     const ids = (k: keyof typeof p.findings) => p.findings[k].map((f) => f.directory).sort();
     expect(ids("no-title")).toEqual(["kept", "notes"]);
@@ -122,7 +122,7 @@ describe("plan, on a fixture", async () => {
     expect(ids("unmarked-readme")).toEqual(["kept"]);
   });
 
-  test("nothing was written by planning", () => {
+  test("planningWritesNothing", () => {
     expect(readFileSync(join(inst, "skills", "README.md"), "utf-8")).toContain("\nold\n");
     expect(existsSync(join(inst, "notes", "README.md"))).toBe(false);
     rmSync(r, { recursive: true, force: true });
@@ -151,18 +151,18 @@ describe("a subdirectory row says what it IS when the caller resolved one", asyn
   const p = await plan(r, withDesc);
   const skills = p.writes.get(join(r, "demo", "skills", "README.md"))!;
 
-  test("the description replaces the count", () => {
+  test("descriptionReplacesCount", () => {
     expect(skills).toContain("| [`pack/`](pack/) | A bundle of related skills. | |");
   });
 
-  test("and the count is GONE, not merely accompanied", () => {
+  test("countIsGone", () => {
     // The row carries one answer. Printing both would make a reader ask which
     // is the subject of the row, and reintroduce the drifting value this
     // change exists to remove.
     expect(skills).not.toContain("1 file");
   });
 
-  test("a name with no description falls back to a value that does not count", () => {
+  test("nameFallbackHasNoCount", () => {
     // Partial resolution is the normal case: a directory may declare some of
     // its children and not others. The unnamed ones must not go blank.
     const partial = instancesIn(r).map((i) => ({
@@ -174,7 +174,7 @@ describe("a subdirectory row says what it IS when the caller resolved one", asyn
     });
   });
 
-  test("an empty string is not a description — it falls back", () => {
+  test("emptyDescriptionFallsBack", () => {
     // `""` is what the writer itself passes down for "nothing declared", so a
     // caller supplying it must behave the same way rather than emitting a
     // blank cell.
@@ -198,10 +198,10 @@ describe("a README is invariant under adding a file — bean ba9e", async () => 
   writeFileSync(join(r, "demo", "skills", "pack", "c.md"), "---\nname: c\ndescription: C.\n---\n");
   const after = await plan(r, instancesIn(r));
 
-  test("adding a file under a subdirectory changes no README", () => {
+  test("addingFileChangesNoReadme", () => {
     expect(after.writes.get(join(r, "demo", "skills", "README.md"))).toBe(before);
   });
-  test("but the count in the plan moves", () => {
+  test("addingFileMovesPlanCount", () => {
     expect(after.counts.get(join(r, "demo", "skills", "README.md"))!.subdirs.pack).toBe(2);
     rmSync(r, { recursive: true, force: true });
   });
@@ -211,7 +211,7 @@ describe("over the list limit, the summary names kinds, never numbers — bean b
   const r = repo();
   for (let i = 0; i < 151; i++) writeFileSync(join(r, "demo", "notes", `n${i}.${i % 2 ? "md" : "txt"}`), "x\n");
   const notes = (await plan(r, instancesIn(r))).writes.get(join(r, "demo", "notes", "README.md"))!;
-  test("the kinds, in name order, and no count", () => {
+  test("overLimitNamesKinds", () => {
     expect(notes).toContain("More than 150 files directly here, too many to list, of these kinds: .md, .txt.");
     expect(notes).not.toMatch(/\b151\b|\b7[56] \.(md|txt)\b/); // 151 files: 76 .txt, 75 .md
     rmSync(r, { recursive: true, force: true });
@@ -235,16 +235,16 @@ describe("in a git work tree, only the committed tree is counted — bean ba9e, 
   const dirty = await plan(r, instancesIn(r));
   const readme = join(r, "demo", "skills", "README.md");
 
-  test("an untracked file changes neither the README nor the counts", () => {
+  test("untrackedFileNotCounted", () => {
     expect(dirty.writes.get(readme)).toBe(clean.writes.get(readme));
     expect(dirty.counts.get(readme)).toEqual(clean.counts.get(readme));
   });
-  test("it is reported, by path", () => {
+  test("untrackedFileReported", () => {
     const f = dirty.findings["untracked-not-counted"].find((x) => x.directory === "skills")!;
     expect(f.path).toContain("demo/skills/pack/transient.md");
     expect(f.path).toContain("demo/skills/stray.md");
   });
-  test("staging it is what makes it count", () => {
+  test("stagedFileCounts", () => {
     git("add", "demo/skills/pack/transient.md");
     return plan(r, instancesIn(r)).then((q) => {
       expect(q.counts.get(readme)!.subdirs.pack).toBe(2);
@@ -266,24 +266,24 @@ describe("a wholly generated README declares itself in front matter — owner de
   };
   const first = await plan(r, instancesIn(r));
 
-  test("a README created from nothing opens with it, then the region", () => {
+  test("createdReadmeHasFrontMatter", () => {
     const notes = first.writes.get(at("notes"))!;
     expect(DECLARES(notes)).toBe(true);
     expect(notes.split("\n").slice(0, 4)).toEqual(["---", expect.stringMatching(/^generated: ".*scripts\/subgraph-readmes\.ts.*"$/), "---", BEGIN]);
   });
 
-  test("a partly authored README never claims to be generated", () => {
+  test("partlyAuthoredNotGenerated", () => {
     expect(DECLARES(first.writes.get(at("skills"))!)).toBe(false);
   });
 
-  test("regenerating is a fixed point: no second block, nothing stale", async () => {
+  test("regenerateIsFixedPoint", async () => {
     writeFileSync(at("notes"), first.writes.get(at("notes"))!);
     const again = (await plan(r, instancesIn(r))).writes.get(at("notes"))!;
     expect(again).toBe(first.writes.get(at("notes"))!);
     expect(again.match(/^---$/gm)!.length).toBe(2);
   });
 
-  test("a page that gains authored text loses it", async () => {
+  test("authoredTextDropsFrontMatter", async () => {
     writeFileSync(at("notes"), `${first.writes.get(at("notes"))!}\nWritten by a person.\n`);
     const next = (await plan(r, instancesIn(r))).writes.get(at("notes"))!;
     expect(DECLARES(next)).toBe(false);
@@ -291,7 +291,7 @@ describe("a wholly generated README declares itself in front matter — owner de
     expect(next).toContain("This section was generated");
   });
 
-  test("front matter somebody else wrote is kept as it is, and none is added", async () => {
+  test("foreignFrontMatterKept", async () => {
     const authored = `---\ntitle: "Notes"\nnav_order: 3\n---\n${BEGIN}\n${END}\n`;
     writeFileSync(at("notes"), authored);
     const next = (await plan(r, instancesIn(r))).writes.get(at("notes"))!;

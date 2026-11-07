@@ -20,7 +20,7 @@ function pkg(files: Record<string, string>): string {
 }
 
 describe("check-closure", () => {
-  test("its own files, zod and node: builtins pass", () => {
+  test("ownFilesZodBuiltinsPass", () => {
     const root = pkg({
       "schemas/a.ts": 'import { z } from "zod";\nimport { join } from "node:path";\nexport const a = z.string();\n',
       "schemas/b.ts": 'import { a } from "./a.ts";\nexport { a };\n',
@@ -28,12 +28,12 @@ describe("check-closure", () => {
     expect(checkClosure(root)).toEqual([]);
   });
 
-  test("a relative import out of the package fails", () => {
+  test("relativeImportOutsideFails", () => {
     const root = pkg({ "schemas/a.ts": 'import { x } from "../../above/x.ts";\n' });
     expect(checkClosure(root).map((f) => f.why)).toEqual(["leaves bootstrap-tools (../above/x.ts)"]);
   });
 
-  test("liquidjs and @playwright/test are allowed, any other package fails, and a test may add only bun:test and ajv", () => {
+  test("onlyAllowedPackagesPass", () => {
     const root = pkg({
       "schemas/a.ts": 'import { Liquid } from "liquidjs";\nimport _ from "lodash";\nimport { chromium } from "@playwright/test";\n',
       "schemas/a.test.ts": 'import { test } from "bun:test";\nimport Ajv from "ajv";\nimport x from "playwright";\n',
@@ -44,14 +44,14 @@ describe("check-closure", () => {
     ]);
   });
 
-  test("an import quoted in a comment is not an import; dynamic and re-exports are", () => {
+  test("commentImportIgnored", () => {
     expect(specifiersOf('/** import { x } from "../../above/x.ts"; */\n// import "y";\nexport const q = 1;\n')).toEqual([]);
     expect(specifiersOf('export { a } from "./a.ts";\nconst m = await import("./b.ts");\n').sort()).toEqual(["./a.ts", "./b.ts"]);
   });
 });
 
 describe("strings are data, not imports", () => {
-  test("a fixture that builds an import inside a string is not read as one", () => {
+  test("stringImportIgnored", () => {
     expect(specifiersOf('const src = \'import { x } from "../../above/x.ts";\';\nconst t = `await import("./b.ts")`;\n')).toEqual([]);
   });
 });
@@ -71,7 +71,7 @@ describe("importClosure: the transitive walk", () => {
     return dir;
   }
 
-  test("follows relative imports transitively, across directories, with .js → .ts and JSON as a leaf", () => {
+  test("followsRelativeImports", () => {
     const d = tree({
       "a/entry.ts": 'import { b } from "../b/b.js";\nexport const e = b;\n',
       "b/b.ts": 'import data from "./data.json";\nexport { c } from "../c/index.ts";\nexport const b = data;\n',
@@ -85,7 +85,7 @@ describe("importClosure: the transitive walk", () => {
     expect(r.missing).toEqual([]);
   });
 
-  test("a bare import is external unless resolveBare maps it; a mapped one is followed; a claimed one that names nothing is unresolved", () => {
+  test("bareImportExternalUnlessMapped", () => {
     const d = tree({
       "app/main.ts": 'import { z } from "zod";\nimport { s } from "@fx/lib/s.js";\nimport { g } from "@fx/lib/gone.js";\n',
       "lib/s.ts": 'import { t } from "./t.ts";\nexport const s = t;\n',
@@ -99,7 +99,7 @@ describe("importClosure: the transitive walk", () => {
     expect(r.unresolved.map((e) => e.specifier)).toEqual(["@fx/lib/gone.js"]);
   });
 
-  test("an unresolved relative import, a missing entry and a computed import() are each reported, never dropped", () => {
+  test("reportsUnresolvedImports", () => {
     const d = tree({ "m.ts": 'import "./nope.ts";\nconst p = "./x.ts";\nawait import(p);\n' });
     const r = importClosure([join(d, "m.ts"), join(d, "absent.ts")]);
     expect(r.unresolved.map((e) => e.specifier)).toEqual(["./nope.ts"]);
@@ -107,7 +107,7 @@ describe("importClosure: the transitive walk", () => {
     expect(r.computed).toEqual([join(d, "m.ts")]);
   });
 
-  test("`follow` records an edge without walking past it; `declaredEdges` walks a declared computed target", () => {
+  test("followAndDeclaredEdges", () => {
     const d = tree({
       "in/a.ts": 'import { o } from "../out/o.ts";\n',
       "out/o.ts": 'import "./deeper.ts";\n',
@@ -122,7 +122,7 @@ describe("importClosure: the transitive walk", () => {
     expect(l.files.map((f) => f.slice(d.length + 1))).toEqual(["in/loader.ts", "in/plugin.ts"]);
   });
 
-  test("it reads through a host, so a caller can walk a tree it has not checked out", () => {
+  test("readsThroughHost", () => {
     const files: Record<string, string> = { "/v/a.ts": 'import "./b.js";\n', "/v/b.ts": "" };
     const r = importClosure(["/v/a.ts"], { host: { isFile: (p) => p in files, read: (p) => files[p]! } });
     expect(r.files).toEqual(["/v/a.ts", "/v/b.ts"]);
