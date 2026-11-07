@@ -62,6 +62,7 @@ import {
   BOOTSTRAP_TERM_SHAPES,
   BOOTSTRAP_TERM_USES,
   BOOTSTRAP_TERMS,
+  BOOTSTRAP_TERMS_SUBJECT,
   KnowledgeGraphDeclarationSchema,
 } from "../schemas/graph.ts";
 import { renderSchemaPage, type PageDocument } from "./bootstrap-schema-page.ts";
@@ -286,6 +287,9 @@ export function render(t: (typeof TARGETS)[number]): string {
   // definition only, which JSON Schema expresses as a title and a description.
   const terms = Object.entries(t.terms);
   if (terms.length) {
+    // The subject area the terms belong to, as data beside them, so a layer
+    // that reads them as a glossary need not hard-code it.
+    if (t.terms === BOOTSTRAP_TERMS) doc.subject = BOOTSTRAP_TERMS_SUBJECT;
     // A term with a shape of its own (GraphTypology: bootstrap's kinds, open to a
     // Harness's) carries it beside the definition, so the list is published
     // where the term is, not only inline in the field that uses it.

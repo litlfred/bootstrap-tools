@@ -35,6 +35,15 @@
  */
 import { z } from "zod";
 
+/**
+ * The subject area bootstrap's terms belong to, published as `subject` beside
+ * them in `graph.schema.json`. A layer that translates terms reads it to keep
+ * a fixed translation of these words to text about the same subject: a
+ * Reference here is one Node naming another, not a citation (owner,
+ * 2026-11-07: "do it in the schema").
+ */
+export const BOOTSTRAP_TERMS_SUBJECT = "harness-vocabulary";
+
 /** Every term bootstrap uses, with its definition. The generator emits each as a `$defs` entry. */
 export const BOOTSTRAP_TERMS = {
   // ORDERED, and the order is the point: each definition uses only terms
