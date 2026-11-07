@@ -87,6 +87,7 @@ It is **one** toolset over swappable content. Someone who wants a different gene
 | `scripts/init.ts` | walks an instance's initialization steps as its declarations name them. PRIMARY and first: `schemas:staged` and `schemas:published`, the JSON Schemas and JSON-LD at their IRIs. Then directories, assets, the README and its sections, needed harnesses' instructions and the Pages site. It performs what a tool can (switching Pages on needs an authenticated `gh`) and reports each as done, not done, could not determine, or stated. A 404 is not done; a 403, 407, 5xx or no answer could not be determined |
 | `scripts/render-bpmn.ts` | draws each Process as an SVG beside its `.bpmn`, with bpmn-js in headless Chromium; the harness's site renderer uses the same drawing |
 | `scripts/git-files.ts` | the files git accounts for — tracked, plus untracked and not ignored |
+| `scripts/gate-own.ts` | whether a file is the caller's own in a layer's PR checks, read from the paths the layer PR-check runner sets; `iri:sync:check` judges only those, so another layer's stale copy is that layer's CI's to catch |
 | `scripts/check-closure.ts` | fails if anything here imports beyond itself, `zod`, `liquidjs`, `@playwright/test` and the runtime. Its walk, `importClosure`, is the one import-closure walker: a harness's remote mount uses it to bring a chosen Tool with its code, and nothing writes a second |
 | `scripts/check-node-iris.ts` | fails if a published node's identifier is not its file's path |
 | `scripts/check-bootstrap-concepts.ts` | fails if a bootstrap schema, or the Zod it is generated from, names a concept from outside bootstrap |
@@ -296,6 +297,8 @@ Part of [Bootstrap tools](#readme) 0.1.0, declared as `bootstrap-tools-scripts`,
 | [`export-graph.feature`](scripts/export-graph.feature) | a file |  |
 | [`export-graph.test.ts`](scripts/export-graph.test.ts) | a file |  |
 | [`export-graph.ts`](scripts/export-graph.ts) | a file |  |
+| [`gate-own.test.ts`](scripts/gate-own.test.ts) | a file |  |
+| [`gate-own.ts`](scripts/gate-own.ts) | a file |  |
 | [`gen-bootstrap-schemas.ts`](scripts/gen-bootstrap-schemas.ts) | a file |  |
 | [`gen-vocabulary.feature`](scripts/gen-vocabulary.feature) | a file |  |
 | [`gen-vocabulary.test.ts`](scripts/gen-vocabulary.test.ts) | a file |  |
