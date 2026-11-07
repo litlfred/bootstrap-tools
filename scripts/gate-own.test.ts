@@ -13,28 +13,27 @@ import { join } from "node:path";
 import { GATE_FOREIGN_PATHS_ENV, GATE_OWN_PATHS_ENV, gateOwnsFile } from "./gate-own.ts";
 
 describe("gateOwnsFile: a file is the caller's when its deepest instance directory is", () => {
-  // The same cases as cat-harness-tools' test/gate-own-files.test.ts, which
-  // tests the rule this file restates.
+  // The same cases the runner's own reader is tested on.
   const env = (own: string, foreign: string) => ({ [GATE_OWN_PATHS_ENV]: own, [GATE_FOREIGN_PATHS_ENV]: foreign });
 
   test("unset is undefined: judge everything", () => {
-    expect(gateOwnsFile("cat-harness/AGENTS.md", {})).toBeUndefined();
+    expect(gateOwnsFile("harness-layer/AGENTS.md", {})).toBeUndefined();
   });
 
   test("a layer root: its own directory is its own, a mounted layer's and the index's root files are not", () => {
-    const e = env("smart-base", "cat-harness,cat-harness-tools");
-    expect(gateOwnsFile("smart-base/AGENTS.md", e)).toBe(true);
-    expect(gateOwnsFile("./smart-base/scripts/x.ts", e)).toBe(true);
-    expect(gateOwnsFile("cat-harness/docs/guides/agent-onboarding.md", e)).toBe(false);
+    const e = env("site-layer", "harness-layer,tools-layer");
+    expect(gateOwnsFile("site-layer/AGENTS.md", e)).toBe(true);
+    expect(gateOwnsFile("./site-layer/scripts/x.ts", e)).toBe(true);
+    expect(gateOwnsFile("harness-layer/docs/guides/agent-onboarding.md", e)).toBe(false);
     expect(gateOwnsFile("README.md", e)).toBe(false);
     // A prefix of a name is not containment.
-    expect(gateOwnsFile("smart-base-extra/AGENTS.md", e)).toBe(false);
+    expect(gateOwnsFile("site-layer-extra/AGENTS.md", e)).toBe(false);
   });
 
   test("an instance at the root owns the root's files but not a mounted layer under it", () => {
-    const e = env(".", "cat-harness");
+    const e = env(".", "harness-layer");
     expect(gateOwnsFile("README.md", e)).toBe(true);
-    expect(gateOwnsFile("cat-harness/AGENTS.md", e)).toBe(false);
+    expect(gateOwnsFile("harness-layer/AGENTS.md", e)).toBe(false);
   });
 });
 

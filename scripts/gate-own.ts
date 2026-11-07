@@ -1,24 +1,23 @@
 /**
  * Whether a file is the caller's own in a layer's PR checks: the reader of
- * the environment contract `run-gates.py` sets (cat-harness-tools,
- * `.github/scripts/layer-pr-checks/`), restated here in a dozen lines rather
- * than imported, because bootstrap-tools depends on bootstrap and nothing
- * above it (the reason `git-files.ts` gives for its own restatement).
+ * the environment contract the layer PR-check runner sets, restated here in a
+ * dozen lines rather than imported, because bootstrap-tools depends on
+ * bootstrap and nothing above it (the reason `git-files.ts` gives for its own
+ * restatement).
  *
  * @module bootstrap-tools/scripts/gate-own
  *
  * Owner ruling, 2026-11-05 ("Move the checks"): a check of a layer's own
  * committed files runs only in the repository that commits those files, so
  * other layers stop seeing false new failures. `iri:sync:check` read every
- * file in the checkout, the mounted layers' included, so a stale IRI in
- * cat-harness's docs failed the gate in smart-ra#223.
+ * file in the checkout, the mounted layers' included, so a stale IRI in a
+ * mounted layer's docs failed the gate in every root that mounted it.
  *
  * `CAT_GATE_OWN_PATHS` names the caller's own instance directories, relative
  * to the root (`.` for an instance at the root); `CAT_GATE_FOREIGN_PATHS`
  * every other instance's. Unset (a local run, this layer's own CI), every
- * file is judged, as before. The rule is cat-harness-tools'
- * `scripts/lib/gate-own.ts` `gateOwnsFile`; `gate-own.test.ts` holds this copy
- * to the same cases that file's test does.
+ * file is judged, as before. The rule is the runner's own reader's, and
+ * `gate-own.test.ts` holds this copy to the same cases.
  */
 
 /** The caller's own instances' directories, comma-separated. */
