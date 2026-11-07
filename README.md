@@ -297,6 +297,7 @@ Part of [Bootstrap tools](#readme) 0.1.0, declared as `bootstrap-tools-scripts`,
 | [`export-graph.feature`](scripts/export-graph.feature) | a file |  |
 | [`export-graph.test.ts`](scripts/export-graph.test.ts) | a file |  |
 | [`export-graph.ts`](scripts/export-graph.ts) | a file |  |
+| [`gate-own.feature`](scripts/gate-own.feature) | a file |  |
 | [`gate-own.test.ts`](scripts/gate-own.test.ts) | a file |  |
 | [`gate-own.ts`](scripts/gate-own.ts) | a file |  |
 | [`gen-bootstrap-schemas.ts`](scripts/gen-bootstrap-schemas.ts) | a file |  |

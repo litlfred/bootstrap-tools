@@ -1,6 +1,6 @@
 Feature: declared paths stay inside the declaring directory
 
-  @test:schemas/graph-paths.test.ts::refusesEscapingPath
+  @test:schemas/graph-paths.test.ts::declared_paths_stay_inside_the_declaring_directory::refusesEscapingPath[${p}]
   Scenario Outline: refuses <path>
     Given the path <path>
     When it is used as a Subgraph's path and as an Asset's src
@@ -18,7 +18,7 @@ Feature: declared paths stay inside the declaring directory
       | "a/.." |
       | "a\\..\\b" |
 
-  @test:schemas/graph-paths.test.ts::acceptsContainedPath
+  @test:schemas/graph-paths.test.ts::declared_paths_stay_inside_the_declaring_directory::acceptsContainedPath[${p}]
   Scenario Outline: accepts <path>
     Given the path <path>
     When it is used as a Subgraph's path and as an Asset's src
@@ -34,7 +34,7 @@ Feature: declared paths stay inside the declaring directory
       | "a/b..c" |
       | "a/.hidden" |
 
-  @test:schemas/graph-paths.test.ts::jsonSchemaCarriesPathPattern
+  @test:schemas/graph-paths.test.ts::declared_paths_stay_inside_the_declaring_directory::jsonSchemaCarriesPathPattern
   Scenario: the generated JSON Schema carries the pattern on both fields
     When the input JSON Schemas of SubgraphSchema and AssetSchema are generated
     Then the Subgraph's path property carries a pattern
