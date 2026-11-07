@@ -41,6 +41,7 @@ import { join, relative } from "node:path";
 
 import { knowledgeGraphsIn } from "../schemas/declaration.ts";
 import { gitFiles } from "./git-files.ts";
+import { gateOwnsFile } from "./gate-own.ts";
 import { type ReleaseIris, releaseIris } from "../schemas/release-iri.ts";
 
 /** Text a person or program reads; binaries and lockfiles are never IRI carriers here. */
@@ -119,6 +120,10 @@ if (import.meta.main) {
   }
   const stale: string[] = [];
   let total = 0;
+  // In a layer's PR checks, only the caller's own files (owner ruling
+  // 2026-11-05, "Move the checks"; `gate-own.ts`): a mounted layer's stale
+  // copy is that layer's to rewrite, in its own CI. Counted, never charged.
+  let others = 0;
   for (const abs of files) {
     const rel = relative(repo, abs);
     if (!TEXT.test(rel) || SKIP.some((re) => re.test(rel))) continue;
@@ -138,6 +143,10 @@ if (import.meta.main) {
       n += r.changes;
     }
     if (n === 0) continue;
+    if (check && gateOwnsFile(rel) === false) {
+      others++;
+      continue;
+    }
     if (!check) {
       total += n;
       stale.push(`${rel} (${n})`);
@@ -150,6 +159,7 @@ if (import.meta.main) {
   for (const { root, release } of rels) {
     console.log(`${relative(repo, root) || "."}: ${release.agent} (${release.version})`);
   }
+  if (others > 0) console.log(`· ${others} file(s) of other layers carry a stale IRI — not this caller's; their own CI judges them`);
   if (stale.length === 0) {
     console.log("✓ every literal release IRI is at its declared major.");
     process.exit(0);
