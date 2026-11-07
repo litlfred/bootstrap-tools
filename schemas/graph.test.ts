@@ -13,6 +13,7 @@ import {
   BOOTSTRAP_TERM_DEFINED_BY,
   BOOTSTRAP_TERM_USES,
   BOOTSTRAP_TERMS,
+  BOOTSTRAP_TERMS_SUBJECT,
   KnowledgeGraphDeclarationSchema,
 } from "./graph.ts";
 import { checkDeclaredOrder } from "./declared-order.ts";
@@ -330,5 +331,17 @@ describe("every $schema a bootstrap file carries is a Node Kind its declaration 
 
   test("declarationShapeKnowsNodeSchemas", () => {
     expect(KnowledgeGraphDeclarationSchema.safeParse(decl).success).toBe(true);
+  });
+});
+
+describe("the terms' subject area (owner, 2026-11-07: \"do it in the schema\")", () => {
+  test("is a lowercase local id, so a layer can compare it", () => {
+    expect(BOOTSTRAP_TERMS_SUBJECT).toMatch(/^[a-z0-9][a-z0-9._-]*$/);
+  });
+
+  test("is published beside the terms in graph.schema.json when bootstrap is checked out beside these tools", () => {
+    const file = join(import.meta.dir, "..", "..", "bootstrap", "schemas", "graph.schema.json");
+    if (!existsSync(file)) return; // standalone: check-bootstrap.yml's --check covers the published file
+    expect(JSON.parse(readFileSync(file, "utf-8")).subject).toBe(BOOTSTRAP_TERMS_SUBJECT);
   });
 });
