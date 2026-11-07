@@ -64,14 +64,14 @@ const DECLARATION = Buffer.from('{"name":"demo","title":"Démo — données","ne
 const INSTRUCTIONS = Buffer.from("Do this first.\r\nThen this.\n", "utf-8");
 
 describe("1. serve a file exactly as committed", () => {
-  test("the declaration and the instructions at the predetermined path come back byte for byte", () => {
+  test("servesDeclarationByteForByte", () => {
     const top = mkdtempSync(join(tmpdir(), "kg-store-"));
     const dir = store(top, "demo", { "demo.json": DECLARATION, "docs/bootstrap/initialization.md": INSTRUCTIONS });
     expect(serve(dir, "HEAD", "demo.json")!.equals(DECLARATION)).toBe(true);
     expect(serve(dir, "HEAD", "docs/bootstrap/initialization.md")!.equals(INSTRUCTIONS)).toBe(true);
   });
 
-  test("a read AT A REF returns what was committed there, not what came later", () => {
+  test("readsAtRef", () => {
     const top = mkdtempSync(join(tmpdir(), "kg-store-"));
     const dir = store(top, "demo", { "demo.json": DECLARATION });
     const first = String(git(dir, ["rev-parse", "HEAD"]).stdout).trim();
@@ -81,7 +81,7 @@ describe("1. serve a file exactly as committed", () => {
     expect(String(serve(dir, "HEAD", "demo.json"))).toBe('{"name":"demo","needs":[]}\n');
   });
 
-  test("the files the declaration lists are served under the same rule", () => {
+  test("servesListedFiles", () => {
     const top = mkdtempSync(join(tmpdir(), "kg-store-"));
     const listed = Buffer.from("---\nname: x\n---\nbody", "utf-8");
     const dir = store(top, "demo", {
@@ -93,7 +93,7 @@ describe("1. serve a file exactly as committed", () => {
 });
 
 describe("2. tell absent from present", () => {
-  test("an uncommitted path is ABSENT — not an empty file, and not a read that merely failed", () => {
+  test("uncommittedPathAbsent", () => {
     const top = mkdtempSync(join(tmpdir(), "kg-store-"));
     const dir = store(top, "demo", { "demo.json": DECLARATION, "empty.json": "" });
     // Present and empty: served, as zero bytes.
@@ -105,14 +105,14 @@ describe("2. tell absent from present", () => {
     expect(asked.stderr).toMatch(/does not exist|exists on disk, but not in/);
   });
 
-  test("a file on disk but never committed is absent from the store", () => {
+  test("untrackedFileAbsent", () => {
     const top = mkdtempSync(join(tmpdir(), "kg-store-"));
     const dir = store(top, "demo", { "demo.json": DECLARATION });
     writeFileSync(join(dir, "draft.json"), "{}");
     expect(serve(dir, "HEAD", "draft.json")).toBeUndefined();
   });
 
-  test("a reader is told absent and present-but-unreadable apart: initSteps says which", async () => {
+  test("absentVersusUnreadable", async () => {
     const top = mkdtempSync(join(tmpdir(), "kg-store-"));
     // Absent: no declaration at the root at all.
     const empty = store(top, "nothing", { "README.md": "# nothing\n" });
@@ -130,7 +130,7 @@ describe("2. tell absent from present", () => {
 });
 
 describe("3. serve siblings the same way", () => {
-  test("a `needs` entry is read from ../<name>/<name>.json, and its instructions from the predetermined path", async () => {
+  test("readsSiblingNeeds", async () => {
     const top = mkdtempSync(join(tmpdir(), "kg-store-"));
     const demo = store(top, "demo", { "demo.json": DECLARATION, "README.md": "# demo\n" });
     const base = store(top, "base", { "base.json": '{"name":"base","directories":[]}', "docs/bootstrap/initialization.md": INSTRUCTIONS });
@@ -142,7 +142,7 @@ describe("3. serve siblings the same way", () => {
     expect(steps.find((s) => s.id === "instructions:base")?.state).toBe("stated");
   });
 
-  test("a sibling that is not there is absent, and reported so — never skipped", async () => {
+  test("missingSiblingReported", async () => {
     const top = mkdtempSync(join(tmpdir(), "kg-store-"));
     const demo = store(top, "demo", { "demo.json": DECLARATION, "README.md": "# demo\n" });
     const { steps } = await initSteps(demo, { probe: offlineProbe, dryRun: true });
@@ -153,7 +153,7 @@ describe("3. serve siblings the same way", () => {
 });
 
 describe("4. keep what is written", () => {
-  test("a committed declaration is read back by a later reader, with who wrote it and when", () => {
+  test("committedDeclarationReadBack", () => {
     const top = mkdtempSync(join(tmpdir(), "kg-store-"));
     const when = "2026-10-20T09:00:00+00:00";
     const dir = store(top, "demo", { "demo.json": DECLARATION }, { GIT_AUTHOR_DATE: when, GIT_COMMITTER_DATE: when });

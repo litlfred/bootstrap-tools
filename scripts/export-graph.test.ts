@@ -19,25 +19,25 @@ type Node = { "@id": string; "@type": string; [k: string]: unknown };
 const nodes = () => (build()["@graph"] as Node[]).filter((n) => n["@type"] !== undefined);
 
 describe("bootstrap's graph, from bootstrap's files, in standard terms", () => {
-  test("parses against its schema, with and without provenance", () => {
+  test("parsesAgainstSchema", () => {
     for (const d of [build(), build(true)]) {
       const r = GraphExportSchema.safeParse(d);
       expect(r.success ? [] : r.error.issues).toEqual([]);
     }
   });
 
-  test("pure: two builds are byte-identical, and nothing absolute from this machine appears", () => {
+  test("buildIsPure", () => {
     expect(JSON.stringify(build())).toBe(JSON.stringify(build()));
     expect(JSON.stringify(build())).not.toContain(BOOTSTRAP);
   });
 
-  test("names nothing above bootstrap — no harness prefix, no harness property", () => {
+  test("namesNothingAbove", () => {
     const text = JSON.stringify({ ...build(), "@id": "", "@graph": nodes().map((n) => ({ ...n, "@id": "" })) });
     expect(text).not.toContain("cat-harness");
     expect(text).not.toContain("folio-assistant");
   });
 
-  test("every skill bootstrap holds is a node, at the id a harness links to", () => {
+  test("everySkillIsNode", () => {
     const onDisk = readdirSync(join(BOOTSTRAP, "skills"))
       .filter((f) => f.endsWith(".md") && f !== "README.md")
       .map((f) => /^name:\s*(.+)$/m.exec(readFileSync(join(BOOTSTRAP, "skills", f), "utf-8"))?.[1]?.trim() ?? f.slice(0, -3))
@@ -46,7 +46,7 @@ describe("bootstrap's graph, from bootstrap's files, in standard terms", () => {
     expect(inGraph).toEqual(onDisk);
   });
 
-  test("every link inside the graph lands on a node of it", () => {
+  test("everyLinkLandsOnNode", () => {
     const ids = new Set([DOC, ...nodes().map((n) => n["@id"])]);
     const dangling: string[] = [];
     for (const n of nodes()) {
@@ -58,29 +58,29 @@ describe("bootstrap's graph, from bootstrap's files, in standard terms", () => {
     expect(dangling).toEqual([]);
   });
 
-  test("a subgraph says what it holds with bootstrap's own graph-typology individuals", () => {
+  test("subgraphUsesOwnTypologies", () => {
     const declared = new Set((JSON.parse(readFileSync(join(BOOTSTRAP, "bootstrap.json"), "utf-8")) as { directories: { graphTypologies: string[] }[] }).directories.flatMap((d) => d.graphTypologies));
     for (const n of nodes().filter((x) => x["@type"] === "bootstrap:Subgraph")) {
       for (const t of n["type"] as string[]) expect(declared.has(t.replace("bootstrap:graphTypology/", ""))).toBe(true);
     }
   });
 
-  test("provenance only when asked, and never on a node", () => {
+  test("provenanceOnlyWhenAsked", () => {
     expect("generatedAtTime" in build()).toBe(false);
     const p = build(true);
     expect("generatedAtTime" in p).toBe(true);
     expect(JSON.stringify(p["@graph"])).not.toContain("generatedAtTime");
   });
 
-  test("the document says it is generated, and by what", () => {
+  test("documentSaysGenerated", () => {
     expect(String(build()["comment"])).toContain(GENERATED_BY);
   });
 
-  test("nothing the build could not read is dropped silently", () => {
+  test("unreadableNotDropped", () => {
     expect(build()["problems"]).toEqual([]);
   });
 
-  test("a declared subgraph whose contents were not read is named, not left empty", () => {
+  test("unreadSubgraphNamed", () => {
     const g = build();
     const graph = g["@graph"] as { "@type": string; label: string; type: string[] }[];
     const unread = graph
@@ -92,7 +92,7 @@ describe("bootstrap's graph, from bootstrap's files, in standard terms", () => {
     expect(g["omitted"]).toEqual(unread);
   });
 
-  test("nodes are sorted by @id, by code unit", () => {
+  test("nodesSortedById", () => {
     const ids = (build()["@graph"] as { "@id": string }[]).map((n) => n["@id"]);
     expect(ids).toEqual([...ids].sort());
   });
@@ -101,7 +101,7 @@ describe("bootstrap's graph, from bootstrap's files, in standard terms", () => {
 describe("a process says what it is for, what it calls, and where it is drawn", () => {
   const processes = () => nodes().filter((n) => n["@type"] === "bootstrap:Process");
 
-  test("every bootstrap process carries its diagram's documentation: the whole as description, the first sentence as summary", () => {
+  test("processCarriesDocumentation", () => {
     expect(processes().length).toBe(readdirSync(join(BOOTSTRAP, "processes")).filter((f) => f.endsWith(".bpmn")).length);
     for (const p of processes()) {
       expect(typeof p["description"], p["@id"]).toBe("string");
@@ -109,7 +109,7 @@ describe("a process says what it is for, what it calls, and where it is drawn", 
     }
   });
 
-  test("the processes a process calls are its call activities' calledElement, each a Process node", () => {
+  test("processCallsAreProcessNodes", () => {
     const init = processes().find((p) => p["@id"].endsWith("/process/Process_InitializeHarness"))!;
     expect(init["requires"]).toEqual(
       ["Process_CompleteInitialization", "Process_Discussion", "Process_LogMessage"].map((x) => `${BASE}process/${x}`),
@@ -119,11 +119,11 @@ describe("a process says what it is for, what it calls, and where it is drawn", 
     for (const c of calls) expect(String(c["calledElement"])).toContain("/process/");
   });
 
-  test("a process is depicted by the SVG drawn beside its .bpmn", () => {
+  test("processDepictedBySvg", () => {
     for (const p of processes()) expect(p["depiction"]).toBe(String(p["source"]).replace(/\.bpmn$/, ".svg"));
   });
 
-  test("the process's own documentation, never a task's; a call to a process no diagram defines is a problem, and no link is written", () => {
+  test("processOwnDocumentationOnly", () => {
     const root = mkdtempSync(join(tmpdir(), "export-graph-"));
     mkdirSync(join(root, "processes"));
     writeFileSync(join(root, "demo.json"), JSON.stringify({ name: "demo", needs: ["bootstrap"], directories: [{ id: "p", path: "processes/", graphTypologies: ["processes"] }] }));
@@ -141,7 +141,7 @@ describe("a process says what it is for, what it calls, and where it is drawn", 
     expect(g["problems"]).toEqual(["process/P_A: calls process/P_Missing, which no diagram here defines", "process/P_A/node/C: calls process/P_Missing, which no diagram here defines"]);
   });
 
-  test("a global task is a Task that requires its Skill, and a call to it by bare id resolves to it from another file", () => {
+  test("globalTaskRequiresSkill", () => {
     // Owner, 2026-10-20, "a1 b1 c1": one shared .bpmn per layer that holds
     // no process; a call activity names a global task by bare id.
     const root = mkdtempSync(join(tmpdir(), "export-graph-"));
@@ -183,7 +183,7 @@ describe("a process says what it is for, what it calls, and where it is drawn", 
     expect(GraphExportSchema.safeParse(g).success).toBe(true);
   });
 
-  test("a lane NAMES its Role with partitionElementRef; the retired role ref still binds, with a problem", () => {
+  test("laneNamesRole", () => {
     // Owner, 2026-10-16: "Lane names Role, not Actor" — and a lane is not the
     // Role. The name is BPMN's own: partitionElementRef → a bpmn:resource.
     const root = mkdtempSync(join(tmpdir(), "export-graph-"));
@@ -212,14 +212,14 @@ describe("a process says what it is for, what it calls, and where it is drawn", 
     ]);
   });
 
-  test("a task REQUIRES its Skill (dcterms:requires); the Skill names no task", () => {
+  test("taskRequiresSkill", () => {
     const tasks = nodes().filter((n) => n["@type"] === "bootstrap:ProcessNode" && String(n["requires"] ?? "").includes("/skill/"));
     expect(tasks.length).toBeGreaterThan(0);
     expect(nodes().some((n) => "skill" in n)).toBe(false);
     expect((build()["@context"] as Record<string, unknown>)["requires"]).toEqual({ "@id": "dcterms:requires", "@type": "@id" });
   });
 
-  test("another instance's graph is written in bootstrap's classes, whatever it declares", () => {
+  test("otherInstanceInBootstrapClasses", () => {
     const tools = exportGraph(join(import.meta.dir, ".."), { docIri: DOC });
     const ctx = tools["@context"] as Record<string, unknown>;
     expect(ctx["bootstrap"]).toBe((build()["@context"] as Record<string, unknown>)["bootstrap"]);
@@ -227,7 +227,7 @@ describe("a process says what it is for, what it calls, and where it is drawn", 
     expect((tools["@graph"] as Node[]).filter((n) => n["@type"] === "bootstrap:Process").map((n) => n["summary"] !== undefined)).toEqual([true]);
   });
 
-  test("the first sentence", () => {
+  test("firstSentence", () => {
     expect(firstSentence("One.  Two.")).toBe("One.");
     expect(firstSentence("A file.bpmn is\n read. Then")).toBe("A file.bpmn is read.");
     expect(firstSentence("No stop")).toBe("No stop");
@@ -236,7 +236,7 @@ describe("a process says what it is for, what it calls, and where it is drawn", 
 });
 
 describe("the XML reader is enough for authored BPMN", () => {
-  test("elements, attributes, nesting, text and entities", () => {
+  test("xmlReaderParsesBpmn", () => {
     const x = parseXml('<?xml version="1.0"?><!-- c --><a:r x="1"><a:c y=\'2\'/><a:t>a &amp; b</a:t></a:r>');
     const r = x.children[0]!;
     expect(r.name).toBe("a:r");

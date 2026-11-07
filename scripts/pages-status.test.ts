@@ -32,20 +32,20 @@ describe("pages-status — the push's status and its message", () => {
   writeFileSync(join(root, "skills", "s.md"), "# s\n");
   spawnSync("git", ["init", "-q"], { cwd: root });
 
-  test("the publication root is --url, else iriBase, else the Pages address", () => {
+  test("publicationRootPrecedence", () => {
     expect(publicationRoot({ iriBase: "https://a.example/x" }, undefined)).toBe("https://a.example/x/");
     expect(publicationRoot({ iriBase: "https://a.example/x/" }, "https://staging.example/pr-1")).toBe("https://staging.example/pr-1/");
     expect(publicationRoot({ repository: "Owner/repo" })).toBe("https://owner.github.io/repo/");
     expect(publicationRoot({})).toBeUndefined();
   });
 
-  test("a failure outranks an unknown, and an unknown is never a pass", () => {
+  test("failureOutranksUnknown", () => {
     expect(pushStatus(["done", "done"])).toBe("pushed");
     expect(pushStatus(["done", "could-not-determine"])).toBe("could-not-determine");
     expect(pushStatus(["could-not-determine", "not-done"])).toBe("not-pushed");
   });
 
-  test("every address answering is pushed, and the message names the commit and the QA", async () => {
+  test("allAnsweringIsPushed", async () => {
     const r = (await pagesStatus(root, { sha: "1a2b3c4d5e", probe: probeWith(() => 200) }))!;
     expect(r.status).toBe("pushed");
     expect(r.target).toBe("github-pages");
@@ -53,14 +53,14 @@ describe("pages-status — the push's status and its message", () => {
     expect(r.message).toStartWith("pushed 1a2b3c4 to https://x.example/demo/ — QA: staged ok");
   });
 
-  test("a root that answers over a README.html that does not is not pushed", async () => {
+  test("missingReadmeNotPushed", async () => {
     const r = (await pagesStatus(root, { sha: "abc", probe: probeWith((u) => (u.endsWith("README.html") ? 404 : 200)) }))!;
     expect(r.status).toBe("not-pushed");
     expect(r.qa.readme).toEqual({ state: "not-done", http: 404 });
     expect(r.message).toContain("README.html 404");
   });
 
-  test("a document answering 404 is not pushed; a 403 could not be determined", async () => {
+  test("http404NotPushed403Unknown", async () => {
     const missing = (await pagesStatus(root, { sha: "abc", probe: probeWith((u) => (u.endsWith(".json") ? 404 : 200)) }))!;
     expect(missing.status).toBe("not-pushed");
     expect(missing.message).toContain("missing: https://x.example/demo/1.0.0/schemas/a.schema.json");
@@ -68,7 +68,7 @@ describe("pages-status — the push's status and its message", () => {
     expect(blind.status).toBe("could-not-determine");
   });
 
-  test("a subgraph list renders only those directories and the root's files; an unknown id is a problem", async () => {
+  test("subgraphListFiltersDirectories", async () => {
     const sel = subgraphSelection({ directories: [{ id: "skills", path: "skills/" }] }, ["skills", "nope"]);
     expect(sel.unknown).toEqual(["nope"]);
     expect(sel.keep!("README.md")).toBe(true);

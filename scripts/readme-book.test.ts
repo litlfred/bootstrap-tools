@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { buildBook, danglingFragments, githubSlug, readmeOrder, sectionId } from "./readme-book.ts";
 
 describe("the README page — every README on one page", () => {
-  test("root first, then by path", () => {
+  test("rootFirstThenByPath", () => {
     expect(readmeOrder(["b/README.md", "README.md", "a/x/README.md", "a/README.md", "a/notes.md"])).toEqual([
       "README.md",
       "a/README.md",
@@ -15,13 +15,13 @@ describe("the README page — every README on one page", () => {
     ]);
   });
 
-  test("section ids come from the directory", () => {
+  test("sectionIdsFromDirectory", () => {
     expect(sectionId("README.md")).toBe("readme");
     expect(sectionId("schemas/README.md")).toBe("schemas");
     expect(sectionId("a/B c/README.md")).toBe("a-b-c");
   });
 
-  test("GitHub's slug", () => {
+  test("githubSlug", () => {
     expect(githubSlug("Who takes part")).toBe("who-takes-part");
     expect(githubSlug("FR-1: `x`")).toBe("fr-1-x");
   });
@@ -35,7 +35,7 @@ describe("the README page — every README on one page", () => {
   ]);
   const book = buildBook(root, readmes, { title: "T" });
 
-  test("a TOC lists each README and its level-2 headings, and every fragment on the page lands", () => {
+  test("tocFragmentsLand", () => {
     expect(book.markdown).toContain("1. [Top](#readme) — `README.md`");
     expect(book.markdown).toContain("   - [Every file](#readme--every-file)");
     expect(book.markdown).toContain("2. [skills](#skills) — `skills/README.md`");
@@ -44,18 +44,18 @@ describe("the README page — every README on one page", () => {
     expect(book.problems).toEqual([]);
   });
 
-  test("headings are demoted under their section; a heading in code is not touched", () => {
+  test("headingsDemotedNotInCode", () => {
     expect(book.markdown).toContain('### <a id="skills--every-file"></a>Every file');
     expect(book.markdown).toContain("## not a heading");
   });
 
-  test("links between READMEs become anchors; other relative links resolve from the root", () => {
+  test("readmeLinksBecomeAnchors", () => {
     expect(book.markdown).toContain("[the skills](#skills--every-file)");
     expect(book.markdown).toContain("[up](#readme--every-file)");
     expect(book.markdown).toContain("[a](skills/a.md)");
   });
 
-  test("a link to nothing is a problem, not a silent pass", () => {
+  test("deadLinkIsProblem", () => {
     const bad = buildBook(root, new Map([["README.md", "# x\n\n[gone](missing.md) and [nope](#nowhere)\n"]]), { title: "T" });
     expect(bad.problems.length).toBe(2);
   });

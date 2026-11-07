@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { BUILD_OUTPUT_DIRS, knowledgeGraphsIn } from "./declaration.ts";
 
 describe("knowledgeGraphsIn", () => {
-  test("does not read a build-output directory, so a build report is no writer's input", () => {
+  test("skipsBuildOutputDirectory", () => {
     const root = mkdtempSync(join(tmpdir(), "kg-scan-"));
     for (const d of BUILD_OUTPUT_DIRS) {
       mkdirSync(join(root, d));

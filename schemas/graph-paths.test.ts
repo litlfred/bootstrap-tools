@@ -16,18 +16,18 @@ const asset = (src: string) => AssetSchema.safeParse({ id: "a", src, role: "r" }
 
 describe("declared paths stay inside the declaring directory", () => {
   for (const p of REFUSED) {
-    test(`refuses ${JSON.stringify(p)}`, () => {
+    test(`refusesEscapingPath[${p}]`, () => {
       expect(subgraph(p)).toBe(false);
       expect(asset(p)).toBe(false);
     });
   }
   for (const p of ACCEPTED) {
-    test(`accepts ${JSON.stringify(p)}`, () => {
+    test(`acceptsContainedPath[${p}]`, () => {
       expect(subgraph(p)).toBe(true);
       expect(asset(p)).toBe(true);
     });
   }
-  test("the generated JSON Schema carries the pattern on both fields", () => {
+  test("jsonSchemaCarriesPathPattern", () => {
     const s = z.toJSONSchema(SubgraphSchema, { io: "input" }) as { properties: Record<string, { pattern?: string }> };
     const a = z.toJSONSchema(AssetSchema, { io: "input" }) as { properties: Record<string, { pattern?: string }> };
     expect(s.properties.path.pattern).toBeTruthy();

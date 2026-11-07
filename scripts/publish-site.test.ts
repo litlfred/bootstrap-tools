@@ -34,7 +34,7 @@ function read(remoteUrl: string, path: string): string | undefined {
 }
 
 describe("publish-site — any runner, any git remote (bootstrap-tools#7)", () => {
-  test("a full replace: the staged site lands and a file it does not hold is gone", () => {
+  test("fullReplaceRemovesStale", () => {
     const r = remote();
     const res = publishSite({ site: staged({ "index.html": "new\n", "subgraph/v0/context.jsonld": "{}\n" }), remote: r, backoff: 0 });
     expect(res.state).toBe("published");
@@ -43,26 +43,26 @@ describe("publish-site — any runner, any git remote (bootstrap-tools#7)", () =
     expect(read(r, "stale.html")).toBeUndefined();
   });
 
-  test("publishing the same site twice is `current`, not a second commit", () => {
+  test("republishIsCurrent", () => {
     const r = remote();
     const site = staged({ "index.html": "same\n" });
     expect(publishSite({ site, remote: r, backoff: 0 }).state).toBe("published");
     expect(publishSite({ site, remote: r, backoff: 0 }).state).toBe("current");
   });
 
-  test("an empty or missing site is refused, never published over the branch", () => {
+  test("refusesEmptySite", () => {
     const r = remote();
     expect(publishSite({ site: staged({}), remote: r, backoff: 0 }).state).toBe("failed");
     expect(publishSite({ site: "/nonexistent-site-dir", remote: r, backoff: 0 }).state).toBe("failed");
     expect(read(r, "stale.html")).toBe("old\n");
   });
 
-  test("an unreachable remote fails with a reason rather than throwing", () => {
+  test("unreachableRemoteFails", () => {
     const res = publishSite({ site: staged({ "a.html": "x\n" }), remote: "/nonexistent/remote.git", attempts: 1, backoff: 0 });
     expect(res.state).toBe("failed");
   });
 
-  test("--into replaces only that subtree: the root and other previews stay", () => {
+  test("intoReplacesSubtreeOnly", () => {
     const r = remote();
     expect(publishSite({ site: staged({ "index.html": "a\n" }), remote: r, into: "STAGING/a", backoff: 0 }).state).toBe("published");
     expect(publishSite({ site: staged({ "index.html": "b\n" }), remote: r, into: "STAGING/b", backoff: 0 }).state).toBe("published");
@@ -73,7 +73,7 @@ describe("publish-site — any runner, any git remote (bootstrap-tools#7)", () =
     expect(read(r, "STAGING/a/index.html")).toBeUndefined();
   });
 
-  test("--keep: a full replace keeps the named top-level paths, and the staged site cannot overwrite them", () => {
+  test("keepPreservesTopLevelPaths", () => {
     const r = remote();
     publishSite({ site: staged({ "index.html": "p\n" }), remote: r, into: "STAGING/p", backoff: 0 });
     const res = publishSite({ site: staged({ "index.html": "root\n", "STAGING/p/index.html": "clobber\n" }), remote: r, keep: ["STAGING"], backoff: 0 });
@@ -83,7 +83,7 @@ describe("publish-site — any runner, any git remote (bootstrap-tools#7)", () =
     expect(read(r, "STAGING/p/index.html")).toBe("p\n");
   });
 
-  test("an --into or --keep outside the branch, or both at once, is refused", () => {
+  test("refusesBadIntoOrKeep", () => {
     const r = remote();
     const site = staged({ "a.html": "x\n" });
     for (const into of ["../x", "/abs", ".", "a/../../b", ".git"]) expect(publishSite({ site, remote: r, into, backoff: 0 }).state).toBe("failed");
@@ -92,7 +92,7 @@ describe("publish-site — any runner, any git remote (bootstrap-tools#7)", () =
     expect(read(r, "stale.html")).toBe("old\n");
   });
 
-  test("only what a publish writes is checked out: kept paths and other previews are not", () => {
+  test("checksOutOnlyWrittenPaths", () => {
     expect(sparsePatterns({})).toBeUndefined();
     expect(sparsePatterns({ into: "STAGING/a/" })).toEqual(["/STAGING/a/"]);
     expect(sparsePatterns({ keep: ["STAGING", "branches"] })).toEqual(["/*", "!/STAGING/", "!/branches/"]);
