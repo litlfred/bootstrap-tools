@@ -4,28 +4,28 @@ Feature: the generated bootstrap discussion schemas, against the contract they r
     Given the generated discussion input and output JSON Schemas read from bootstrap/schemas
     And a corpus of output documents and a corpus of input documents, each labelled with whether it must validate
 
-  @test:schemas/discussion.test.ts::keepsPublishedSchemaIds
+  @test:schemas/discussion.test.ts::the_generated_bootstrap_schemas::keepsPublishedSchemaIds
   Scenario: keep their published `$id` — it is a contract, cited from five languages' catalogues
     Then the input schema's $id is "https://litlfred.github.io/bootstrap/v0/schemas/discussion.input.schema.json"
     And the output schema's $id is "https://litlfred.github.io/bootstrap/v0/schemas/discussion.output.schema.json"
 
-  @test:schemas/discussion.test.ts::carriesTwoConditionals
+  @test:schemas/discussion.test.ts::the_generated_bootstrap_schemas::carriesTwoConditionals
   Scenario: carry the two conditionals Zod cannot export
     Then the output schema's allOf holds exactly 2 entries
 
-  @test:schemas/discussion.test.ts::strictAtEveryDepth
+  @test:schemas/discussion.test.ts::the_generated_bootstrap_schemas::strictAtEveryDepth
   Scenario: ARE strict, at every depth — bean `z634`, decided 2026-09-21
     When the occurrences of additionalProperties false are counted in each schema
     Then the input schema has 3
     And the output schema has 4
 
-  @test:schemas/discussion.test.ts::zodRejectsUnknownKeys
+  @test:schemas/discussion.test.ts::the_generated_bootstrap_schemas::zodRejectsUnknownKeys
   Scenario: the Zod is strict too, or the two forms disagree about what validates
     Given the Zod schemas RepositoryRefSchema, ParticipantSchema, DiscussionInputSchema, ExchangeEntrySchema and DiscussionOutputObjectSchema
     When each parses an object carrying only a key it does not declare
     Then each reports an unrecognized_keys issue
 
-  @test:schemas/discussion.test.ts::outputCorpusVerdict
+  @test:schemas/discussion.test.ts::the_generated_bootstrap_schemas::output_corpus::outputCorpusVerdict[${c.why.replace(/\s+/g,_"_")}]
   Scenario Outline: output corpus > accepts or REJECTS: <why>
     Given the output case "<why>"
     When it is validated against the generated output JSON Schema
@@ -44,7 +44,7 @@ Feature: the generated bootstrap discussion schemas, against the contract they r
       | ...and the same document with the key spelled right is accepted | true |
       | STRICTNESS reaches NESTED objects too — a participant with a stray key | false |
 
-  @test:schemas/discussion.test.ts::inputCorpusVerdict
+  @test:schemas/discussion.test.ts::the_generated_bootstrap_schemas::input_corpus::inputCorpusVerdict[${c.why.replace(/\s+/g,_"_")}]
   Scenario Outline: input corpus > accepts or REJECTS: <why>
     Given the input case "<why>"
     When it is validated against the generated input JSON Schema
@@ -59,7 +59,7 @@ Feature: the generated bootstrap discussion schemas, against the contract they r
       | a repository must say which part it plays | false |
       | STRICTNESS: an extra top-level key is rejected rather than ignored | false |
 
-  @test:schemas/discussion.test.ts::zodAgreesWithOutputSchema
+  @test:schemas/discussion.test.ts::the_generated_bootstrap_schemas::the_Zod_and_the_JSON_Schema_agree::zodAgreesWithOutputSchema[${c.why.replace(/\s+/g,_"_")}]
   Scenario Outline: output — <why>
     Given the output case "<why>"
     When it is parsed with the Zod DiscussionOutputSchema and validated against the generated output JSON Schema
@@ -78,7 +78,7 @@ Feature: the generated bootstrap discussion schemas, against the contract they r
       | ...and the same document with the key spelled right is accepted |
       | STRICTNESS reaches NESTED objects too — a participant with a stray key |
 
-  @test:schemas/discussion.test.ts::zodAgreesWithInputSchema
+  @test:schemas/discussion.test.ts::the_generated_bootstrap_schemas::the_Zod_and_the_JSON_Schema_agree::zodAgreesWithInputSchema[${c.why.replace(/\s+/g,_"_")}]
   Scenario Outline: input — <why>
     Given the input case "<why>"
     When it is parsed with the Zod DiscussionInputSchema and validated against the generated input JSON Schema

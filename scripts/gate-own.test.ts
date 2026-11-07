@@ -16,11 +16,11 @@ describe("gateOwnsFile: a file is the caller's when its deepest instance directo
   // The same cases the runner's own reader is tested on.
   const env = (own: string, foreign: string) => ({ [GATE_OWN_PATHS_ENV]: own, [GATE_FOREIGN_PATHS_ENV]: foreign });
 
-  test("unset is undefined: judge everything", () => {
+  test("unsetJudgesEverything", () => {
     expect(gateOwnsFile("harness-layer/AGENTS.md", {})).toBeUndefined();
   });
 
-  test("a layer root: its own directory is its own, a mounted layer's and the index's root files are not", () => {
+  test("layerRootOwnsOnlyItsDirectory", () => {
     const e = env("site-layer", "harness-layer,tools-layer");
     expect(gateOwnsFile("site-layer/AGENTS.md", e)).toBe(true);
     expect(gateOwnsFile("./site-layer/scripts/x.ts", e)).toBe(true);
@@ -30,7 +30,7 @@ describe("gateOwnsFile: a file is the caller's when its deepest instance directo
     expect(gateOwnsFile("site-layer-extra/AGENTS.md", e)).toBe(false);
   });
 
-  test("an instance at the root owns the root's files but not a mounted layer under it", () => {
+  test("rootInstanceOwnsRootFilesOnly", () => {
     const e = env(".", "harness-layer");
     expect(gateOwnsFile("README.md", e)).toBe(true);
     expect(gateOwnsFile("harness-layer/AGENTS.md", e)).toBe(false);
@@ -52,14 +52,14 @@ describe("iri:sync:check judges only the caller's own files", () => {
     return spawnSync("bun", [join(import.meta.dir, "iri-sync.ts"), "--check", "--repo", root], { encoding: "utf-8", env });
   };
 
-  test("unscoped, both stale files fail it, as before", () => {
+  test("unscopedFailsBothStaleFiles", () => {
     const r = run({});
     expect(r.status).toBe(1);
     expect(r.stdout).toContain("own/a.md");
     expect(r.stdout).toContain("other/b.md");
   });
 
-  test("scoped, the caller's own stale file still fails it; the other layer's is counted, not charged", () => {
+  test("scopedChargesOnlyOwnStaleFile", () => {
     const r = run({ [GATE_OWN_PATHS_ENV]: "own", [GATE_FOREIGN_PATHS_ENV]: "other" });
     expect(r.status).toBe(1);
     expect(r.stdout).toContain("own/a.md");
@@ -67,7 +67,7 @@ describe("iri:sync:check judges only the caller's own files", () => {
     expect(r.stdout).toContain("1 file(s) of other layers");
   });
 
-  test("scoped to a caller whose own files are current, it passes", () => {
+  test("scopedPassesWhenOwnFilesCurrent", () => {
     const r = run({ [GATE_OWN_PATHS_ENV]: "elsewhere", [GATE_FOREIGN_PATHS_ENV]: "own,other" });
     expect(r.status).toBe(0);
     expect(r.stdout).toContain("2 file(s) of other layers");
