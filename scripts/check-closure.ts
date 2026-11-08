@@ -33,7 +33,7 @@
  * they import, transitively, with each edge resolved or said not to be. This
  * gate is one caller (every file of the package, followed only inside it);
  * a remote mount that brings a chosen Tool is another (its definition and
- * implementation, followed across the mounted instances); the staging cone is
+ * implementation, followed across the mounted layers); the staging cone is
  * a third. There is one walker, not one per caller: two walkers are two
  * answers to "what does this code load", and the one a gate does not exercise
  * is the one that drifts.
@@ -192,7 +192,7 @@ export interface ImportClosureOptions {
   host?: ClosureHost;
   /**
    * A bare specifier's file, for the packages the caller holds as source (a
-   * workspace sibling, a mounted instance). Return a path to follow it,
+   * workspace sibling, a mounted layer). Return a path to follow it,
    * `null` when the package is the caller's and the path names nothing
    * (unresolved), or `undefined` to leave it `external`. Absent: every bare
    * import is external.

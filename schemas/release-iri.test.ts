@@ -1,5 +1,5 @@
 /**
- * An instance's release addresses, and the sync that keeps literal copies of
+ * A layer's release addresses, and the sync that keeps literal copies of
  * them at the declared major (owner, 2026-10-23, option "B. Major in
  * address": every address carries the major only; the pin fixes the release).
  */

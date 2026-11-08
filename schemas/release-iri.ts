@@ -1,5 +1,5 @@
 /**
- * An instance's release addresses: where its identifiers live for the major
+ * A layer's release addresses: where its identifiers live for the major
  * version it declares.
  *
  * @module schemas/release-iri
@@ -29,7 +29,7 @@
  *
  * ## Derived, never typed
  *
- * `iriBase` and `version` are written once, in the instance's declaration.
+ * `iriBase` and `version` are written once, in the layer's declaration.
  * Everything here is computed from them; a generator or template that needs
  * an address asks {@link releaseIris} (or reads the `release` variable it is
  * handed) instead of spelling one out. The copies that cannot be computed at
@@ -44,7 +44,7 @@ import { readKnowledgeGraphDeclaration } from "./declaration.ts";
 /** MAJOR.MINOR.PATCH, nothing else: no ranges, no pre-release, no `v`. */
 export const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 
-/** An instance's release, as both audiences address it. */
+/** A layer's release, as both audiences address it. */
 export interface ReleaseIris {
   /** The declared `iriBase`, ending in `/`. */
   readonly iriBase: string;

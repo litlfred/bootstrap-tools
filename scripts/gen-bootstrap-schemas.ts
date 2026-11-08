@@ -6,7 +6,7 @@
  * @covers schemas
  * @graphNode none — a generator over the bootstrap schemas, not a schema itself
  *
- * ## Why the source and the output are in different instances
+ * ## Why the source and the output are in different layers
  *
  * `bootstrap/README.md` promises a Bootstrapping Agent **no harness, no server, no
  * tools and no work plan**, and that what it reads is "a file you read, not
@@ -86,7 +86,7 @@ const check = process.argv.includes("--check");
 /**
  * Where `bootstrap` actually is, resolved from its own declaration.
  *
- * The INSTANCE is the part that can move — it is discovered by declared name
+ * The LAYER is the part that can move — it is discovered by declared name
  * rather than assumed to sit at `bootstrap/`, so a relocation moves the
  * output with it. What is not resolved is the `skills/<file>` tail, and that
  * is deliberate: those filenames are half of a published `$id` and are cited
