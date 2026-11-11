@@ -16,6 +16,7 @@ Part of [Bootstrap tools](../README.md) 0.1.0, declared as `bootstrap-tools-scri
 | [`bootstrap-schema-page.feature`](bootstrap-schema-page.feature) | a file |  |
 | [`bootstrap-schema-page.test.ts`](bootstrap-schema-page.test.ts) | a file |  |
 | [`bootstrap-schema-page.ts`](bootstrap-schema-page.ts) | a file |  |
+| [`bpmn-tidy.ts`](bpmn-tidy.ts) | a file |  |
 | [`check-bootstrap-concepts.ts`](check-bootstrap-concepts.ts) | a file |  |
 | [`check-closure.feature`](check-closure.feature) | a file |  |
 | [`check-closure.test.ts`](check-closure.test.ts) | a file |  |
