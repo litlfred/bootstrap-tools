@@ -287,6 +287,7 @@ Part of [Bootstrap tools](#readme) 0.1.0, declared as `bootstrap-tools-scripts`,
 | [`bootstrap-schema-page.feature`](scripts/bootstrap-schema-page.feature) | a file |  |
 | [`bootstrap-schema-page.test.ts`](scripts/bootstrap-schema-page.test.ts) | a file |  |
 | [`bootstrap-schema-page.ts`](scripts/bootstrap-schema-page.ts) | a file |  |
+| [`bpmn-tidy.ts`](scripts/bpmn-tidy.ts) | a file |  |
 | [`check-bootstrap-concepts.ts`](scripts/check-bootstrap-concepts.ts) | a file |  |
 | [`check-closure.feature`](scripts/check-closure.feature) | a file |  |
 | [`check-closure.test.ts`](scripts/check-closure.test.ts) | a file |  |
