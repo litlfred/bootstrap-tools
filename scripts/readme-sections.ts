@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Write — or with `--check`, verify — the generated sections of an instance's
+ * Write — or with `--check`, verify — the generated sections of a layer's
  * `README.md`: `kg:processes`, `kg:files`, `kg:roles` and `kg:toc`.
  *
  * @module bootstrap-tools/scripts/readme-sections

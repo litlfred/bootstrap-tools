@@ -12,7 +12,7 @@ description: >
 The bump bootstrap's published schemas require is **computed** from a diff of
 the generated schemas, never asserted. It answers the question a third party
 following one of bootstrap's `$id`s has: **will a document that validated
-yesterday fail today?** It is not the version of an instance as a whole.
+yesterday fail today?** It is not the version of a layer as a whole.
 
 ## Why this needs its own rules
 

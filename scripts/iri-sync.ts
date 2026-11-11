@@ -1,11 +1,11 @@
 #!/usr/bin/env bun
 /**
- * iri-sync.ts — keep every literal copy of an instance's release IRIs at the
+ * iri-sync.ts — keep every literal copy of a layer's release IRIs at the
  * major version its declaration states.
  *
  * ## Why a sync, when everything else is derived
  *
- * `release-iri.ts` derives an instance's addresses from `iriBase` and
+ * `release-iri.ts` derives a layer's addresses from `iriBase` and
  * `version`, and every generator and template asks it rather than spelling
  * one out. Some copies cannot ask: an `xmlns` attribute in a BPMN file, a
  * value in a code list, a fixture string in a test. Those are literal by
@@ -15,7 +15,7 @@
  *
  * ## The rewrites
  *
- * For each instance declaring `iriBase` (see `releaseIris`):
+ * For each layer declaring `iriBase` (see `releaseIris`):
  *
  * - `<iriBase><any semver>/` → `<iriBase>v<major>/` — a full-version form,
  *   the declared version's own included: no address carries a full version
@@ -77,7 +77,7 @@ export function rewrite(text: string, r: ReleaseIris, from?: string): { text: st
   return { text: out, changes };
 }
 
-/** Every instance that declares an `iriBase`, with its release. */
+/** Every layer that declares an `iriBase`, with its release. */
 export function releases(repoRoot: string): { root: string; release: ReleaseIris }[] {
   const out: { root: string; release: ReleaseIris }[] = [];
   for (const { root, decl } of knowledgeGraphsIn(repoRoot)) {
@@ -106,7 +106,7 @@ if (import.meta.main) {
   }
   // The whole checkout when it is one repository (the monorepo, where
   // a harness's literal citations of bootstrap's IRIs are kept in step too);
-  // otherwise each declaring instance's own repository — the standalone case,
+  // otherwise each declaring layer's own repository — the standalone case,
   // where bootstrap and bootstrap-tools are sibling clones in a directory that
   // is not itself a repository (found by `rehearse-standalone`).
   const perRoot = () => {

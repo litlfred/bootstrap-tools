@@ -4,7 +4,7 @@
  * @module bootstrap-tools/scripts/subgraph-readmes.test
  * @graphNode none — a test
  *
- * Fixture instances in a temporary directory, resolved with bootstrap's plain
+ * Fixture layers in a temporary directory, resolved with bootstrap's plain
  * rule (`instancesIn`). `plan()` writes nothing. Whether every link a
  * generated README carries resolves over the REAL tree is the hosting harness's test,
  * because the real tree is resolved with the harness's Extensions.

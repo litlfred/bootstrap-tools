@@ -13,23 +13,23 @@
  * file in the checkout, the mounted layers' included, so a stale IRI in a
  * mounted layer's docs failed the gate in every root that mounted it.
  *
- * `CAT_GATE_OWN_PATHS` names the caller's own instance directories, relative
- * to the root (`.` for an instance at the root); `CAT_GATE_FOREIGN_PATHS`
- * every other instance's. Unset (a local run, this layer's own CI), every
+ * `CAT_GATE_OWN_PATHS` names the caller's own layer directories, relative
+ * to the root (`.` for a layer at the root); `CAT_GATE_FOREIGN_PATHS`
+ * every other layer's. Unset (a local run, this layer's own CI), every
  * file is judged, as before. The rule is the runner's own reader's, and
  * `gate-own.test.ts` holds this copy to the same cases.
  */
 
-/** The caller's own instances' directories, comma-separated. */
+/** The caller's own layers' directories, comma-separated. */
 export const GATE_OWN_PATHS_ENV = "CAT_GATE_OWN_PATHS";
-/** Every other instance's directory in the root, the same way. */
+/** Every other layer's directory in the root, the same way. */
 export const GATE_FOREIGN_PATHS_ENV = "CAT_GATE_FOREIGN_PATHS";
 
 /**
  * Whether the file at `rel` (relative to the root) is the caller's own, or
  * `undefined` when the run names no own paths (judge everything). A file
- * belongs to the deepest instance directory that contains it; a file outside
- * every instance directory is the caller's only when one of its instances
+ * belongs to the deepest layer directory that contains it; a file outside
+ * every layer directory is the caller's only when one of its layers
  * sits at the root.
  */
 // input-site: env CAT_GATE_OWN_PATHS,CAT_GATE_FOREIGN_PATHS #6166bceb — the instance directories ownership is decided by; the values are the whole of what they contribute

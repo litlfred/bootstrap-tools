@@ -11,7 +11,7 @@
  * you read, not something you run". Measured: that directory holds `.md`,
  * `.json` and `.bpmn` and **no executable code**. So its shapes cannot be Zod
  * *in it* — owner, 2026-09-20, *"bootstrap should not know zod at all"*. They
- * live in this sibling instance, `bootstrap-tools`: Zod is an AUTHORING TOOL
+ * live in this sibling layer, `bootstrap-tools`: Zod is an AUTHORING TOOL
  * for the Knowledge Graph, *"different tools can/will be used, but the core KG
  * should be unchanged"*, and what bootstrap carries is only what it generates.
  *
@@ -139,7 +139,7 @@ export type ExchangeEntry = z.infer<typeof ExchangeEntrySchema>;
  * a const is not a Zod call, so it lands as `undetermined` and its fields are
  * invisible in the relationship diagram — which is what
  * `themePaletteShape` and `kgNodeLabelShape` already do. Since the whole
- * reason this instance exists is to make bootstrap's shapes visible, hiding
+ * reason this layer exists is to make bootstrap's shapes visible, hiding
  * the biggest one behind a variable would defeat it.
  */
 export const DiscussionOutputObjectSchema = z.object({

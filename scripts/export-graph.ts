@@ -63,10 +63,10 @@
  * ## The vocabulary is always bootstrap's
  *
  * Every class here is bootstrap's, so the `bootstrap:` prefix is bootstrap's
- * namespace whatever instance is exported: read from `root` when `root` IS
+ * namespace whatever layer is exported: read from `root` when `root` IS
  * bootstrap, else from the bootstrap checkout beside it (`--bootstrap`,
- * default `../bootstrap`), the one an instance that `needs` bootstrap sits
- * beside. An instance cannot rename bootstrap's terms by declaring an
+ * default `../bootstrap`), the one a layer that `needs` bootstrap sits
+ * beside. A layer cannot rename bootstrap's terms by declaring an
  * `iriBase` of its own.
  *
  * ## Subjects are paths beside the document, and each one loads

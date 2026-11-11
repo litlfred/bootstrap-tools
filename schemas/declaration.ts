@@ -6,7 +6,7 @@
  * ## Why this exists instead of a harness's reader
  *
  * bootstrap-tools needed three things from the hosting harness's declaration module
- * — find a directory's declaration, parse it, list the instances in a
+ * — find a directory's declaration, parse it, list the layers in a
  * checkout — and importing them pulled in that module and seven more: 9,299 of
  * the 11,577 lines the bootstrap code reached (measured 2026-09-29). A -tools
  * package for bootstrap may depend on bootstrap and nothing above it (owner,
@@ -61,10 +61,10 @@ export function readKnowledgeGraphDeclaration(dir: string): KnowledgeGraphDeclar
 /**
  * Every Knowledge Graph in a checkout: its root, if it declares one, and each
  * directory directly under it that does. One level, because that is where an
- * instance's declaration sits; a nested instance is its own checkout's to list.
+ * layer's declaration sits; a nested layer is its own checkout's to list.
  */
 /**
- * Top-level build-output directories, never instances. Scanning them read every
+ * Top-level build-output directories, never layers. Scanning them read every
  * `*.json` a build wrote (`build/qa-refresh.json`, stamped with a commit and
  * per-writer seconds), which made that report an input of every writer that
  * lists the checkout's graphs, so none of them could be skipped when it was

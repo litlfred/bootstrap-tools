@@ -14,7 +14,7 @@ description: >
 
 | input | what | default |
 |---|---|---|
-| the Knowledge Graph | an instance root, the directory holding its `<name>.json` | none; required |
+| the Knowledge Graph | a layer root, the directory holding its `<name>.json` | none; required |
 | Subgraphs | a list of directory ids from that declaration | the whole graph |
 | publication root URL | where the rendering is served | the declaration's `iriBase`, else `https://<owner>.github.io/<repo>/` |
 
@@ -40,7 +40,7 @@ start it, what must be reviewed first) belongs to the process that
 ## The steps
 
 Drawn in [`processes/render-kg-to-github-pages.bpmn`](../processes/render-kg-to-github-pages.bpmn).
-Every command below is run from bootstrap-tools, with the instance as `--root`.
+Every command below is run from bootstrap-tools, with the layer as `--root`.
 
 1. **Resolve the inputs.** Read the declaration; check every Subgraph id is
    one it declares; settle the root URL. An unknown id is refused, never
@@ -61,7 +61,7 @@ Every command below is run from bootstrap-tools, with the instance as `--root`.
    every JSON Schema and JSON-LD document at the IRI it names, the files as
    they sit, the README page as `README.md` — served at `<root>/README.html`
    — and `index.html`, a redirect to it. The redirect is only the default:
-   an instance that carries its own `index.html` or `index.md` at its root
+   a layer that carries its own `index.html` or `index.md` at its root
    gets that as its landing page instead. Every generated page opens with a
    notice naming bootstrap-tools and the script that wrote it, and its footer
    links the generator and its source rather than GitHub's editor, which
@@ -72,8 +72,8 @@ Every command below is run from bootstrap-tools, with the instance as `--root`.
    is deployed. A push of a tree known to be broken is not a push to report.
 5. **Deploy.** Commit the staged tree onto `gh-pages` as a full replace with
    `bun run scripts/publish-site.ts --site <dir> --remote <git url>`: the
-   instance's Pages workflow runs it on a push to `main`, and an agent runs it
-   with its own git credentials for an instance that carries no workflow
+   layer's Pages workflow runs it on a push to `main`, and an agent runs it
+   with its own git credentials for a layer that carries no workflow
    (bootstrap). GitHub Pages builds the branch (Jekyll, unless `.nojekyll`).
    A rejected push is rebuilt and retried, never rebased. The `gh-pages`
    commit is the one the message names.

@@ -1,11 +1,11 @@
 /**
- * `kg:processes` and `kg:files` — an instance's README sections drawn from its
+ * `kg:processes` and `kg:files` — a layer's README sections drawn from its
  * own declaration.
  *
  * @module bootstrap-tools/scripts/readme-graph-sections.test
  * @graphNode none — a test
  *
- * Each test builds its own instance in a temporary directory rather than
+ * Each test builds its own layer in a temporary directory rather than
  * reading bootstrap, so a change to bootstrap cannot make these pass or fail.
  */
 import { describe, expect, test } from "bun:test";

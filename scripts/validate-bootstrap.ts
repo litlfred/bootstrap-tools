@@ -18,9 +18,9 @@
  *
  * - `models/models.json` — `ModelRegistrySchema`. REQUIRED: bootstrap
  *   declares a `models` graph, so an absent registry is a finding.
- * - `bootstrap.json` — the instance's own declaration, against
+ * - `bootstrap.json` — the layer's own declaration, against
  *   `KnowledgeGraphDeclarationSchema`, the shape `graph.schema.json` publishes.
- *   REQUIRED: an instance without a declaration is not an instance.
+ *   REQUIRED: a layer without a declaration is not a layer.
  * - every `.json` under bootstrap whose top-level `$schema` names one of the
  *   two discussion `$id`s — `DiscussionInputSchema` / `DiscussionOutputSchema`.
  *   Discovered by what the file SAYS it is, never by filename. Zero is a
@@ -193,7 +193,7 @@ export function discussionDocuments(root: string, ids = discussionIds(root)): Ta
   return out;
 }
 
-/** Everything this run looks at, for the bootstrap instance rooted at `root`. */
+/** Everything this run looks at, for the bootstrap layer rooted at `root`. */
 export function planTargets(root: string): Target[] {
   const name = readKnowledgeGraphDeclaration(root)?.name ?? "bootstrap";
   return [

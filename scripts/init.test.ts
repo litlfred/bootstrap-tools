@@ -7,7 +7,7 @@ import { spawnSync } from "node:child_process";
 
 import { enablePagesByHand, exitStatus, httpAnswer, initSteps, offlineProbe, ownerRepo, pagesWorkflow, type Probe } from "./init.ts";
 
-/** A fake instance `demo` needing `base`, as sibling checkouts. */
+/** A fake layer `demo` needing `base`, as sibling checkouts. */
 function fixture(opts: { workflow?: boolean; withBase?: boolean } = {}): string {
   const top = mkdtempSync(join(tmpdir(), "init-"));
   const root = join(top, "demo");
