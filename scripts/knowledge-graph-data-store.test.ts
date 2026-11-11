@@ -8,7 +8,7 @@
  * and that each of its lines "is something a test can check". This is that
  * check, for the git CLI. Each `describe` is one numbered responsibility, and
  * nothing here tests more than the line it quotes: the judgements made with
- * what the store serves (is this an instance, which harness) are the
+ * what the store serves (is this a layer, which harness) are the
  * Bootstrapping Agent's, and are not tested as the store's.
  *
  * bootstrap runs nothing, so its contract's tests live here, as

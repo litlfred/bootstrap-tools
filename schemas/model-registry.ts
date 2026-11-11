@@ -136,7 +136,7 @@ export const ModelRegistrySchema = z.object({
 
 export type ModelRegistry = z.infer<typeof ModelRegistrySchema>;
 
-/** Directory, relative to the instance root, holding the registry. */
+/** Directory, relative to the layer root, holding the registry. */
 export const MODEL_REGISTRY_DIR = "models";
 /** Its filename. Declared in the file, not inferred from the extension. */
 export const MODEL_REGISTRY_FILENAME = "models.json";

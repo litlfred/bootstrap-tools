@@ -22,7 +22,7 @@
  *   trailing slash (`processes/ns/`, the address a slash vocabulary is
  *   served at, as its directory index).
  *
- * An identifier under the instance's `iriBase` but at ANOTHER version is also
+ * An identifier under the layer's `iriBase` but at ANOTHER version is also
  * a finding: a document names its own release. Identifiers outside the base
  * are not this gate's question.
  *

@@ -5,7 +5,7 @@
  * @module bootstrap-tools/scripts/subgraph-readmes
  * @covers code
  *
- * A large instance cannot list every file in one README, so each declared
+ * A large layer cannot list every file in one README, so each declared
  * directory gets its own, committed and part of the Knowledge Graph, written
  * from the graph's own metadata (titles, descriptions), with a finding where
  * a fact is missing.
@@ -14,7 +14,7 @@
  *
  * One copy of the README writers, in the tools repository, which the harness
  * that hosts bootstrap calls. It knows bootstrap's declaration
- * shape and nothing above it. So it takes its instances ALREADY RESOLVED
+ * shape and nothing above it. So it takes its layers ALREADY RESOLVED
  * ({@link InstanceInput}): a harness whose declarations carry Extensions —
  * a directory scoped to the repository, one allowed to be absent — resolves
  * those itself and hands the result to {@link plan}. Run standalone, this
@@ -330,7 +330,7 @@ export function instancesIn(repo: string): InstanceInput[] {
   return out;
 }
 
-/** Every declared directory of every instance given, planned. */
+/** Every declared directory of every layer given, planned. */
 export async function plan(repo: string, instances: InstanceInput[], templates: string = TEMPLATES): Promise<Plan> {
   const liquid = new Liquid({ root: [templates], extname: ".liquid", jekyllInclude: true, strictFilters: true });
   const out: Plan = {
@@ -349,7 +349,7 @@ export async function plan(repo: string, instances: InstanceInput[], templates: 
   const seen = new Set<string>();
 
   for (const { root: inst, decl, readme: instReadme, dirs } of instances) {
-    // The version, and — for an instance declaring an iriBase — both release
+    // The version, and — for a layer declaring an iriBase — both release
     // addresses, so a template writes `{{ release.version }}` rather than a
     // number that goes stale on the next bump (owner, 2026-09-29).
     const iris = releaseIris(decl);
@@ -374,7 +374,7 @@ export async function plan(repo: string, instances: InstanceInput[], templates: 
     for (const d of dirs) {
       const abs = d.abs;
       const at = { instance: name, directory: d.id, path: relative(repo, abs) || "." };
-      // The instance's own root, or the repository's, is the instance README's
+      // The layer's own root, or the repository's, is the layer README's
       // job, not a directory README's.
       if (abs === resolve(inst) || abs === resolve(repo)) continue;
       if (!existsSync(abs) || !statSync(abs).isDirectory()) {

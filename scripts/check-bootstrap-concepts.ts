@@ -26,7 +26,7 @@
  *
  * Both halves are DERIVED, not listed:
  *
- * - every directory the `bootstrap` instance declares with the `schemas`
+ * - every directory the `bootstrap` layer declares with the `schemas`
  *   graph typology, where the published `*.schema.json` live; and
  * - every `../schemas/*.ts` module `gen-bootstrap-schemas.ts` imports, which
  *   are the sources those documents are generated from.
@@ -47,7 +47,7 @@ import { join, relative } from "node:path";
 
 const REPO = join(import.meta.dir, "..", "..");
 
-/** The bootstrap instances, by root directory. */
+/** The bootstrap layers, by root directory. */
 const BOOTSTRAP_INSTANCES = ["bootstrap"];
 
 /** Each forbidden term, with the reason a reader will see if it appears. */
@@ -76,7 +76,7 @@ function filesUnder(dir: string): string[] {
   return out;
 }
 
-/** The schema directories every bootstrap instance declares. Throws when one cannot be read. */
+/** The schema directories every bootstrap layer declares. Throws when one cannot be read. */
 export function bootstrapSchemaDirs(repo: string): string[] {
   const dirs: string[] = [];
   for (const inst of BOOTSTRAP_INSTANCES) {
@@ -97,7 +97,7 @@ export function bootstrapSchemaSources(repo: string): string[] {
   const text = readFileSync(gen, "utf8");
   const out = new Set<string>();
   // Only a module imported FOR A SCHEMA is a source: the generator also
-  // imports `declaration.ts` for its instance helpers, and that module's text
+  // imports `declaration.ts` for its layer helpers, and that module's text
   // never reaches a published document.
   for (const m of text.matchAll(/import\s*\{([^}]*)\}\s*from\s+"\.\.\/schemas\/([a-z0-9-]+\.ts)"/g)) {
     if (/\b\w+Schema\b/.test(m[1]!)) out.add(join(repo, "bootstrap-tools", "schemas", m[2]!));

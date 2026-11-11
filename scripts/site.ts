@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Stage an instance's site for GitHub Pages: its files as they sit, the
+ * Stage a layer's site for GitHub Pages: its files as they sit, the
  * one-page book of its READMEs as the index, and — for bootstrap — its own
  * Knowledge Graph at the address its `@id` names.
  *
@@ -23,24 +23,24 @@
  *    served, at `v<major>/bootstrap.json`, and the skip is reported;
  * 1a. its NAMED SUBGRAPHS (`subgraph-jsonld.ts`), framed from that same graph:
  *    `subgraph/index.jsonld` (the repository), `subgraph/<name>/index.jsonld`
- *    (the instance) and, for each directory of a kind the graph reads,
+ *    (the layer) and, for each directory of a kind the graph reads,
  *    `subgraph/<name>/<path>/index.jsonld` and `index.hydrated.jsonld`, with
  *    the one context they name at `subgraph/v<major>/context.jsonld`. For bootstrap,
- *    and for any instance that `needs` bootstrap — whose graph is written in
+ *    and for any layer that `needs` bootstrap — whose graph is written in
  *    bootstrap's classes, so it is built with bootstrap's checkout beside it
  *    and is a problem, never silently absent, when that checkout is not
- *    there. Such an instance's graph document is written too, at
+ *    there. Such a layer's graph document is written too, at
  *    `<name>.jsonld`. The
  *    publication root is `--base-url`, else `iriBase`, else the declaration's
  *    GitHub Pages address;
- * 2. every DOCUMENT the instance publishes at the address it names — each
+ * 2. every DOCUMENT the layer publishes at the address it names — each
  *    JSON Schema's `$id` and each JSON-LD document's `@id` under `iriBase`
  *    ({@link publishedDocuments}). An `@id` with no extension (`…/v0/ns`,
  *    the namespace a vocabulary is) gets the document at that extensionless
  *    path (`processes/ns.jsonld` also at `processes/ns`); every `.jsonld` also gets a `.json` copy, because Pages
  *    serves `.jsonld` as a download and `.json` as JSON. The `.jsonld` stays
  *    the real one;
- * 3. every file of the instance, as it sits (`publish-files.ts`), so every
+ * 3. every file of the layer, as it sits (`publish-files.ts`), so every
  *    relative link in them still resolves — and again under `v<major>/`,
  *    because an IRI a program reads is `<iriBase>v<major>/…`;
  * 3a. `README.md`, the book (`readme-book.ts`), with its links checked,
@@ -49,19 +49,19 @@
  *    takes the root README's place: the book opens with that README;
  * 4. `index.html`, a redirect to `README.html` — the DEFAULT landing page,
  *    and only that. To change it, an
- *    instance (or the harness staging it) puts its own `index.html` or
+ *    layer (or the harness staging it) puts its own `index.html` or
  *    `index.md` at its root: that file is staged as it sits and the redirect
  *    is not written, reported as skipped. A file rather than a declaration
  *    field, because it is what Pages itself serves first and what anybody
  *    looking at the branch would look for;
- * 5. `_config.yml`, when the instance has none: the title, the theme, and a
+ * 5. `_config.yml`, when the layer has none: the title, the theme, and a
  *    `defaults:` entry per page saying what its footer links to; and
  *    `_layouts/default.html` (`templates/site/default.html`), the theme's
  *    layout with that footer. The theme's own footer links GitHub's editor
  *    for the file on `gh-pages` — a staged copy — and for a generated page
  *    any edit is overwritten. A generated page's
  *    footer names bootstrap-tools, the script, and its source; an authored
- *    page's links the editor for its SOURCE on the instance's branch.
+ *    page's links the editor for its SOURCE on the layer's branch.
  *
  * Every `@context` bootstrap writes is inline in its document (no file names
  * an external context), so publishing each document
@@ -75,7 +75,7 @@
  *
  * `--subgraph <id>` (repeatable) renders only the named Subgraphs — the
  * directories the declaration lists under those ids — plus the files at the
- * instance root (its declaration, README and assets), which say what the
+ * layer root (its declaration, README and assets), which say what the
  * Subgraphs are part of. Absent, the whole Knowledge Graph is rendered. An id
  * the declaration does not list is a problem, never silently an empty site
  * (`processes/render-kg-to-github-pages.bpmn`, the process this is a step of).
@@ -108,7 +108,7 @@ export const BOOK = "README.md";
 /** The layout staged beside the pages: the theme's, with a footer that never links an edit page for a generated file. */
 export const LAYOUT = join(import.meta.dir, "templates", "site", "default.html");
 
-/** A page at the root that is the instance's own landing page; any one of them stops the default redirect. */
+/** A page at the root that is the layer's own landing page; any one of them stops the default redirect. */
 export const LANDING = ["index.html", "index.md", "index.markdown", "index.htm"];
 
 /** The default landing page: a redirect to the README page, with nothing to run. */
@@ -142,7 +142,7 @@ export interface PageFooter {
 
 /**
  * The footer facts for a page staged from `rel` (its source, relative to the
- * instance root): wholly generated → the scripts and the source, no edit link;
+ * layer root): wholly generated → the scripts and the source, no edit link;
  * authored → the editor for its source on `branch`, and any generated regions.
  * `repo` is `https://github.com/<owner>/<repo>`, or `undefined` when the
  * declaration names none — then no link is composed at all.
@@ -183,13 +183,13 @@ export function siteConfig(decl: { name: string; title?: string; description?: s
   return `${out.join("\n")}\n`;
 }
 
-/** A document the instance publishes at an address it names itself. */
+/** A document the layer publishes at an address it names itself. */
 export interface PublishedDocument {
   /** The address, as the document names it (no fragment). */
   iri: string;
   /** Where it is staged: the address with `iriBase` removed. */
   path: string;
-  /** The file it comes from, relative to the instance root; `undefined` for a document built at publish time. */
+  /** The file it comes from, relative to the layer root; `undefined` for a document built at publish time. */
   source?: string;
   kind: "json-schema" | "json-ld";
 }
@@ -323,7 +323,7 @@ export function stageSite(
         const doc = `${JSON.stringify(graph, null, 2)}\n`;
         put(`${decl.name}.jsonld`, doc);
         // The `.json` copy shares bootstrap's declaration's address, and the
-        // graph keeps it (bootstrap-graph-publication); another instance's
+        // graph keeps it (bootstrap-graph-publication); another layer's
         // declaration has no versioned copy to fall back on, so it keeps its own.
         if (decl.name === "bootstrap") put("bootstrap.json", doc);
         for (const [rel, body] of subjectDocuments(graph, `${decl.name}.jsonld`)) put(rel, body);
@@ -369,7 +369,7 @@ export function stageSite(
 
 
   // Then every file as it sits. An authored index.html or index.md is the
-  // instance's own landing page, and the default redirect is not written.
+  // layer's own landing page, and the default redirect is not written.
   // A skip is reported only where the file there DIFFERS: a document already
   // staged at its own address is the same bytes, not a collision.
   const differs = (dir: string, f: string) => readFileSync(join(dir, f)).compare(readFileSync(join(root, f))) !== 0;
@@ -388,7 +388,7 @@ export function stageSite(
   // A document whose address is taken by something else is a broken IRI.
   for (const d of docs) if (!existsSync(join(out, d.path))) report.problems.push(`${d.iri} is not staged at ${d.path}`);
 
-  // The default landing page, unless the instance brought its own.
+  // The default landing page, unless the layer brought its own.
   if (!LANDING.some((f) => existsSync(join(out, f)))) put("index.html", redirectPage());
   else report.skipped.push("index.html (the instance's own landing page is staged instead of the redirect)");
 
@@ -417,7 +417,7 @@ export function stageSite(
 /**
  * The directory a release's files are staged under: `v<major>`, the segment
  * every address of that release carries (`release-iri.ts`), or none when the
- * instance declares no `iriBase` or no semver `version`.
+ * layer declares no `iriBase` or no semver `version`.
  */
 export function releaseSegment(decl: { iriBase?: string; version?: string }): string | undefined {
   const m = decl.iriBase && decl.version ? SEMVER.exec(decl.version) : null;

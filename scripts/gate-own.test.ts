@@ -38,7 +38,7 @@ describe("gateOwnsFile: a file is the caller's when its deepest instance directo
 });
 
 describe("iri:sync:check judges only the caller's own files", () => {
-  // Two instances in one git root, each with one file one major behind.
+  // Two layers in one git root, each with one file one major behind.
   const root = mkdtempSync(join(tmpdir(), "bt-iri-own-"));
   spawnSync("git", ["init", "-q"], { cwd: root });
   mkdirSync(join(root, "own"));

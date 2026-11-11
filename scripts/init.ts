@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Walk an instance's initialization steps AS ITS DECLARATIONS NAME THEM,
+ * Walk a layer's initialization steps AS ITS DECLARATIONS NAME THEM,
  * check each, perform the ones a tool can perform, and report every step in
  * one of four states — never a green tick over something nobody checked.
  *
@@ -15,7 +15,7 @@
  *
  * ## Where the steps come from
  *
- * Nothing here is a per-instance list. The steps are read off the
+ * Nothing here is a per-layer list. The steps are read off the
  * declaration at `--root` and the declarations it `needs`, each found as a
  * sibling checkout `../<name>/<name>.json`:
  *
@@ -30,7 +30,7 @@
  * | `asset:<id>` | `assets[]` — the file exists | no |
  * | `readme` | the root has a `README.md` | no |
  * | `readme-sections` | the README's own markers — every opted-in section is current | yes |
- * | `site:workflow` | `repository` — a workflow commits the site onto gh-pages: the instance's own, or one in this toolset that checks it out | no |
+ * | `site:workflow` | `repository` — a workflow commits the site onto gh-pages: the layer's own, or one in this toolset that checks it out | no |
  * | `site:branch` | `repository` — a gh-pages branch exists (it must, before Pages can be on) | no: says how |
  * | `site:enabled` | `repository` — Pages is on, serving gh-pages | yes, with `gh`, once the branch exists |
  * | `site:live` | `iriBase`, else the Pages address — the address answers, and so does its `README.html` | no |
@@ -131,12 +131,12 @@ export function enablePagesByHand(o: { owner: string; repo: string }): string {
   return `open ${pagesSettings(o)} → "Build and deployment" → Source: "Deploy from a branch" → branch \`gh-pages\`, folder \`/ (root)\` (free for a public repository; the branch must exist first — site:branch). Then re-run the Pages workflow from the Actions tab, or push to main.`;
 }
 
-/** This toolset's own checkout, whose workflows may publish an instance from outside it. */
+/** This toolset's own checkout, whose workflows may publish a layer from outside it. */
 const TOOLSET_ROOT = join(import.meta.dir, "..");
 
 /**
  * A workflow that deploys `root`'s site to Pages, or `undefined`: one under
- * the instance's own `.github/workflows/`, or — for an instance that carries
+ * the layer's own `.github/workflows/`, or — for a layer that carries
  * no workflow naming its toolset (bootstrap, owner 2026-10-01) — one under
  * the toolset's that checks out `owner/repo` and pushes its gh-pages.
  */
@@ -305,12 +305,12 @@ export function httpAnswer(status: number | undefined): StepState {
 /**
  * The PRIMARY initialization step of a Knowledge Graph harness (owner,
  * 2026-09-30: *"json(ld) is primary step in initializing KG harness"*): every
- * JSON Schema and JSON-LD document the instance names an address for is
+ * JSON Schema and JSON-LD document the layer names an address for is
  * published AT that address. Two steps, because they answer different
  * questions — `schemas:staged`, does the site this toolset builds put each
  * one where its IRI says (checked here, no network); and
  * `schemas:published`, does each IRI answer now. The site is the vehicle;
- * these are the goal. Nothing is emitted when the instance publishes no
+ * these are the goal. Nothing is emitted when the layer publishes no
  * document (no `iriBase`, nothing under it): an empty list checked is not a
  * pass, so it is not reported as one.
  */

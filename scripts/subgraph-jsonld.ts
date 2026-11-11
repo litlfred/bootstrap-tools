@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * An instance's NAMED SUBGRAPHS as JSON-LD: under each subgraph's IRI,
+ * A layer's NAMED SUBGRAPHS as JSON-LD: under each subgraph's IRI,
  * `index.jsonld` and `index.hydrated.jsonld`, both projected from the one
  * graph `export-graph.ts` builds.
  *
@@ -18,7 +18,7 @@
  * | IRI | `index.jsonld` | `index.hydrated.jsonld` |
  * |---|---|---|
  * | `<BASE>subgraph/` — the repository | its harness root, by IRI | — |
- * | `<BASE>subgraph/<HARNESS>/` — the instance | its direct members as pointers, its top-level subgraphs by IRI | — (the root is never hydrated: that would be the whole graph in one file) |
+ * | `<BASE>subgraph/<HARNESS>/` — the layer | its direct members as pointers, its top-level subgraphs by IRI | — (the root is never hydrated: that would be the whole graph in one file) |
  * | `<BASE>subgraph/<HARNESS>/<PATH>/` — each directory | its direct members as pointers (`@id`, `@type`, `name`, `title`), its child subgraphs by IRI | every node of its transitive membership, inline, child subgraphs nested |
  *
  * Every file names one shared context by URL, `<BASE>subgraph/v<major>/context.jsonld`,
@@ -61,7 +61,7 @@
  * file, a declared diagram with no documented Process node, or a build that
  * is not byte-identical twice; with `--out`, also on any file there that
  * differs from what would be written. Repeat `--root` to check several
- * instances.
+ * layers.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
@@ -79,7 +79,7 @@ export const HYDRATED_FILE = "index.hydrated.jsonld";
 export const CONTEXT_FILE = "context.jsonld";
 
 /**
- * The context's path below `subgraph/`, from the instance's declared semver
+ * The context's path below `subgraph/`, from the layer's declared semver
  * (owner, 2026-10-03: "major version from SEMVER"). The same rule as
  * `bootstrap.json`'s `iriBase`: `v<major>/` for what is stable across minor
  * and patch releases. A term change that is not backward compatible is a
@@ -141,7 +141,7 @@ function pointer(n: Node): Node {
 
 interface Entry {
   iri: string;
-  /** Instance-relative directory ending in `/`; `""` for the harness root. */
+  /** Layer-relative directory ending in `/`; `""` for the harness root. */
   rel: string;
   kinds: string[];
   title?: string;
@@ -170,7 +170,7 @@ export interface SubgraphBuild {
 }
 
 /**
- * Frame `graph` — `export-graph.ts`'s document for the instance at `root`,
+ * Frame `graph` — `export-graph.ts`'s document for the layer at `root`,
  * built with `sourceBase` = `base`, so every `source` is a link — into its
  * subgraph files. Pure over the graph and the files git lists under `root`.
  */
@@ -301,7 +301,7 @@ export function frameSubgraphs(root: string, graph: Record<string, unknown>, bas
   };
 }
 
-/** Build the instance's graph and frame it. `base` as {@link publicationBase} resolves it. */
+/** Build the layer's graph and frame it. `base` as {@link publicationBase} resolves it. */
 export function buildSubgraphs(root: string, opts: { baseUrl?: string; bootstrapRoot?: string } = {}): SubgraphBuild {
   const decl = readKnowledgeGraphDeclaration(root);
   if (!decl) throw new Error(`${root} carries no Knowledge Graph declaration`);

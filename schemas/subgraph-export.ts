@@ -30,9 +30,9 @@ export const SubgraphIriSchema = z
 const SubgraphNodeBase = z.object({
   "@id": SubgraphIriSchema,
   "@type": z.literal("bootstrap:Subgraph"),
-  /** The repository's or harness's name at the two top levels; the instance-relative path below them. */
+  /** The repository's or harness's name at the two top levels; the layer-relative path below them. */
   name: z.string().min(1),
-  /** Instance-relative, ending in `/`; `./` at the two top levels. */
+  /** Layer-relative, ending in `/`; `./` at the two top levels. */
   path: z.string().min(1),
   title: z.string().optional(),
   description: z.string().optional(),
