@@ -294,7 +294,7 @@ export function tidyDrawing(viewer: any, style: TidyStyle): { issues: string[]; 
   const headers: Box[] = [...pools, ...lanes].filter((p) => p.di?.isHorizontal !== false).map((p) => ({ x: p.x, y: p.y, width: 30, height: p.height }));
   const placed: Box[] = [...placedText];
 
-  const cost = (r: Box, own: Box | undefined): number => {
+  const cost = (r: Box, inPool: boolean): number => {
     const g = grow(r, 2);
     let c = 0;
     for (const s of shapes) {
@@ -308,8 +308,8 @@ export function tidyDrawing(viewer: any, style: TidyStyle): { issues: string[]; 
       const o = overlap(g, p);
       if (o > 0) c += 1500 + o;
     }
-    if (pools.length && !pools.some((p) => overlap(r, p) === r.width * r.height)) c += 1500;
-    if (own && overlap(g, own) > 0) c += 1000;
+    // A label belongs inside a pool when its shape or flow is in one; a data store drawn outside every pool keeps its label outside too.
+    if (inPool && !pools.some((p) => overlap(r, p) === r.width * r.height)) c += 1500;
     return c;
   };
 
@@ -380,10 +380,12 @@ export function tidyDrawing(viewer: any, style: TidyStyle): { issues: string[]; 
       issues.push(`${target.id}: label has a word wider than ${widths[widths.length - 1]}`);
       continue;
     }
+    const anchor = Array.isArray(target.waypoints) ? target.waypoints[0] : { x: target.x + target.width / 2, y: target.y + target.height / 2 };
+    const inPool = pools.some((p) => anchor.x >= p.x && anchor.x <= p.x + p.width && anchor.y >= p.y && anchor.y <= p.y + p.height);
     let best = cands[0]!;
     let bestCost = Infinity;
     for (const c of cands) {
-      const k = cost(c.box, undefined) + c.pref;
+      const k = cost(c.box, inPool) + c.pref;
       if (k < bestCost) {
         bestCost = k;
         best = c;
