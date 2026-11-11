@@ -37,6 +37,7 @@ import { basename, dirname, join, relative, resolve } from "node:path";
 import { chromium, type Page } from "@playwright/test";
 
 import { knowledgeGraphsIn, readKnowledgeGraphDeclaration, supportsContent } from "../schemas/declaration.ts";
+import { tidyDrawing, type TidyStyle } from "./bpmn-tidy.ts";
 
 /** Where bpmn-js's browser bundle sits under a checkout's `node_modules/`. */
 export const VIEWER_BUNDLE = "node_modules/bpmn-js/dist/bpmn-viewer.production.min.js";
@@ -87,6 +88,19 @@ export const TEXT_STYLE = {
  */
 export const HEADER_STYLE = { fontSize: 13, lineHeight: 1.05 } as const;
 
+/**
+ * How {@link tidyDrawing} re-lays the text bpmn-js drew: names inside shapes
+ * start at {@link TEXT_STYLE}'s size and shrink to `minFontSize` to fit whole
+ * words in their box; flows keep bpmn-js's rounded bends (owner, 2026-11-11,
+ * Q-SQ-1 = C: the square they meant is the task box, not the bend).
+ */
+export const TIDY_STYLE: TidyStyle = {
+  ...TEXT_STYLE,
+  headerStyle: HEADER_STYLE,
+  minFontSize: 11,
+  squareBends: false,
+};
+
 /** A box in diagram coordinates. */
 export interface DrawnBox {
   id: string;
@@ -120,6 +134,11 @@ export interface DrawnLayout {
    */
   headers?: { id: string; width: number; height: number; room: number }[];
   edges: { id: string; points: { x: number; y: number }[] }[];
+  /** What {@link tidyDrawing} could not fix: a name too long for its box, a label with no clear place, a flow through a shape. */
+  issues?: string[];
+  /** The one size every name inside a shape was drawn at, and the shapes whose names set it. */
+  fontSize?: number;
+  limitedBy?: string[];
 }
 
 /** A headless page with bpmn-js loaded. One per batch: launching per file dominates the runtime. */
@@ -174,15 +193,19 @@ export async function openRenderer(viewerBundle: string): Promise<Renderer> {
   await page.setContent(`<!doctype html><html><head><style>${measuringFont()}</style></head><body><div id="canvas"></div></body></html>`);
   await page.evaluate(() => Promise.all(["16px Arial", "bold 16px Arial"].map((f) => document.fonts.load(f))));
   await page.addScriptTag({ path: viewerBundle });
+  // tidyDrawing runs in the page, so it goes over as its source text.
+  await page.addScriptTag({ content: `window.tidyDrawing = ${tidyDrawing.toString()};` });
   return {
     render: (xml) =>
-      page.evaluate(async ({ bpmnXml, textRenderer, headerStyle }) => {
+      page.evaluate(async ({ bpmnXml, textRenderer, tidyStyle }) => {
         const container = document.getElementById("canvas")!;
         container.innerHTML = "";
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const Viewer = (window as any).BpmnJS;
         const viewer = new Viewer({ container, textRenderer });
         const result = await viewer.importXML(bpmnXml);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { issues, fontSize, limitedBy } = (window as any).tidyDrawing(viewer, tidyStyle) as { issues: string[]; fontSize?: number; limitedBy: string[] };
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const all: any[] = viewer.get("elementRegistry").getAll();
         const reg = viewer.get("elementRegistry");
@@ -201,25 +224,13 @@ export async function openRenderer(viewerBundle: string): Promise<Renderer> {
           .filter((e) => Array.isArray(e.waypoints))
           .map((e) => ({ id: e.id, points: e.waypoints.map((p: { x: number; y: number }) => ({ x: p.x, y: p.y })) }));
         const registry = viewer.get("elementRegistry");
-        // Pool and lane names at HEADER_STYLE: re-laid with bpmn-js's own
-        // text renderer, in the same 30-wide strip, then turned as bpmn-js turns them.
-        const texter = viewer.get("textRenderer");
+        // Pool and lane names, as tidyDrawing laid them, measured before they are turned.
         const headers: { id: string; width: number; height: number; room: number }[] = [];
         for (const e of all) {
           if (!/^bpmn:(Participant|Lane)$/.test(e.type) || !e.businessObject?.name) continue;
           if (e.di?.isHorizontal === false) continue;
-          const old = registry.getGraphics(e)?.querySelector(".djs-visual > text.djs-label") as SVGTextElement | null;
-          if (!old) continue;
-          const t = texter.createText(e.businessObject.name, {
-            box: { width: e.height, height: 30 },
-            align: "center-middle",
-            padding: 2,
-            style: { ...headerStyle, fill: old.style.fill || "black" },
-          }) as SVGTextElement;
-          t.setAttribute("class", "djs-label");
-          const tf = old.getAttribute("transform");
-          if (tf) t.setAttribute("transform", tf);
-          old.replaceWith(t);
+          const t = registry.getGraphics(e)?.querySelector(".djs-visual > text.djs-label") as SVGTextElement | null;
+          if (!t) continue;
           const b = t.getBBox();
           headers.push({ id: e.id, width: b.width, height: b.height, room: e.height });
         }
@@ -233,8 +244,8 @@ export async function openRenderer(viewerBundle: string): Promise<Renderer> {
           });
         const { svg } = await viewer.saveSVG({ format: true });
         viewer.destroy();
-        return { svg, warnings: (result.warnings ?? []).map((w: Error) => w.message), layout: { labels, edges, texts, headers } };
-      }, { bpmnXml: xml, textRenderer: TEXT_STYLE, headerStyle: HEADER_STYLE }),
+        return { svg, warnings: (result.warnings ?? []).map((w: Error) => w.message), layout: { labels, edges, texts, headers, issues, fontSize, limitedBy } };
+      }, { bpmnXml: xml, textRenderer: TEXT_STYLE, tidyStyle: TIDY_STYLE }),
     close: () => browser.close(),
   };
 }
@@ -305,11 +316,20 @@ export function processIds(xml: string): string[] {
 
 /**
  * Links for the copy beside the source: a call activity links to the called
- * diagram's SVG when that diagram sits in the same directory, and to nothing
+ * diagram when that diagram sits in the same directory, and to nothing
  * otherwise. `processFile` maps a process id to the absolute path of the
- * `.bpmn` defining it.
+ * `.bpmn` defining it. By default the link is the called diagram's SVG; a
+ * caller that publishes the processes on a page passes `hrefFor` to link the
+ * process's place on that page instead, since a bare SVG opened on its own is
+ * not where a reader wants to land (owner, 2026-11-11: *"subprocess should
+ * link to process page"*).
  */
-export function siblingLinks(file: string, xml: string, processFile: Map<string, string>): Map<string, string> {
+export function siblingLinks(
+  file: string,
+  xml: string,
+  processFile: Map<string, string>,
+  hrefFor: (calledFile: string, calledProcess: string) => string = (home) => `${basename(home, ".bpmn")}.svg`,
+): Map<string, string> {
   const out = new Map<string, string>();
   for (const m of xml.matchAll(/<bpmn:callActivity\b([^>]*)>/g)) {
     const id = /\sid="([^"]+)"/.exec(m[1]!)?.[1];
@@ -317,7 +337,7 @@ export function siblingLinks(file: string, xml: string, processFile: Map<string,
     const home = called ? processFile.get(called) : undefined;
     if (!id || !home) continue;
     if (dirname(home) !== dirname(file)) continue;
-    out.set(id, `${basename(home, ".bpmn")}.svg`);
+    out.set(id, hrefFor(home, called!));
   }
   return out;
 }
@@ -327,6 +347,7 @@ export async function besideSource(
   r: Renderer,
   file: string,
   processFile: Map<string, string>,
+  hrefFor?: (calledFile: string, calledProcess: string) => string,
 ): Promise<{ svg: string } | { error: string }> {
   const xml = readFileSync(file, "utf-8");
   let raw: Awaited<ReturnType<Renderer["render"]>>;
@@ -338,7 +359,7 @@ export async function besideSource(
   if (raw.warnings.length) return { error: `${raw.warnings.length} import warning(s): ${raw.warnings.join("; ")}` };
   const drawn = drawing(raw.svg, "bpmn-marker-");
   if (!drawn) return { error: "could not make the SVG responsive — bpmn-js output changed shape" };
-  const own = siblingLinks(file, xml, processFile);
+  const own = siblingLinks(file, xml, processFile, hrefFor);
   // The note goes on THIS copy only — the one written into the content graph.
   // A harness drawing its own site copy with `drawing()` is not bootstrap-tools
   // writing into bootstrap, and must not say it is.
