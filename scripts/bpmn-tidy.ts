@@ -61,6 +61,27 @@ export interface TidyStyle {
 export function tidyDrawing(viewer: any, style: TidyStyle): { issues: string[]; fontSize?: number; limitedBy: string[] } {
   type Box = { x: number; y: number; width: number; height: number };
   type Seg = { x1: number; y1: number; x2: number; y2: number };
+  type Point = { x: number; y: number };
+  /** The part of a bpmn-js diagram element (shape, connection or label) this function reads. */
+  interface DiagramElement {
+    id: string;
+    type: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    waypoints?: Point[];
+    parent?: DiagramElement;
+    source?: DiagramElement;
+    target?: DiagramElement;
+    labelTarget?: DiagramElement;
+    businessObject?: { name?: string; loopCharacteristics?: unknown; isForCompensation?: boolean };
+    di?: { isHorizontal?: boolean; isExpanded?: boolean };
+  }
+  /** An activity with a name (see `acts`). */
+  type NamedActivity = DiagramElement & { businessObject: NonNullable<DiagramElement["businessObject"]> };
+  /** An external label: drawn for its `labelTarget` (see `labels`). */
+  type Label = DiagramElement & { labelTarget: DiagramElement };
   const issues: string[] = [];
   const reg = viewer.get("elementRegistry");
   const texter = viewer.get("textRenderer");
@@ -160,8 +181,8 @@ export function tidyDrawing(viewer: any, style: TidyStyle): { issues: string[]; 
     return b.width > 0 ? { x: ox + b.x, y: oy + b.y, width: b.width, height: b.height } : undefined;
   };
 
-  const isFlowNode = (e: any) => !e.waypoints && e.type !== "label" && !/Participant|Lane|Process|Collaboration|TextAnnotation|Group/.test(e.type) && e.parent;
-  const isActivity = (e: any) => /^bpmn:(Task|\w+Task|SubProcess|CallActivity|Transaction|AdHocSubProcess)$/.test(e.type);
+  const isFlowNode = (e: DiagramElement) => !e.waypoints && e.type !== "label" && !/Participant|Lane|Process|Collaboration|TextAnnotation|Group/.test(e.type) && e.parent;
+  const isActivity = (e: DiagramElement) => /^bpmn:(Task|\w+Task|SubProcess|CallActivity|Transaction|AdHocSubProcess)$/.test(e.type);
 
   // ---- 1. square bends -----------------------------------------------------
   if (style.squareBends) {
@@ -181,7 +202,7 @@ export function tidyDrawing(viewer: any, style: TidyStyle): { issues: string[]; 
   const placedText: Box[] = [];
   const side = 6;
   const acts = all.filter((e) => isActivity(e) && e.businessObject?.name && reg.getGraphics(e)?.querySelector(".djs-visual > text.djs-label"));
-  const fitIn = (e: any, size: number, soft: boolean): { lines: string[]; top: number } | undefined => {
+  const fitIn = (e: NamedActivity, size: number, soft: boolean): { lines: string[]; top: number } | undefined => {
     const name = String(e.businessObject.name);
     const typed = e.type !== "bpmn:Task" && /Task$/.test(e.type);
     const bo = e.businessObject;
@@ -273,7 +294,7 @@ export function tidyDrawing(viewer: any, style: TidyStyle): { issues: string[]; 
   const shapes: Box[] = all.filter(isFlowNode).map((e) => ({ x: e.x, y: e.y, width: e.width, height: e.height }));
   const flows: (Seg & { id: string })[] = all
     .filter((e) => Array.isArray(e.waypoints))
-    .flatMap((e) => e.waypoints.slice(1).map((p: any, i: number) => ({ id: e.id, x1: e.waypoints[i].x, y1: e.waypoints[i].y, x2: p.x, y2: p.y })));
+    .flatMap((e) => e.waypoints.slice(1).map((p: Point, i: number) => ({ id: e.id, x1: e.waypoints[i].x, y1: e.waypoints[i].y, x2: p.x, y2: p.y })));
   const sharesRun = (f: Seg, g: Seg): boolean => {
     if (f.x1 === f.x2 && g.x1 === g.x2 && Math.abs(f.x1 - g.x1) < 1) {
       return Math.min(Math.max(f.y1, f.y2), Math.max(g.y1, g.y2)) - Math.max(Math.min(f.y1, f.y2), Math.min(g.y1, g.y2)) > 2;
@@ -314,7 +335,7 @@ export function tidyDrawing(viewer: any, style: TidyStyle): { issues: string[]; 
   };
 
   const labels = all.filter((e) => e.type === "label" && e.businessObject?.name && e.labelTarget);
-  const order = (e: any) => (Array.isArray(e.labelTarget.waypoints) ? 1 : 0);
+  const order = (e: Label) => (Array.isArray(e.labelTarget.waypoints) ? 1 : 0);
   labels.sort((a, b) => order(a) - order(b));
   const ext = style.externalStyle;
   const widths = [90, 120, 160, 210, 260];
@@ -426,7 +447,7 @@ export function tidyDrawing(viewer: any, style: TidyStyle): { issues: string[]; 
     for (const n of all) {
       if (!isFlowNode(n) || ends.has(n.id)) continue;
       const inner = grow({ x: n.x, y: n.y, width: n.width, height: n.height }, -2);
-      if (e.waypoints.slice(1).some((p: any, i: number) => crosses({ x1: e.waypoints[i].x, y1: e.waypoints[i].y, x2: p.x, y2: p.y }, inner))) {
+      if (e.waypoints.slice(1).some((p: Point, i: number) => crosses({ x1: e.waypoints[i].x, y1: e.waypoints[i].y, x2: p.x, y2: p.y }, inner))) {
         issues.push(`${e.id}: flow runs through ${n.id}`);
       }
     }
