@@ -69,8 +69,6 @@ import { renderSchemaPage, type PageDocument } from "./bootstrap-schema-page.ts"
 import { ModelRegistrySchema } from "../schemas/model-registry.ts";
 import { bootstrapRelease, releaseIri } from "../schemas/release-iri.ts";
 
-/** Every `$id` below is minted from bootstrap's declared iriBase and version, never typed. */
-const RELEASE = bootstrapRelease();
 import {
   REQUIREMENT_JSON_SCHEMA_CONDITIONALS,
   RequirementSchema,
@@ -119,6 +117,13 @@ function bootstrapRoot(): string {
 }
 
 const BOOTSTRAP = bootstrapRoot();
+
+/**
+ * Every `$id` below is minted from bootstrap's declared iriBase and version,
+ * never typed — read from the checkout `--root` names, the same one the
+ * documents are written into.
+ */
+const RELEASE = bootstrapRelease(BOOTSTRAP);
 
 /** Where each document is published, and the `$id` it is published at. */
 const TARGETS = [
