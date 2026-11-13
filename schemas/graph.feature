@@ -115,3 +115,14 @@ Feature: bootstrap defines its own terms, and nothing in it points above it
   @test:schemas/graph.test.ts::every_$schema_a_bootstrap_file_carries_is_a_Node_Kind_its_declaration_lists_(r3gy_D2;_nodeSchemas,_2026-09-29)::declarationShapeKnowsNodeSchemas
   Scenario: the declaration shape knows the field
     Then bootstrap.json parses under KnowledgeGraphDeclarationSchema
+
+  @test:schemas/graph.test.ts::the_terms'_subject_area_(owner,_2026-11-07:_"do_it_in_the_schema")::is_a_lowercase_local_id,_so_a_layer_can_compare_it
+  Scenario: the terms' subject area is a lowercase local id
+    Then BOOTSTRAP_TERMS_SUBJECT starts with a lowercase letter or digit
+    And holds only lowercase letters, digits, ".", "_" and "-"
+
+  @test:schemas/graph.test.ts::the_terms'_subject_area_(owner,_2026-11-07:_"do_it_in_the_schema")::is_published_beside_the_terms_in_graph.schema.json_when_bootstrap_is_checked_out_beside_these_tools
+  Scenario: the terms' subject area is published in graph.schema.json
+    Given bootstrap checked out beside the tools, with its schemas/graph.schema.json
+    Then that file's "subject" is BOOTSTRAP_TERMS_SUBJECT
+    And when bootstrap is not checked out beside the tools, the test asserts nothing
