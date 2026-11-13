@@ -30,6 +30,7 @@ Part of [Bootstrap tools](../README.md) 0.1.0, declared as `bootstrap-tools-scri
 | [`gate-own.feature`](gate-own.feature) | a file |  |
 | [`gate-own.test.ts`](gate-own.test.ts) | a file |  |
 | [`gate-own.ts`](gate-own.ts) | a file |  |
+| [`gen-bootstrap-schemas.feature`](gen-bootstrap-schemas.feature) | a file |  |
 | [`gen-bootstrap-schemas.test.ts`](gen-bootstrap-schemas.test.ts) | a file |  |
 | [`gen-bootstrap-schemas.ts`](gen-bootstrap-schemas.ts) | a file |  |
 | [`gen-vocabulary.feature`](gen-vocabulary.feature) | a file |  |
