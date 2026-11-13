@@ -70,6 +70,7 @@ Part of [Bootstrap tools](../README.md) 0.1.0, declared as `bootstrap-tools-scri
 | [`readme-toc.test.ts`](readme-toc.test.ts) | a file |  |
 | [`readme-toc.ts`](readme-toc.ts) | a file |  |
 | [`rehearse-standalone.ts`](rehearse-standalone.ts) | a file |  |
+| [`render-bpmn-definers.test.ts`](render-bpmn-definers.test.ts) | a file |  |
 | [`render-bpmn.ts`](render-bpmn.ts) | a file |  |
 | [`render-fonts.conf`](render-fonts.conf) | a file |  |
 | [`schema-semver.feature`](schema-semver.feature) | a file |  |
