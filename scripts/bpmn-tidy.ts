@@ -11,7 +11,7 @@
  * does not fit mid-word. So on a busy diagram a gateway's question lands on
  * its flows' conditions, a condition sits on a line or a box, a data store's
  * name runs across a lane line, and a task's name runs past its box and under
- * its icon (owner, 2026-11-11, smart-trust-phw business processes: *"bad
+ * its icon (owner, 2026-11-11, on a downstream layer's business processes: *"bad
  * bpmn"*, with eight screenshots). This is the one place every picture passes
  * through, so it is fixed here, for every diagram, not in each `.bpmn`.
  *
