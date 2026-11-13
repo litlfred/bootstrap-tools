@@ -342,6 +342,23 @@ export function siblingLinks(
   return out;
 }
 
+/**
+ * Every definer of each process id, as the id → file map seen from `file`.
+ * Two diagrams may define the same id; a single map built by reading them in
+ * turn is last-wins, and `siblingLinks` then drops the link of whichever
+ * referrer lost. The definer in `file`'s own directory wins, as `siblingLinks`
+ * links only there; otherwise the lexicographically first path, so the answer
+ * never depends on read order.
+ */
+export function processFilesFrom(definers: Map<string, string[]>, file: string): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const [id, files] of definers) {
+    const sorted = [...files].sort();
+    out.set(id, sorted.find((f) => dirname(f) === dirname(file)) ?? sorted[0]!);
+  }
+  return out;
+}
+
 /** The picture to write beside `file`, or an error saying why there is none. */
 export async function besideSource(
   r: Renderer,
@@ -404,8 +421,8 @@ if (import.meta.main) {
     console.error(`bpmn-js not installed (${viewer} missing). Run \`bun install\`.`);
     process.exit(1);
   }
-  const processFile = new Map<string, string>();
-  for (const f of sources) for (const id of processIds(readFileSync(f, "utf-8"))) processFile.set(id, f);
+  const definers = new Map<string, string[]>();
+  for (const f of sources) for (const id of processIds(readFileSync(f, "utf-8"))) definers.set(id, [...(definers.get(id) ?? []), f]);
   const r = await openRenderer(viewer);
   let bad = 0;
   for (const file of sources.sort()) {
@@ -418,7 +435,7 @@ if (import.meta.main) {
       console.log(`· ${relative(repo, file)} holds no process — nothing to draw`);
       continue;
     }
-    const got = await besideSource(r, file, processFile);
+    const got = await besideSource(r, file, processFilesFrom(definers, file));
     if ("error" in got) {
       console.error(`✗ ${relative(repo, file)}: ${got.error}`);
       bad++;
