@@ -9,13 +9,20 @@
   conflicted three times in a single day (2026-10-01), and 207 such counts in
   54 READMEs made almost every merge conflict. The numbers are in the
   writer's `Plan.counts`, for a harness to publish where they cannot conflict.
+
+  The table is written only when it has a row. Over the list limit `files` is
+  empty, and with no subdirectory either the summary is the whole answer: a
+  header and separator with no body is not a table to kramdown, which keeps
+  it as a paragraph and turns `---` into an em dash.
 {%- endcomment -%}
 {%- if summary != "" -%}
 _{{ summary }}_
 
 {% endif -%}
-{%- if files.size == 0 and subdirs.size == 0 and summary == "" -%}
+{%- if files.size == 0 and subdirs.size == 0 -%}
+{%- if summary == "" -%}
 _This directory holds no files yet._
+{%- endif -%}
 {%- else -%}
 | file | what it is | used by |
 |---|---|---|

@@ -214,6 +214,25 @@ describe("over the list limit, the summary names kinds, never numbers — bean b
   test("overLimitNamesKinds", () => {
     expect(notes).toContain("More than 150 files directly here, too many to list, of these kinds: .md, .txt.");
     expect(notes).not.toMatch(/\b151\b|\b7[56] \.(md|txt)\b/); // 151 files: 76 .txt, 75 .md
+  });
+  test("overLimitNoSubdirsWritesNoTable", () => {
+    // No file rows and no subdirectory rows: a header and separator alone is
+    // not a table to kramdown, which prints it as a paragraph of em dashes.
+    expect(notes).not.toContain("| file | what it is | used by |");
+    expect(notes).not.toMatch(/^\|---/m);
+    rmSync(r, { recursive: true, force: true });
+  });
+});
+
+describe("over the list limit with a subdirectory, the table holds its row", async () => {
+  const r = repo();
+  for (let i = 0; i < 151; i++) writeFileSync(join(r, "demo", "notes", `n${i}.md`), "x\n");
+  mkdirSync(join(r, "demo", "notes", "sub"));
+  writeFileSync(join(r, "demo", "notes", "sub", "s.md"), "x\n");
+  const notes = (await plan(r, instancesIn(r))).writes.get(join(r, "demo", "notes", "README.md"))!;
+  test("overLimitWithSubdirKeepsTable", () => {
+    expect(notes).toContain("More than 150 files directly here, too many to list");
+    expect(notes).toContain("| file | what it is | used by |\n|---|---|---|\n| [`sub/`](sub/)");
     rmSync(r, { recursive: true, force: true });
   });
 });
