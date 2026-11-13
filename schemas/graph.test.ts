@@ -334,7 +334,7 @@ describe("every $schema a bootstrap file carries is a Node Kind its declaration 
   });
 });
 
-describe("the terms' subject area (owner, 2026-11-07: \"do it in the schema\")", () => {
+describe(`the terms' subject area (owner, 2026-11-07: "do it in the schema")`, () => {
   test("is a lowercase local id, so a layer can compare it", () => {
     expect(BOOTSTRAP_TERMS_SUBJECT).toMatch(/^[a-z0-9][a-z0-9._-]*$/);
   });

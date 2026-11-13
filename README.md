@@ -301,6 +301,7 @@ Part of [Bootstrap tools](#readme) 0.1.0, declared as `bootstrap-tools-scripts`,
 | [`gate-own.feature`](scripts/gate-own.feature) | a file |  |
 | [`gate-own.test.ts`](scripts/gate-own.test.ts) | a file |  |
 | [`gate-own.ts`](scripts/gate-own.ts) | a file |  |
+| [`gen-bootstrap-schemas.feature`](scripts/gen-bootstrap-schemas.feature) | a file |  |
 | [`gen-bootstrap-schemas.test.ts`](scripts/gen-bootstrap-schemas.test.ts) | a file |  |
 | [`gen-bootstrap-schemas.ts`](scripts/gen-bootstrap-schemas.ts) | a file |  |
 | [`gen-vocabulary.feature`](scripts/gen-vocabulary.feature) | a file |  |
