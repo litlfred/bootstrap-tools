@@ -1,5 +1,5 @@
 # The `merge-guard` commit status on this repository's PR heads: a caller of
-# cat-harness-tools' layer-merge-guard.yml (owner, 2026-11-13, card "A.
+# the reusable layer-merge-guard.yml named under `uses:` below (owner, 2026-11-13, card "A.
 # merge-guard required status"). Keep this file name: the guard ignores its
 # own runs as evidence about the head. It never merges.
 name: Merge guard
