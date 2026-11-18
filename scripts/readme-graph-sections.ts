@@ -33,10 +33,11 @@
  * reported as "this instance has no Processes".
  */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { basename, dirname, join, relative } from "node:path";
+import { basename, dirname, extname, join, relative } from "node:path";
 
 import { declarationFileIn, readKnowledgeGraphDeclaration } from "../schemas/declaration.ts";
 import { BOOTSTRAP_TERMS } from "../schemas/graph.ts";
+import { firstSentence, headOf, kindNoun, leadingDoc, summaryLine, textTitle } from "./describe-dir.ts";
 import { gitFiles } from "./git-files.ts";
 import { bootstrapTermTargets, linkTerms } from "./term-links.ts";
 
@@ -71,7 +72,6 @@ export const andList = (xs: readonly string[]): string =>
 /** Escape the cell separator so a value containing `|` cannot break a table. */
 const cell = (text: string): string => text.replace(/\|/g, "\\|");
 
-/** The first sentence of `text`, markdown emphasis removed, at most ~160 characters. */
 /**
  * A relative path as a markdown link DESTINATION: every segment
  * percent-encoded, parentheses included.
@@ -90,12 +90,12 @@ export function linkTarget(path: string): string {
     .join("/");
 }
 
-export function firstSentence(text: string): string {
-  const flat = text.replace(/\s+/g, " ").replace(/\*\*|__/g, "").trim();
-  const end = flat.search(/[.!?](\s|$)/);
-  const s = end === -1 ? flat : flat.slice(0, end + 1);
-  return s.length > 160 ? `${s.slice(0, 157).trimEnd()}…` : s;
-}
+/**
+ * The first sentence of `text`, markdown emphasis removed, at most ~160
+ * characters. Defined in `describe-dir.ts`, beside the other readers of a
+ * file's own words; re-exported here for this module's callers.
+ */
+export { firstSentence };
 
 /**
  * Every file under `dir` that git would commit, relative to `root`, sorted:
@@ -319,6 +319,23 @@ export function describe(root: string, file: string, assets: Map<string, string>
     }
     return "data";
   }
+  // A file nothing above reads still usually says what it is: code in its
+  // leading doc comment, plain text in a title line, and anything else by
+  // its kind. "a file" is left for what none of those can name.
+  const noun = kindNoun(basename(file));
+  if (noun) return noun;
+  const ext = extname(file).toLowerCase();
+  let body: string;
+  try {
+    body = headOf(join(root, file));
+  } catch {
+    return "a file";
+  }
+  // A binary file is not text, and its first bytes are not a sentence.
+  if (body.includes("\u0000")) return "a file";
+  const doc = leadingDoc(body, ext);
+  if (doc) return summaryLine(doc);
+  if (ext === ".txt" || ext === "") return textTitle(body) ?? (ext === ".txt" ? "plain text" : "a file");
   return "a file";
 }
 
