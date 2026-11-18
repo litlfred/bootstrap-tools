@@ -13,25 +13,25 @@ Part of [Bootstrap tools](../README.md) 0.1.0, declared as `bootstrap-tools-sche
 
 | file | what it is | used by |
 |---|---|---|
-| [`declaration.feature`](declaration.feature) | a file |  |
+| [`declaration.feature`](declaration.feature) | knowledgeGraphsIn — finding [Knowledge Graph](https://litlfred.github.io/bootstrap/schemas/#knowledge-graph) declarations in a directory |  |
 | [`declaration.test.ts`](declaration.test.ts) | a file |  |
-| [`declaration.ts`](declaration.ts) | a file |  |
-| [`declared-order.ts`](declared-order.ts) | a file |  |
-| [`discussion.feature`](discussion.feature) | a file |  |
-| [`discussion.test.ts`](discussion.test.ts) | a file |  |
-| [`discussion.ts`](discussion.ts) | a file |  |
-| [`graph-export.ts`](graph-export.ts) | a file |  |
-| [`graph-paths.feature`](graph-paths.feature) | a file |  |
-| [`graph-paths.test.ts`](graph-paths.test.ts) | a file |  |
-| [`graph.feature`](graph.feature) | a file |  |
-| [`graph.test.ts`](graph.test.ts) | a file |  |
-| [`graph.ts`](graph.ts) | a file |  |
-| [`model-registry.ts`](model-registry.ts) | a file |  |
-| [`release-iri.feature`](release-iri.feature) | a file |  |
-| [`release-iri.test.ts`](release-iri.test.ts) | a file |  |
-| [`release-iri.ts`](release-iri.ts) | a file |  |
-| [`requirement-set.ts`](requirement-set.ts) | a file |  |
-| [`requirement.ts`](requirement.ts) | a file |  |
-| [`subgraph-export.ts`](subgraph-export.ts) | a file |  |
+| [`declaration.ts`](declaration.ts) | Read a [Knowledge Graph](https://litlfred.github.io/bootstrap/schemas/#knowledge-graph) [Declaration](https://litlfred.github.io/bootstrap/schemas/#declaration) with nothing but bootstrap's own shape. |  |
+| [`declared-order.ts`](declared-order.ts) | Check an order someone WROTE, rather than compute one. |  |
+| [`discussion.feature`](discussion.feature) | the generated bootstrap discussion schemas, against the contract they replace |  |
+| [`discussion.test.ts`](discussion.test.ts) | The generated bootstrap schemas, against the contract they replace. |  |
+| [`discussion.ts`](discussion.ts) | The two documents the `discussion` process carries, as Zod. |  |
+| [`graph-export.ts`](graph-export.ts) | The shape of `bootstrap.jsonld`, the graph bootstrap owes in place of a visualiser — as `scripts/export-graph.ts` writes it. |  |
+| [`graph-paths.feature`](graph-paths.feature) | declared paths stay inside the declaring directory |  |
+| [`graph-paths.test.ts`](graph-paths.test.ts) | A path a declaration names stays inside the declaring directory (bean `dnrj`): no leading slash or backslash, no drive letter, no `..` segment. |  |
+| [`graph.feature`](graph.feature) | bootstrap defines its own terms, and nothing in it points above it |  |
+| [`graph.test.ts`](graph.test.ts) | bootstrap defines its own terms, and nothing in it points above it (owner, 2026-09-23: "bootstrap = self definitional. |  |
+| [`graph.ts`](graph.ts) | bootstrap's own terms, and the shape of the file that declares a [Knowledge Graph](https://litlfred.github.io/bootstrap/schemas/#knowledge-graph). |  |
+| [`model-registry.ts`](model-registry.ts) | Which languages a MODEL is good at, and whether anybody checked. |  |
+| [`release-iri.feature`](release-iri.feature) | an instance's release addresses, and the sync that keeps literal copies of them at the declared major |  |
+| [`release-iri.test.ts`](release-iri.test.ts) | A layer's release addresses, and the sync that keeps literal copies of them at the declared major (owner, 2026-10-23, option "B. |  |
+| [`release-iri.ts`](release-iri.ts) | A layer's release addresses: where its identifiers live for the major version it declares. |  |
+| [`requirement-set.ts`](requirement-set.ts) | A REQUIREMENT SET — the requirements document: a set of requirement statements at one stage of its life, with the sign-offs that moved it there. |  |
+| [`requirement.ts`](requirement.ts) | A REQUIREMENT — what a harness, or something built with one, must do, said so it can be checked. |  |
+| [`subgraph-export.ts`](subgraph-export.ts) | The files a NAMED SUBGRAPH publishes, as `scripts/subgraph-jsonld.ts` writes them: `index.jsonld` (each direct member a pointer, each child subgraph an IRI)… |  |
 
 <!-- kg:subgraph:end -->
