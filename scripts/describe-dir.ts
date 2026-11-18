@@ -77,7 +77,28 @@ export function oneLine(text: string, max = CELL_CHARS): string {
 }
 
 /** `s` cut to `max` characters with `…`, never leaving a code span open. */
+/**
+ * Text read out of an arbitrary file, made safe for a markdown table cell:
+ * HTML comments are removed until none is left (one pass can leave a `<!--`
+ * that a crafted `<!<!---->--` rebuilds), a stray `<!--` or `-->` is dropped,
+ * and `<` outside code spans becomes `&lt;` so no raw HTML reaches the README.
+ * (`|` is escaped later, where the row is written.)
+ */
+export function cellSafe(text: string): string {
+  let s = text;
+  for (let prev = ""; prev !== s; ) {
+    prev = s;
+    s = s.replace(/<!--[\s\S]*?-->/g, "");
+  }
+  s = s.replace(/<!--|-->/g, "");
+  return s
+    .split(/(`[^`]*`)/)
+    .map((part, i) => (i % 2 === 1 ? part : part.replace(/</g, "&lt;")))
+    .join("");
+}
+
 function cut(s: string, max: number): string {
+  s = cellSafe(s);
   if (s.length <= max) return s;
   let head = s.slice(0, max - 3).trimEnd();
   if ((head.match(/`/g) ?? []).length % 2 === 1) head = head.slice(0, head.lastIndexOf("`")).trimEnd();
@@ -221,7 +242,11 @@ export function jsonTitle(j: unknown): string | undefined {
  * declared for …"* and the *"Part of …"* line.
  */
 export function readmeSummary(md: string, dirName?: string): string | undefined {
-  let text = md.replace(/^---\n[\s\S]*?\n---\n/, "").replace(/<!--[\s\S]*?-->/g, "");
+  let text = md.replace(/^---\n[\s\S]*?\n---\n/, "");
+  for (let prev = ""; prev !== text; ) {
+    prev = text;
+    text = text.replace(/<!--[\s\S]*?-->/g, "");
+  }
   text = text.replace(/```[\s\S]*?```/g, "");
   let heading: string | undefined;
   for (const block of text.split(/\n\s*\n/)) {

@@ -9,7 +9,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { describeSubdirectory, jsonTitle, kindNoun, kindsPhrase, leadingDoc, oneLine, readmeSummary, summaryLine, textTitle } from "./describe-dir.ts";
+import { cellSafe, describeSubdirectory, jsonTitle, kindNoun, kindsPhrase, leadingDoc, oneLine, readmeSummary, summaryLine, textTitle } from "./describe-dir.ts";
 import { describe as describeFile } from "./readme-graph-sections.ts";
 
 describe("leading documentation, by language", () => {
@@ -93,5 +93,18 @@ describe("a subdirectory, from what it holds", () => {
     expect(describeSubdirectory(join(r, "s"), ["x.md"])).toEqual({ text: "`.md` files", from: "" });
     expect(describeSubdirectory(join(r, "s"), [])).toBeUndefined();
     rmSync(r, { recursive: true, force: true });
+  });
+});
+
+describe("text read from a file is safe in a table cell", () => {
+  test("a comment rebuilt by one removal pass is still removed (CodeQL js/incomplete-multi-character-sanitization)", () => {
+    expect(cellSafe("a <!<!---->-- b")).not.toContain("<!--");
+    expect(readmeSummary("Text <!<!---->-- hidden --> more.\n") ?? "").not.toContain("<!--");
+  });
+  test("raw HTML outside code spans is escaped, inside them it is kept", () => {
+    expect(cellSafe("a <script>x</script> `<b>`")).toBe("a &lt;script>x&lt;/script> `<b>`");
+  });
+  test("a title carrying HTML comes out escaped", () => {
+    expect(oneLine("Title <img src=x onerror=y>")).toBe("Title &lt;img src=x onerror=y>");
   });
 });
