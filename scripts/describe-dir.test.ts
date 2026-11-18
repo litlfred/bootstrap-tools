@@ -9,7 +9,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { cellSafe, describeSubdirectory, jsonTitle, kindNoun, kindsPhrase, leadingDoc, oneLine, readmeSummary, summaryLine, textTitle } from "./describe-dir.ts";
+import { cellSafe, describeSubdirectory, stripHtmlComments, jsonTitle, kindNoun, kindsPhrase, leadingDoc, oneLine, readmeSummary, summaryLine, textTitle } from "./describe-dir.ts";
 import { describe as describeFile } from "./readme-graph-sections.ts";
 
 describe("leading documentation, by language", () => {
@@ -100,6 +100,10 @@ describe("text read from a file is safe in a table cell", () => {
   test("a comment rebuilt by one removal pass is still removed (CodeQL js/incomplete-multi-character-sanitization)", () => {
     expect(cellSafe("a <!<!---->-- b")).not.toContain("<!--");
     expect(readmeSummary("Text <!<!---->-- hidden --> more.\n") ?? "").not.toContain("<!--");
+  });
+  test("both comment endings, and an unterminated comment, are removed", () => {
+    expect(stripHtmlComments("a<!-- x -->b<!-- y --!>c<!-- z")).toBe("abc");
+    expect(stripHtmlComments("<!<!---->--x")).not.toContain("<!--");
   });
   test("raw HTML outside code spans is escaped, inside them it is kept", () => {
     expect(cellSafe("a <script>x</script> `<b>`")).toBe("a &lt;script>x&lt;/script> `<b>`");

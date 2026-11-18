@@ -78,20 +78,43 @@ export function oneLine(text: string, max = CELL_CHARS): string {
 
 /** `s` cut to `max` characters with `…`, never leaving a code span open. */
 /**
+ * HTML comments removed by a scanner, not a regular expression: from each
+ * `<!--` to the nearest `-->` or `--!>` (both end a comment in HTML), and an
+ * unterminated `<!--` to the end of the text, repeated until nothing it
+ * returns contains `<!--` (a crafted `<!<!---->--` cannot rebuild one).
+ */
+export function stripHtmlComments(text: string): string {
+  // Joining the text on either side of a removed comment can form a new
+  // opener ("<!<!---->--x" -> "<!--x"), so repeat until none is left. Each
+  // pass removes at least four characters, so this ends.
+  let s = text;
+  while (s.includes("<!--")) s = stripOnce(s);
+  return s;
+}
+
+function stripOnce(text: string): string {
+  let out = "";
+  let i = 0;
+  for (;;) {
+    const open = text.indexOf("<!--", i);
+    if (open === -1) return out + text.slice(i);
+    out += text.slice(i, open);
+    const ends = [text.indexOf("-->", open + 4), text.indexOf("--!>", open + 4)].filter((e) => e !== -1);
+    if (ends.length === 0) return out;
+    const end = Math.min(...ends);
+    i = end + (text.startsWith("--!>", end) ? 4 : 3);
+  }
+}
+
+/**
  * Text read out of an arbitrary file, made safe for a markdown table cell:
- * HTML comments are removed until none is left (one pass can leave a `<!--`
- * that a crafted `<!<!---->--` rebuilds), a stray `<!--` or `-->` is dropped,
- * and `<` outside code spans becomes `&lt;` so no raw HTML reaches the README.
- * (`|` is escaped later, where the row is written.)
+ * comments removed ({@link stripHtmlComments}), then every `<` outside a code
+ * span written `&lt;`, so no raw HTML (a tag, or a comment opener left by
+ * anything upstream) reaches the README. `|` is escaped later, where the row
+ * is written.
  */
 export function cellSafe(text: string): string {
-  let s = text;
-  for (let prev = ""; prev !== s; ) {
-    prev = s;
-    s = s.replace(/<!--[\s\S]*?-->/g, "");
-  }
-  s = s.replace(/<!--|-->/g, "");
-  return s
+  return stripHtmlComments(text)
     .split(/(`[^`]*`)/)
     .map((part, i) => (i % 2 === 1 ? part : part.replace(/</g, "&lt;")))
     .join("");
@@ -242,11 +265,7 @@ export function jsonTitle(j: unknown): string | undefined {
  * declared for …"* and the *"Part of …"* line.
  */
 export function readmeSummary(md: string, dirName?: string): string | undefined {
-  let text = md.replace(/^---\n[\s\S]*?\n---\n/, "");
-  for (let prev = ""; prev !== text; ) {
-    prev = text;
-    text = text.replace(/<!--[\s\S]*?-->/g, "");
-  }
+  let text = stripHtmlComments(md.replace(/^---\n[\s\S]*?\n---\n/, ""));
   text = text.replace(/```[\s\S]*?```/g, "");
   let heading: string | undefined;
   for (const block of text.split(/\n\s*\n/)) {
