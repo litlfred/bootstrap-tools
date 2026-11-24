@@ -21,7 +21,7 @@
  * 2. a self-describing file in it, in {@link SELF_DESCRIBING} order: a
  *    manifest named after the directory (`<dir>/<dir>.json`, `.ts`, `.js`),
  *    then the conventional `package.json`, `manifest.json`, `index.json`,
- *    `structure.json`, `summary.json`, `index.ts`, `index.js`, `__init__.py`;
+ *    `summary.json`, `index.ts`, `index.js`, `__init__.py`;
  * 3. failing all of those, the KINDS of file it holds (`.md`, `.ts`, …).
  *
  * Every answer but the last says where it came from, so a reader can tell a
@@ -289,6 +289,12 @@ export function readmeSummary(md: string, dirName?: string): string | undefined 
 /**
  * The files, relative to a subdirectory, that may describe it — in the order
  * they are tried after its README. `{dir}` is the subdirectory's own name.
+ *
+ * Not `structure.json`: that is a library entry's document structure, not a
+ * description of its directory, and it is read only through the structure
+ * accessor that knows its variants (bean rkqp), which lives above this layer.
+ * A directory holding one is still described by its README, a manifest here,
+ * or the kinds fallback.
  */
 export const SELF_DESCRIBING = [
   "{dir}.json",
@@ -297,7 +303,6 @@ export const SELF_DESCRIBING = [
   "package.json",
   "manifest.json",
   "index.json",
-  "structure.json",
   "summary.json",
   "index.ts",
   "index.js",

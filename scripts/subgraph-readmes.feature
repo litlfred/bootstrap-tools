@@ -187,9 +187,15 @@ Feature: subgraph-readmes — one README per declared directory, from the declar
 
   @test:scripts/subgraph-readmes.test.ts::an_undeclared_subdirectory_is_described_from_itself_—_owner,_2026-11-18::selfDescribingJsonTitleWins
   Scenario: a self-describing JSON file's title wins over another's paragraph, and a pipe cannot break the row
-    Given skills holds doc/structure.json titled "On | Pipes" and doc/summary.json with a brief
+    Given skills holds doc/manifest.json titled "On | Pipes" and doc/summary.json with a brief
     When the READMEs are planned for the fixture
-    Then doc/'s row reads "On \| Pipes (from structure.json)"
+    Then doc/'s row reads "On \| Pipes (from manifest.json)"
+
+  @test:scripts/subgraph-readmes.test.ts::an_undeclared_subdirectory_is_described_from_itself_—_owner,_2026-11-18::structureJsonIsNotADirectoryDescription
+  Scenario: a library entry's structure.json is not read as a description of its directory
+    Given skills holds entry/structure.json with a title and nothing else
+    When the READMEs are planned for the fixture
+    Then entry/'s row is described by the kinds of file it holds, not by that title
 
   @test:scripts/subgraph-readmes.test.ts::an_undeclared_subdirectory_is_described_from_itself_—_owner,_2026-11-18::readmeFirstParagraph
   Scenario: a subdirectory README is read for its first paragraph of prose
