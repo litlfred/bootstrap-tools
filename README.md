@@ -244,26 +244,26 @@ Part of [Bootstrap tools](#readme) 0.1.0, declared as `bootstrap-tools-schemas`,
 
 | file | what it is | used by |
 |---|---|---|
-| [`declaration.feature`](schemas/declaration.feature) | a file |  |
+| [`declaration.feature`](schemas/declaration.feature) | knowledgeGraphsIn — finding [Knowledge Graph](https://litlfred.github.io/bootstrap/schemas/#knowledge-graph) declarations in a directory |  |
 | [`declaration.test.ts`](schemas/declaration.test.ts) | a file |  |
-| [`declaration.ts`](schemas/declaration.ts) | a file |  |
-| [`declared-order.ts`](schemas/declared-order.ts) | a file |  |
-| [`discussion.feature`](schemas/discussion.feature) | a file |  |
-| [`discussion.test.ts`](schemas/discussion.test.ts) | a file |  |
-| [`discussion.ts`](schemas/discussion.ts) | a file |  |
-| [`graph-export.ts`](schemas/graph-export.ts) | a file |  |
-| [`graph-paths.feature`](schemas/graph-paths.feature) | a file |  |
-| [`graph-paths.test.ts`](schemas/graph-paths.test.ts) | a file |  |
-| [`graph.feature`](schemas/graph.feature) | a file |  |
-| [`graph.test.ts`](schemas/graph.test.ts) | a file |  |
-| [`graph.ts`](schemas/graph.ts) | a file |  |
-| [`model-registry.ts`](schemas/model-registry.ts) | a file |  |
-| [`release-iri.feature`](schemas/release-iri.feature) | a file |  |
-| [`release-iri.test.ts`](schemas/release-iri.test.ts) | a file |  |
-| [`release-iri.ts`](schemas/release-iri.ts) | a file |  |
-| [`requirement-set.ts`](schemas/requirement-set.ts) | a file |  |
-| [`requirement.ts`](schemas/requirement.ts) | a file |  |
-| [`subgraph-export.ts`](schemas/subgraph-export.ts) | a file |  |
+| [`declaration.ts`](schemas/declaration.ts) | Read a [Knowledge Graph](https://litlfred.github.io/bootstrap/schemas/#knowledge-graph) [Declaration](https://litlfred.github.io/bootstrap/schemas/#declaration) with nothing but bootstrap's own shape. |  |
+| [`declared-order.ts`](schemas/declared-order.ts) | Check an order someone WROTE, rather than compute one. |  |
+| [`discussion.feature`](schemas/discussion.feature) | the generated bootstrap discussion schemas, against the contract they replace |  |
+| [`discussion.test.ts`](schemas/discussion.test.ts) | The generated bootstrap schemas, against the contract they replace. |  |
+| [`discussion.ts`](schemas/discussion.ts) | The two documents the `discussion` process carries, as Zod. |  |
+| [`graph-export.ts`](schemas/graph-export.ts) | The shape of `bootstrap.jsonld`, the graph bootstrap owes in place of a visualiser — as `scripts/export-graph.ts` writes it. |  |
+| [`graph-paths.feature`](schemas/graph-paths.feature) | declared paths stay inside the declaring directory |  |
+| [`graph-paths.test.ts`](schemas/graph-paths.test.ts) | A path a declaration names stays inside the declaring directory (bean `dnrj`): no leading slash or backslash, no drive letter, no `..` segment. |  |
+| [`graph.feature`](schemas/graph.feature) | bootstrap defines its own terms, and nothing in it points above it |  |
+| [`graph.test.ts`](schemas/graph.test.ts) | bootstrap defines its own terms, and nothing in it points above it (owner, 2026-09-23: "bootstrap = self definitional. |  |
+| [`graph.ts`](schemas/graph.ts) | bootstrap's own terms, and the shape of the file that declares a [Knowledge Graph](https://litlfred.github.io/bootstrap/schemas/#knowledge-graph). |  |
+| [`model-registry.ts`](schemas/model-registry.ts) | Which languages a MODEL is good at, and whether anybody checked. |  |
+| [`release-iri.feature`](schemas/release-iri.feature) | an instance's release addresses, and the sync that keeps literal copies of them at the declared major |  |
+| [`release-iri.test.ts`](schemas/release-iri.test.ts) | A layer's release addresses, and the sync that keeps literal copies of them at the declared major (owner, 2026-10-23, option "B. |  |
+| [`release-iri.ts`](schemas/release-iri.ts) | A layer's release addresses: where its identifiers live for the major version it declares. |  |
+| [`requirement-set.ts`](schemas/requirement-set.ts) | A REQUIREMENT SET — the requirements document: a set of requirement statements at one stage of its life, with the sign-offs that moved it there. |  |
+| [`requirement.ts`](schemas/requirement.ts) | A REQUIREMENT — what a harness, or something built with one, must do, said so it can be checked. |  |
+| [`subgraph-export.ts`](schemas/subgraph-export.ts) | The files a NAMED SUBGRAPH publishes, as `scripts/subgraph-jsonld.ts` writes them: `index.jsonld` (each direct member a pointer, each child subgraph an IRI)… |  |
 
 <!-- kg:subgraph:end -->
 
@@ -284,85 +284,88 @@ Part of [Bootstrap tools](#readme) 0.1.0, declared as `bootstrap-tools-scripts`,
 
 | file | what it is | used by |
 |---|---|---|
-| [`bootstrap-schema-page.feature`](scripts/bootstrap-schema-page.feature) | a file |  |
-| [`bootstrap-schema-page.test.ts`](scripts/bootstrap-schema-page.test.ts) | a file |  |
-| [`bootstrap-schema-page.ts`](scripts/bootstrap-schema-page.ts) | a file |  |
-| [`bpmn-tidy.ts`](scripts/bpmn-tidy.ts) | a file |  |
-| [`check-bootstrap-concepts.ts`](scripts/check-bootstrap-concepts.ts) | a file |  |
-| [`check-closure.feature`](scripts/check-closure.feature) | a file |  |
-| [`check-closure.test.ts`](scripts/check-closure.test.ts) | a file |  |
-| [`check-closure.ts`](scripts/check-closure.ts) | a file |  |
-| [`check-node-iris.feature`](scripts/check-node-iris.feature) | a file |  |
+| [`bootstrap-schema-page.feature`](scripts/bootstrap-schema-page.feature) | the drawn schema page — bootstrap/schemas/README.md |  |
+| [`bootstrap-schema-page.test.ts`](scripts/bootstrap-schema-page.test.ts) | The drawn schema page — `bootstrap/schemas/README.md`. |  |
+| [`bootstrap-schema-page.ts`](scripts/bootstrap-schema-page.ts) | bootstrap's schemas, drawn — the page a person reads instead of raw JSON. |  |
+| [`bpmn-tidy.ts`](scripts/bpmn-tidy.ts) | Tidy what bpmn-js drew, before it is saved as SVG: put every label where it can be read, and fit every name in its box. |  |
+| [`check-bootstrap-concepts.ts`](scripts/check-bootstrap-concepts.ts) | A BOOTSTRAP SCHEMA NAMES NO OUTSIDE CONCEPT. |  |
+| [`check-closure.feature`](scripts/check-closure.feature) | the closure gate and the import closure walker, tested with planted violations |  |
+| [`check-closure.test.ts`](scripts/check-closure.test.ts) | The closure gate, tested with PLANTED violations: a boundary check that has never been seen failing is not known to check anything (`4j3h`, `q2wn`). |  |
+| [`check-closure.ts`](scripts/check-closure.ts) | check-closure.ts — bootstrap-tools imports nothing but itself, `zod`, `liquidjs`, `@playwright/test` and the runtime. |  |
+| [`check-node-iris.feature`](scripts/check-node-iris.feature) | check-node-iris — every published file's identifier is its own path under the release address |  |
 | [`check-node-iris.test.ts`](scripts/check-node-iris.test.ts) | a file |  |
-| [`check-node-iris.ts`](scripts/check-node-iris.ts) | a file |  |
-| [`export-graph.feature`](scripts/export-graph.feature) | a file |  |
+| [`check-node-iris.ts`](scripts/check-node-iris.ts) | check-node-iris.ts — a published node's own identifier names the path its file sits at. |  |
+| [`describe-dir.feature`](scripts/describe-dir.feature) | describe-dir — what a file or a directory is, read from itself |  |
+| [`describe-dir.test.ts`](scripts/describe-dir.test.ts) | `describe-dir` — what a file or a directory is, read from itself. |  |
+| [`describe-dir.ts`](scripts/describe-dir.ts) | What a file or a directory IS, read from itself — extractive, offline, no model. |  |
+| [`export-graph.feature`](scripts/export-graph.feature) | export-graph — bootstrap's graph from bootstrap's files, in standard terms |  |
 | [`export-graph.test.ts`](scripts/export-graph.test.ts) | a file |  |
 | [`export-graph.ts`](scripts/export-graph.ts) | a file |  |
-| [`gate-own.feature`](scripts/gate-own.feature) | a file |  |
-| [`gate-own.test.ts`](scripts/gate-own.test.ts) | a file |  |
-| [`gate-own.ts`](scripts/gate-own.ts) | a file |  |
-| [`gen-bootstrap-schemas.feature`](scripts/gen-bootstrap-schemas.feature) | a file |  |
+| [`gate-own.feature`](scripts/gate-own.feature) | Gate scoping — a layer's PR checks judge only the caller's own files |  |
+| [`gate-own.test.ts`](scripts/gate-own.test.ts) | `iri:sync:check` judges only the caller's own files in a layer's PR checks (owner ruling 2026-11-05, "Move the checks"; `gate-own.ts`). |  |
+| [`gate-own.ts`](scripts/gate-own.ts) | Whether a file is the caller's own in a layer's PR checks: the reader of the environment contract the layer PR-check runner sets, restated here in a dozen li… |  |
+| [`gen-bootstrap-schemas.feature`](scripts/gen-bootstrap-schemas.feature) | gen-bootstrap-schemas mints from the bootstrap checkout it is handed |  |
 | [`gen-bootstrap-schemas.test.ts`](scripts/gen-bootstrap-schemas.test.ts) | a file |  |
-| [`gen-bootstrap-schemas.ts`](scripts/gen-bootstrap-schemas.ts) | a file |  |
-| [`gen-vocabulary.feature`](scripts/gen-vocabulary.feature) | a file |  |
+| [`gen-bootstrap-schemas.ts`](scripts/gen-bootstrap-schemas.ts) | Generate `bootstrap`'s JSON Schema from the Zod in `bootstrap-tools/schemas/`. |  |
+| [`gen-vocabulary.feature`](scripts/gen-vocabulary.feature) | bootstrap's vocabulary is exactly its terms (owner, 2026-09-30) |  |
 | [`gen-vocabulary.test.ts`](scripts/gen-vocabulary.test.ts) | a file |  |
-| [`gen-vocabulary.ts`](scripts/gen-vocabulary.ts) | a file |  |
-| [`generated-by.feature`](scripts/generated-by.feature) | a file |  |
-| [`generated-by.test.ts`](scripts/generated-by.test.ts) | a file |  |
-| [`generated-by.ts`](scripts/generated-by.ts) | a file |  |
-| [`git-files.ts`](scripts/git-files.ts) | a file |  |
-| [`init.feature`](scripts/init.feature) | a file |  |
-| [`init.test.ts`](scripts/init.test.ts) | a file |  |
-| [`init.ts`](scripts/init.ts) | a file |  |
-| [`iri-sync.ts`](scripts/iri-sync.ts) | a file |  |
-| [`knowledge-graph-data-store.feature`](scripts/knowledge-graph-data-store.feature) | a file |  |
-| [`knowledge-graph-data-store.test.ts`](scripts/knowledge-graph-data-store.test.ts) | a file |  |
-| [`logger.feature`](scripts/logger.feature) | a file |  |
-| [`logger.test.ts`](scripts/logger.test.ts) | a file |  |
-| [`pages-status.feature`](scripts/pages-status.feature) | a file |  |
+| [`gen-vocabulary.ts`](scripts/gen-vocabulary.ts) | gen-vocabulary.ts — bootstrap's vocabulary, `bootstrap/ns.jsonld`: every term bootstrap defines and every [Graph Typology](https://litlfred.github.io/bootstrap/schemas/#graph-typology) it defines, as RDF/SKOS, at the addr… |  |
+| [`generated-by.feature`](scripts/generated-by.feature) | every file bootstrap-tools writes into bootstrap says so, and names bootstrap-tools as the writer |  |
+| [`generated-by.test.ts`](scripts/generated-by.test.ts) | Every file bootstrap-tools writes into bootstrap says so, and names bootstrap-tools as the writer (owner, 2026-09-30, bean `xsqm`). |  |
+| [`generated-by.ts`](scripts/generated-by.ts) | The note every file bootstrap-tools writes into bootstrap carries: that it is generated, by what, and what to change instead. |  |
+| [`git-files.ts`](scripts/git-files.ts) | The files git accounts for under a directory — tracked, plus untracked and not ignored — as absolute paths, or `undefined` when git cannot answer. |  |
+| [`init.feature`](scripts/init.feature) | init — the steps the declarations name, in four states |  |
+| [`init.test.ts`](scripts/init.test.ts) | A fake layer `demo` needing `base`, as sibling checkouts. |  |
+| [`init.ts`](scripts/init.ts) | Walk a layer's initialization steps AS ITS DECLARATIONS NAME THEM, check each, perform the ones a tool can perform, and report every step in one of four stat… |  |
+| [`iri-sync.ts`](scripts/iri-sync.ts) | iri-sync.ts — keep every literal copy of a layer's release IRIs at the major version its declaration states. |  |
+| [`knowledge-graph-data-store.feature`](scripts/knowledge-graph-data-store.feature) | bootstrap's knowledge-graph-data-store contract, held against a git repository read through the git CLI |  |
+| [`knowledge-graph-data-store.test.ts`](scripts/knowledge-graph-data-store.test.ts) | bootstrap's `knowledge-graph-data-store` contract, held to its four responsibilities against the mechanical [Actor](https://litlfred.github.io/bootstrap/schemas/#actor) that plays the [Role](https://litlfred.github.io/bootstrap/schemas/#role): a git repository, read… |  |
+| [`logger.feature`](scripts/logger.feature) | bootstrap's logger contract, held to what can be checked from bootstrap's own files |  |
+| [`logger.test.ts`](scripts/logger.test.ts) | bootstrap's `logger` contract, held to what can be checked from bootstrap's own files: the shape of the message the Logger must record, and where the diagram… |  |
+| [`pages-status.feature`](scripts/pages-status.feature) | pages-status — the push's status and its message |  |
 | [`pages-status.test.ts`](scripts/pages-status.test.ts) | a file |  |
-| [`pages-status.ts`](scripts/pages-status.ts) | a file |  |
-| [`publish-files.feature`](scripts/publish-files.feature) | a file |  |
+| [`pages-status.ts`](scripts/pages-status.ts) | The OUTPUT of rendering a [Knowledge Graph](https://litlfred.github.io/bootstrap/schemas/#knowledge-graph) to GitHub Pages: the status of the push, and one message that carries the deployed commit and the QA result. |  |
+| [`publish-files.feature`](scripts/publish-files.feature) | bootstrap's files, published as they sit |  |
 | [`publish-files.test.ts`](scripts/publish-files.test.ts) | a file |  |
-| [`publish-files.ts`](scripts/publish-files.ts) | a file |  |
-| [`publish-site.feature`](scripts/publish-site.feature) | a file |  |
-| [`publish-site.test.ts`](scripts/publish-site.test.ts) | a file |  |
-| [`publish-site.ts`](scripts/publish-site.ts) | a file |  |
-| [`readme-book.feature`](scripts/readme-book.feature) | a file |  |
+| [`publish-files.ts`](scripts/publish-files.ts) | Publish bootstrap's files AS THEY SIT at its site address — every relative link in them still resolves, because nothing moves. |  |
+| [`publish-site.feature`](scripts/publish-site.feature) | publish-site — any runner, any git remote (bootstrap-tools#7) |  |
+| [`publish-site.test.ts`](scripts/publish-site.test.ts) | A bare remote whose `gh-pages` holds one stale file. |  |
+| [`publish-site.ts`](scripts/publish-site.ts) | Publish a staged site onto a branch (default `gh-pages`) as a FULL REPLACE. |  |
+| [`readme-book.feature`](scripts/readme-book.feature) | the README page — every README on one page |  |
 | [`readme-book.test.ts`](scripts/readme-book.test.ts) | a file |  |
-| [`readme-book.ts`](scripts/readme-book.ts) | a file |  |
-| [`readme-graph-sections.feature`](scripts/readme-graph-sections.feature) | a file |  |
-| [`readme-graph-sections.test.ts`](scripts/readme-graph-sections.test.ts) | a file |  |
-| [`readme-graph-sections.ts`](scripts/readme-graph-sections.ts) | a file |  |
-| [`readme-sections.feature`](scripts/readme-sections.feature) | a file |  |
+| [`readme-book.ts`](scripts/readme-book.ts) | Every README in a repository as ONE page, with a table of contents: the root README first, then each directory's README in path order. |  |
+| [`readme-graph-sections.feature`](scripts/readme-graph-sections.feature) | kg:processes and kg:files — an instance's README sections drawn from its own declaration |  |
+| [`readme-graph-sections.test.ts`](scripts/readme-graph-sections.test.ts) | `kg:processes` and `kg:files` — a layer's README sections drawn from its own declaration. |  |
+| [`readme-graph-sections.ts`](scripts/readme-graph-sections.ts) | README sections a layer renders from its own declaration: its [Processes](https://litlfred.github.io/bootstrap/schemas/#process), drawn, every file it holds, and its [Roles](https://litlfred.github.io/bootstrap/schemas/#role). |  |
+| [`readme-sections.feature`](scripts/readme-sections.feature) | README sections, written standalone, and where a bootstrap term link points |  |
 | [`readme-sections.test.ts`](scripts/readme-sections.test.ts) | a file |  |
-| [`readme-sections.ts`](scripts/readme-sections.ts) | a file |  |
-| [`readme-toc.feature`](scripts/readme-toc.feature) | a file |  |
+| [`readme-sections.ts`](scripts/readme-sections.ts) | Write — or with `--check`, verify — the generated sections of a layer's `README.md`: `kg:processes`, `kg:files`, `kg:roles` and `kg:toc`. |  |
+| [`readme-toc.feature`](scripts/readme-toc.feature) | kg:toc — a README's own headings, as GitHub anchors them |  |
 | [`readme-toc.test.ts`](scripts/readme-toc.test.ts) | a file |  |
-| [`readme-toc.ts`](scripts/readme-toc.ts) | a file |  |
-| [`rehearse-standalone.ts`](scripts/rehearse-standalone.ts) | a file |  |
-| [`render-bpmn-definers.test.ts`](scripts/render-bpmn-definers.test.ts) | a file |  |
-| [`render-bpmn.ts`](scripts/render-bpmn.ts) | a file |  |
+| [`readme-toc.ts`](scripts/readme-toc.ts) | `kg:toc` — a README's table of contents, generated from its own headings. |  |
+| [`rehearse-standalone.ts`](scripts/rehearse-standalone.ts) | Rehearse the split: run bootstrap-tools against bootstrap with NOTHING else present — the two as sibling checkouts in an empty directory, as… |  |
+| [`render-bpmn-definers.test.ts`](scripts/render-bpmn-definers.test.ts) | Two diagrams in different directories define the same process id. |  |
+| [`render-bpmn.ts`](scripts/render-bpmn.ts) | Draw a BPMN 2.0 diagram as a standalone SVG, and write that SVG beside its `.bpmn` for every [Process](https://litlfred.github.io/bootstrap/schemas/#process) a content graph declares. |  |
 | [`render-fonts.conf`](scripts/render-fonts.conf) | a file |  |
-| [`schema-semver.feature`](scripts/schema-semver.feature) | a file |  |
-| [`schema-semver.test.ts`](scripts/schema-semver.test.ts) | a file |  |
-| [`schema-semver.ts`](scripts/schema-semver.ts) | a file |  |
-| [`site.feature`](scripts/site.feature) | a file |  |
+| [`schema-semver.feature`](scripts/schema-semver.feature) | the bump classifier behind bootstrap:semver — what each change to a published schema requires |  |
+| [`schema-semver.test.ts`](scripts/schema-semver.test.ts) | The bump classifier behind `bootstrap:semver` — skill `bootstrap-contract-semver`. |  |
+| [`schema-semver.ts`](scripts/schema-semver.ts) | The semver bump bootstrap's published schemas REQUIRE, computed from a diff. |  |
+| [`site.feature`](scripts/site.feature) | site — what a Pages workflow publishes |  |
 | [`site.test.ts`](scripts/site.test.ts) | a file |  |
 | [`site.ts`](scripts/site.ts) | a file |  |
-| [`subgraph-jsonld.feature`](scripts/subgraph-jsonld.feature) | a file |  |
+| [`subgraph-jsonld.feature`](scripts/subgraph-jsonld.feature) | named subgraphs — one IRI, two files, projected from one graph |  |
 | [`subgraph-jsonld.test.ts`](scripts/subgraph-jsonld.test.ts) | a file |  |
-| [`subgraph-jsonld.ts`](scripts/subgraph-jsonld.ts) | a file |  |
-| [`subgraph-readmes.feature`](scripts/subgraph-readmes.feature) | a file |  |
-| [`subgraph-readmes.test.ts`](scripts/subgraph-readmes.test.ts) | a file |  |
+| [`subgraph-jsonld.ts`](scripts/subgraph-jsonld.ts) | A layer's NAMED SUBGRAPHS as JSON-LD: under each subgraph's IRI, `index.jsonld` and `index.hydrated.jsonld`, both projected from the one graph… |  |
+| [`subgraph-readmes.feature`](scripts/subgraph-readmes.feature) | subgraph-readmes — one README per declared directory, from the declaration |  |
+| [`subgraph-readmes.test.ts`](scripts/subgraph-readmes.test.ts) | `subgraph-readmes` — one README per declared directory, from the declaration. |  |
 | [`subgraph-readmes.ts`](scripts/subgraph-readmes.ts) | a file |  |
-| [`term-links.feature`](scripts/term-links.feature) | a file |  |
+| [`term-links.feature`](scripts/term-links.feature) | linkTerms — linking defined terms in prose |  |
 | [`term-links.test.ts`](scripts/term-links.test.ts) | a file |  |
-| [`term-links.ts`](scripts/term-links.ts) | a file |  |
-| [`validate-bootstrap.feature`](scripts/validate-bootstrap.feature) | a file |  |
-| [`validate-bootstrap.test.ts`](scripts/validate-bootstrap.test.ts) | a file |  |
-| [`validate-bootstrap.ts`](scripts/validate-bootstrap.ts) | a file |  |
-| [`templates/`](scripts/templates/) | _nothing declares what this holds_ | |
+| [`term-links.ts`](scripts/term-links.ts) | Link every defined term in a piece of Markdown prose to its definition. |  |
+| [`validate-bootstrap.feature`](scripts/validate-bootstrap.feature) | bootstrap:validate — bootstrap's documents, parsed against their Zod |  |
+| [`validate-bootstrap.test.ts`](scripts/validate-bootstrap.test.ts) | `bootstrap:validate` — bootstrap's documents, parsed against their Zod. |  |
+| [`validate-bootstrap.ts`](scripts/validate-bootstrap.ts) | Parse bootstrap's JSON documents against the Zod they are described by. |  |
+| [`templates/`](scripts/templates/) | _holds `.html` and `.liquid` files_ | |
 
 <!-- kg:subgraph:end -->
 

@@ -57,7 +57,7 @@ Feature: subgraph-readmes — one README per declared directory, from the declar
   Scenario: files are described from themselves; a subdirectory is one row, with no count
     When the READMEs are planned for the fixture
     Then a.md's row reads "Does A."
-    And pack/ is one row reading "nothing declares what this holds", with no count
+    And pack/ is one row reading "holds `.md` files" — the kinds it holds, with no count
 
   @test:scripts/subgraph-readmes.test.ts::plan,_on_a_fixture::countsInPlan
   Scenario: the counts the README no longer prints are in the plan — bean ba9e
@@ -102,13 +102,13 @@ Feature: subgraph-readmes — one README per declared directory, from the declar
   Scenario: a name with no description falls back to a value that does not count
     Given the caller resolves only an unrelated subdirectory name, not pack
     When the READMEs are planned
-    Then pack/'s row reads "nothing declares what this holds"
+    Then pack/'s row reads "holds `.md` files", read from what it holds
 
   @test:scripts/subgraph-readmes.test.ts::a_subdirectory_row_says_what_it_IS_when_the_caller_resolved_one::emptyDescriptionFallsBack
   Scenario: an empty string is not a description — it falls back
     Given the caller resolves pack with an empty description
     When the READMEs are planned
-    Then pack/'s row reads "nothing declares what this holds"
+    Then pack/'s row reads "holds `.md` files", read from what it holds
 
   @test:scripts/subgraph-readmes.test.ts::a_README_is_invariant_under_adding_a_file_—_bean_ba9e::addingFileChangesNoReadme
   Scenario: adding a file under a subdirectory changes no README
@@ -178,3 +178,84 @@ Feature: subgraph-readmes — one README per declared directory, from the declar
     Then the notes README starts with that same front matter and the begin marker
     And it has exactly two front matter fence lines
     And it declares no generated key in front matter
+
+  @test:scripts/subgraph-readmes.test.ts::an_undeclared_subdirectory_is_described_from_itself_—_owner,_2026-11-18::manifestNamedAfterDirectory
+  Scenario: a manifest named after the subdirectory describes it by its doc comment's first paragraph
+    Given skills holds paper/paper.ts whose doc comment opens "A Paper Title" above a paragraph of prose
+    When the READMEs are planned for the fixture
+    Then paper/'s row reads "A Paper Title (from paper.ts)"
+
+  @test:scripts/subgraph-readmes.test.ts::an_undeclared_subdirectory_is_described_from_itself_—_owner,_2026-11-18::selfDescribingJsonTitleWins
+  Scenario: a self-describing JSON file's title wins over another's paragraph, and a pipe cannot break the row
+    Given skills holds doc/structure.json titled "On | Pipes" and doc/summary.json with a brief
+    When the READMEs are planned for the fixture
+    Then doc/'s row reads "On \| Pipes (from structure.json)"
+
+  @test:scripts/subgraph-readmes.test.ts::an_undeclared_subdirectory_is_described_from_itself_—_owner,_2026-11-18::readmeFirstParagraph
+  Scenario: a subdirectory README is read for its first paragraph of prose
+    Given skills holds told/README.md with front matter, a comment, a banner, a heading and a paragraph
+    When the READMEs are planned for the fixture
+    Then told/'s row links its README and reads the paragraph's first sentence, from README.md
+
+  @test:scripts/subgraph-readmes.test.ts::an_undeclared_subdirectory_is_described_from_itself_—_owner,_2026-11-18::readmeHeadingWhenNoProse
+  Scenario: a README with no paragraph of prose is read for its heading
+    Given skills holds titled/README.md with a heading and a list
+    When the READMEs are planned for the fixture
+    Then titled/'s row reads the heading, from README.md
+
+  @test:scripts/subgraph-readmes.test.ts::an_undeclared_subdirectory_is_described_from_itself_—_owner,_2026-11-18::kindsInNameOrder
+  Scenario: with nothing to read, the row names the kinds of file it holds, in name order
+    Given skills holds mixed/ with a .lean and a .ts file
+    When the READMEs are planned for the fixture
+    Then mixed/'s row reads "holds .lean and .ts files"
+
+  @test:scripts/subgraph-readmes.test.ts::an_undeclared_subdirectory_is_described_from_itself_—_owner,_2026-11-18::declaredStillWins
+  Scenario: a description the caller resolved still wins over one read from the subdirectory
+    When the READMEs are planned with paper/ declared "Declared."
+    Then paper/'s row reads "Declared." with no source
+
+  @test:scripts/subgraph-readmes.test.ts::many_subdirectories_fold_under_a_disclosure,_every_row_kept_—_owner,_2026-11-18::foldedUnderDetails
+  Scenario: more subdirectories than the limit fold under a details disclosure, every row kept
+    Given notes holds one more subdirectory than the limit
+    When the READMEs are planned for the fixture
+    Then the notes README holds a details disclosure with a subdirectory table naming every one
+
+  @test:scripts/subgraph-readmes.test.ts::many_subdirectories_fold_under_a_disclosure,_every_row_kept_—_owner,_2026-11-18::filesStayAboveTheFold
+  Scenario: the file table stays above the fold
+    When the READMEs are planned for the fixture
+    Then n.md's row comes before the disclosure
+
+  @test:scripts/subgraph-readmes.test.ts::many_subdirectories_fold_under_a_disclosure,_every_row_kept_—_owner,_2026-11-18::foldPrintsNoCount
+  Scenario: the fold says expand, never how many — bean ba9e
+    When the READMEs are planned for the fixture
+    Then the notes README does not print the number of subdirectories
+
+  @test:scripts/subgraph-readmes.test.ts::a_directory's_visualisers,_as_the_caller_resolved_them_—_owner,_2026-11-18::linkedWhenResolved
+  Scenario: a resolved visualiser is linked under the "Part of" line
+    When the READMEs are planned with skills rendered by a visualiser at an address, and owing one
+    Then the skills README links it after "See it rendered:"
+    And there is no no-visualiser finding
+
+  @test:scripts/subgraph-readmes.test.ts::a_directory's_visualisers,_as_the_caller_resolved_them_—_owner,_2026-11-18::owedAndMissingIsAFinding
+  Scenario: a directory that owes a visualiser and has none says so, and is a finding
+    When the READMEs are planned with skills owing a visualiser and none resolved
+    Then the skills README says no visualiser renders it though its kind needs one
+    And the no-visualiser finding is skills
+
+  @test:scripts/subgraph-readmes.test.ts::a_directory's_visualisers,_as_the_caller_resolved_them_—_owner,_2026-11-18::notOwedAndMissingIsSilent
+  Scenario: a directory that owes none and has none says nothing
+    When the READMEs are planned with skills owing no visualiser and none resolved
+    Then the skills README does not mention a visualiser
+    And there is no no-visualiser finding
+
+  @test:scripts/subgraph-readmes.test.ts::a_directory's_visualisers,_as_the_caller_resolved_them_—_owner,_2026-11-18::unresolvedAddressIsPrintedAndAFinding
+  Scenario: a visualiser with no address prints could not determine, and is a finding
+    When the READMEs are planned with skills rendered by a visualiser whose address is undetermined
+    Then the skills README prints its title and could not determine its address, with the reason
+    And the unresolved-visualiser finding is skills
+
+  @test:scripts/subgraph-readmes.test.ts::a_directory's_visualisers,_as_the_caller_resolved_them_—_owner,_2026-11-18::callerSaidNothing
+  Scenario: a caller that resolved no visualisers gets no line and no finding
+    When the READMEs are planned for the fixture
+    Then the skills README has no "See it rendered" line
+    And there is no no-visualiser finding
