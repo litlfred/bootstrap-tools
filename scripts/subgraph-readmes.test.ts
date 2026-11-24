@@ -333,8 +333,10 @@ describe("an undeclared subdirectory is described from itself — owner, 2026-11
   mkdirSync(join(skills, "paper"));
   writeFileSync(join(skills, "paper", "paper.ts"), 'import { x } from "y";\n\n/**\n * A Paper Title\n *\n * Longer prose that is not the title.\n */\nexport default 1;\n');
   mkdirSync(join(skills, "doc"));
-  writeFileSync(join(skills, "doc", "structure.json"), JSON.stringify({ metadata: { title: "On | Pipes" } }));
+  writeFileSync(join(skills, "doc", "manifest.json"), JSON.stringify({ metadata: { title: "On | Pipes" } }));
   writeFileSync(join(skills, "doc", "summary.json"), JSON.stringify({ brief: "Not this one." }));
+  mkdirSync(join(skills, "entry"));
+  writeFileSync(join(skills, "entry", "structure.json"), JSON.stringify({ metadata: { title: "Not a directory description" } }));
   mkdirSync(join(skills, "told"));
   writeFileSync(join(skills, "told", "README.md"), "---\nx: 1\n---\n<!-- c -->\n> banner\n\n# Told\n\nIt says what it is. And more.\n");
   mkdirSync(join(skills, "titled"));
@@ -349,8 +351,14 @@ describe("an undeclared subdirectory is described from itself — owner, 2026-11
     expect(out).toContain("| [`paper/`](paper/) | A Paper Title _(from `paper.ts`)_ | |");
   });
   test("selfDescribingJsonTitleWins", () => {
-    // structure.json's title before summary.json's paragraph; a pipe cannot break the row.
-    expect(out).toContain("| [`doc/`](doc/) | On \\| Pipes _(from `structure.json`)_ | |");
+    // manifest.json's title before summary.json's paragraph; a pipe cannot break the row.
+    expect(out).toContain("| [`doc/`](doc/) | On \\| Pipes _(from `manifest.json`)_ | |");
+  });
+  test("structureJsonIsNotADirectoryDescription", () => {
+    // A library entry's structure.json is read only through the structure
+    // accessor (bean rkqp), which lives above this layer; the kinds fallback describes it.
+    expect(out).toContain("| [`entry/`](entry/) | _holds `.json` files_ | |");
+    expect(out).not.toContain("Not a directory description");
   });
   test("readmeFirstParagraph", () => {
     expect(out).toContain("| [`told/`](told/README.md) | It says what it is. _(from `README.md`)_ | |");
