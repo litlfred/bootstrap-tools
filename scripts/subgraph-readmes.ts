@@ -47,7 +47,23 @@
  * The heading is the directory's declared `title`, the paragraph its declared
  * `description`, the kinds its `graphTypologies`; each file row is described from
  * the file itself and "used by" only where a diagram records it (the helpers
- * of the `kg:files` README section). The layout is Liquid, in
+ * of the `kg:files` README section).
+ *
+ * A SUBDIRECTORY row says what the caller resolved for it, and otherwise what
+ * the subdirectory says of itself (`describe-dir.ts`, owner 2026-11-18): its
+ * README, a manifest named after it or a conventional self-describing file,
+ * else the kinds of file it holds — each derived line naming the file it came
+ * from, and never a count (bean `ba9e`). Over {@link SUBDIR_LIST_LIMIT} the
+ * subdirectory rows fold under a `<details>` disclosure, every row kept.
+ *
+ * ## Where the directory is SEEN
+ *
+ * A caller may resolve the pages that render a directory — its visualisers —
+ * and say whether the directory owes one ({@link VisualiserView},
+ * `owesVisualiser`). They are linked under the "Part of" line. Like the
+ * process, what renders a directory and where it is published is declared in
+ * fields this reader does not know, so the caller resolves it; standalone,
+ * none is resolved and the README carries no such line. The layout is Liquid, in
  * `templates/readme/` beside this file; templates may `{% include %}` each
  * other, Jekyll style, and read any declared field through `kg`.
  *
@@ -79,7 +95,10 @@
  *
  * {@link Plan.findings} records every directory with no `title` or no
  * `description`, every declared directory absent from disk (unless the caller
- * said it may be), and every README left untouched for lack of markers. The
+ * said it may be), every README left untouched for lack of markers, every
+ * directory that owes a visualiser and has none (`no-visualiser`), and every
+ * visualiser the caller found but could not place at an address
+ * (`unresolved-visualiser`). The
  * caller decides where findings are recorded; standalone, they are printed.
  *
  * Usage: `bun run bootstrap-tools/scripts/subgraph-readmes.ts [--repo <dir>] [--check]`
@@ -100,6 +119,7 @@ import { BOOTSTRAP_TERMS } from "../schemas/graph.ts";
 import { releaseIris } from "../schemas/release-iri.ts";
 import { GENERATED_BY, generatedBanner, generatedFrontMatter, leadingFrontMatter, ownGeneratedFrontMatter } from "./generated-by.ts";
 import { committedFiles } from "./git-files.ts";
+import { describeSubdirectory } from "./describe-dir.ts";
 import { describe as describeFile, linkTarget, usedByIndex } from "./readme-graph-sections.ts";
 import { bootstrapTermTargets, linkTerms } from "./term-links.ts";
 
@@ -128,6 +148,15 @@ export const DESCRIPTION_WORDS = 60;
 
 /** More direct files than this and the table becomes a count by extension. */
 export const LIST_LIMIT = 150;
+
+/**
+ * More subdirectories than this and their rows are folded under a
+ * `<details>` disclosure, below the file table: every row is still there and
+ * reachable, but a directory of hundreds of documents (a library) no longer
+ * opens on a wall of rows. The fold says "expand", never how many — bean
+ * `ba9e`.
+ */
+export const SUBDIR_LIST_LIMIT = 60;
 
 const cell = (t: string) => t.replace(/\|/g, "\\|").replace(/\s*\n\s*/g, " ");
 
@@ -167,6 +196,25 @@ export interface ProcessView {
   undetermined: string;
 }
 
+/**
+ * One page that renders a directory — a VISUALISER — resolved by the caller.
+ *
+ * Like {@link ProcessView}, the writer only prints it: what renders a
+ * directory, and at what address, is declared in fields this reader does not
+ * know (in one harness, the `visualisers` its layers declare and the route
+ * they are published at). `href` is `""` when the caller knew a visualiser
+ * covers the directory and could not say where its page is published, and
+ * then `undetermined` says why — a printed absence, never a guessed URL.
+ */
+export interface VisualiserView {
+  /** What the link says. */
+  title: string;
+  /** The page, absolute or relative to this README; `""` when undetermined. */
+  href: string;
+  /** Why `href` is empty, or `""`. */
+  undetermined: string;
+}
+
 /** One declared directory, with its path resolved by the caller. */
 export interface SubgraphInput {
   id: string;
@@ -185,6 +233,19 @@ export interface SubgraphInput {
    * carries no process section at all.
    */
   process?: ProcessView;
+  /**
+   * The pages that render this directory, already resolved by the caller.
+   * `undefined`: the caller resolved none and said nothing — no line, no
+   * finding. `[]`: the caller looked and nothing renders it, which is a
+   * finding only when {@link owesVisualiser} says the directory needs one.
+   */
+  visualisers?: VisualiserView[];
+  /**
+   * The caller's answer to whether this directory MUST be rendered. A
+   * directory that owes a visualiser and has none is the `no-visualiser`
+   * finding, and its README says so rather than staying silent.
+   */
+  owesVisualiser?: boolean;
   /**
    * What each SUBDIRECTORY is, by its name — a description the CALLER resolved
    * from whatever declares that subdirectory. Absent, or absent for one name,
@@ -239,6 +300,8 @@ export interface Plan {
     | "absent-directory"
     | "unmarked-readme"
     | "unresolved-process"
+    | "no-visualiser"
+    | "unresolved-visualiser"
     | "untracked-not-counted",
     Finding[]
   >;
@@ -342,6 +405,8 @@ export async function plan(repo: string, instances: InstanceInput[], templates: 
       "absent-directory": [],
       "unmarked-readme": [],
       "unresolved-process": [],
+      "no-visualiser": [],
+      "unresolved-visualiser": [],
       "untracked-not-counted": [],
     },
     counts: new Map(),
@@ -403,18 +468,39 @@ export async function plan(repo: string, instances: InstanceInput[], templates: 
       const direct = all.filter((f) => !f.includes("/") && f !== "README.md");
       const counts = new Map<string, number>();
       for (const f of all) if (f.includes("/")) counts.set(f.split("/")[0]!, (counts.get(f.split("/")[0]!) ?? 0) + 1);
+      // The files under each subdirectory, relative to it: what
+      // `describeSubdirectory` may read, and nothing else (the committed tree).
+      const under = new Map<string, string[]>();
+      for (const f of all) {
+        const i = f.indexOf("/");
+        if (i === -1) continue;
+        const n = f.slice(0, i);
+        if (!under.has(n)) under.set(n, []);
+        under.get(n)!.push(f.slice(i + 1));
+      }
       const subdirs = [...counts]
         .sort((a, b) => a[0].localeCompare(b[0]))
-        .map(([n, count]) => ({
-          name: n,
-          href: linkTarget(n),
-          count,
-          // Empty string rather than undefined, matching every other optional
-          // the templates read: `subgraph.liquid` states the convention —
-          // "Empty strings where not declared — never a typed number."
-          description: linked(cell(d.subdirs?.[n] ?? "")),
-          readme: existsSync(join(abs, n, "README.md")) ? `${linkTarget(n)}/README.md` : "",
-        }));
+        .map(([n, count]) => {
+          // What the subdirectory IS: declared (the caller resolved it) wins;
+          // else read from the subdirectory itself — its README, a
+          // self-describing file, or the kinds of file it holds
+          // (`describe-dir.ts`). `from` says which, so a reader knows a
+          // derived line from a declared one; `""` for declared.
+          const declared = d.subdirs?.[n] ?? "";
+          const derived = declared === "" ? describeSubdirectory(join(abs, n), under.get(n) ?? []) : undefined;
+          return {
+            name: n,
+            href: linkTarget(n),
+            count,
+            // Empty string rather than undefined, matching every other optional
+            // the templates read: `subgraph.liquid` states the convention —
+            // "Empty strings where not declared — never a typed number."
+            description: linked(cell(declared !== "" ? declared : (derived?.text ?? ""))),
+            from: declared === "" && derived !== undefined ? derived.from : "",
+            kinds: declared === "" && derived !== undefined && derived.from === "",
+            readme: existsSync(join(abs, n, "README.md")) ? `${linkTarget(n)}/README.md` : "",
+          };
+        });
       const listed = direct.length <= LIST_LIMIT;
       const files = listed
         ? direct.map((f) => {
@@ -442,6 +528,11 @@ export async function plan(repo: string, instances: InstanceInput[], templates: 
       // this finding — that is a stale checkout, repaired by `render:bpmn`,
       // and merging the two would send a reader to the wrong repair.
       if (d.process !== undefined && d.process.bpmn === "") out.findings["unresolved-process"].push(at);
+      // The same rule for a visualiser: none where one is owed is a finding,
+      // and so is one the caller found but could not place at an address.
+      const visualisers = (d.visualisers ?? []).map((v) => ({ ...v, title: cell(v.title) }));
+      if (d.owesVisualiser === true && d.visualisers !== undefined && visualisers.length === 0) out.findings["no-visualiser"].push(at);
+      if (visualisers.some((v) => v.href === "")) out.findings["unresolved-visualiser"].push(at);
 
       const readme = join(abs, "README.md");
       const onDisk = existsSync(readme) ? readFileSync(readme, "utf-8") : undefined;
@@ -471,7 +562,13 @@ export async function plan(repo: string, instances: InstanceInput[], templates: 
         kg: decl,
         files,
         subdirs,
+        // Over the limit the subdirectory rows fold under a disclosure: every
+        // row is kept, the page just no longer opens on them.
+        folded: subdirs.length > SUBDIR_LIST_LIMIT,
         summary,
+        visualisers,
+        // Print the absence only where the caller looked AND one is owed.
+        missingVisualiser: d.owesVisualiser === true && d.visualisers !== undefined && visualisers.length === 0,
       });
       const spliced = splice(existing, region.replace(/\n{3,}/g, "\n\n"));
       // A page this writes WHOLLY also says so in front matter (owner,

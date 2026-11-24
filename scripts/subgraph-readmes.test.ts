@@ -15,7 +15,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { generatedFrontMatter } from "./generated-by.ts";
-import { BEGIN, END, SCRIPT, instancesIn, plan, splice } from "./subgraph-readmes.ts";
+import { BEGIN, END, SCRIPT, SUBDIR_LIST_LIMIT, instancesIn, plan, splice } from "./subgraph-readmes.ts";
 
 function repo(): string {
   const r = mkdtempSync(join(tmpdir(), "subgraph-readmes-"));
@@ -99,7 +99,9 @@ describe("plan, on a fixture", async () => {
 
   test("subdirectoryIsOneRow", () => {
     expect(skills).toContain("| [`a.md`](a.md) | Does A. |");
-    expect(skills).toContain("| [`pack/`](pack/) | _nothing declares what this holds_ | |");
+    // Nothing declares pack/, so it is described from what it holds — the
+    // kinds of file in it, never how many (bean `ba9e`).
+    expect(skills).toContain("| [`pack/`](pack/) | _holds `.md` files_ | |");
   });
 
   test("countsInPlan", () => {
@@ -170,7 +172,7 @@ describe("a subdirectory row says what it IS when the caller resolved one", asyn
       dirs: i.dirs.map((d) => (d.id === "skills" ? { ...d, subdirs: { nothing: "unrelated" } } : d)),
     }));
     return plan(r, partial).then((q) => {
-      expect(q.writes.get(join(r, "demo", "skills", "README.md"))!).toContain("| [`pack/`](pack/) | _nothing declares what this holds_ | |");
+      expect(q.writes.get(join(r, "demo", "skills", "README.md"))!).toContain("| [`pack/`](pack/) | _holds `.md` files_ | |");
     });
   });
 
@@ -183,7 +185,7 @@ describe("a subdirectory row says what it IS when the caller resolved one", asyn
       dirs: i.dirs.map((d) => (d.id === "skills" ? { ...d, subdirs: { pack: "" } } : d)),
     }));
     return plan(r, blank).then((q) => {
-      expect(q.writes.get(join(r, "demo", "skills", "README.md"))!).toContain("| [`pack/`](pack/) | _nothing declares what this holds_ | |");
+      expect(q.writes.get(join(r, "demo", "skills", "README.md"))!).toContain("| [`pack/`](pack/) | _holds `.md` files_ | |");
     });
   });
 });
@@ -317,6 +319,113 @@ describe("a wholly generated README declares itself in front matter — owner de
     expect(next.startsWith(`---\ntitle: "Notes"\nnav_order: 3\n---\n${BEGIN}`)).toBe(true);
     expect(next.match(/^---$/gm)!.length).toBe(2);
     expect(DECLARES(next)).toBe(false);
+    rmSync(r, { recursive: true, force: true });
+  });
+});
+
+describe("an undeclared subdirectory is described from itself — owner, 2026-11-18", async () => {
+  // "README.md's should be more intelligent on their render and summarize the
+  // contents of their subgraph/dir better." A row of "nothing declares what
+  // this holds" told a GitHub reader nothing about a directory whose own
+  // manifest names it on its first line.
+  const r = repo();
+  const skills = join(r, "demo", "skills");
+  mkdirSync(join(skills, "paper"));
+  writeFileSync(join(skills, "paper", "paper.ts"), 'import { x } from "y";\n\n/**\n * A Paper Title\n *\n * Longer prose that is not the title.\n */\nexport default 1;\n');
+  mkdirSync(join(skills, "doc"));
+  writeFileSync(join(skills, "doc", "structure.json"), JSON.stringify({ metadata: { title: "On | Pipes" } }));
+  writeFileSync(join(skills, "doc", "summary.json"), JSON.stringify({ brief: "Not this one." }));
+  mkdirSync(join(skills, "told"));
+  writeFileSync(join(skills, "told", "README.md"), "---\nx: 1\n---\n<!-- c -->\n> banner\n\n# Told\n\nIt says what it is. And more.\n");
+  mkdirSync(join(skills, "titled"));
+  writeFileSync(join(skills, "titled", "README.md"), "# A Heading Only\n\n- a list\n");
+  mkdirSync(join(skills, "mixed"));
+  writeFileSync(join(skills, "mixed", "z.lean"), "x\n");
+  writeFileSync(join(skills, "mixed", "a.ts"), "x\n");
+  const out = (await plan(r, instancesIn(r))).writes.get(join(skills, "README.md"))!;
+
+  test("manifestNamedAfterDirectory", () => {
+    // The doc comment's first PARAGRAPH: a title line is not run into the prose under it.
+    expect(out).toContain("| [`paper/`](paper/) | A Paper Title _(from `paper.ts`)_ | |");
+  });
+  test("selfDescribingJsonTitleWins", () => {
+    // structure.json's title before summary.json's paragraph; a pipe cannot break the row.
+    expect(out).toContain("| [`doc/`](doc/) | On \\| Pipes _(from `structure.json`)_ | |");
+  });
+  test("readmeFirstParagraph", () => {
+    expect(out).toContain("| [`told/`](told/README.md) | It says what it is. _(from `README.md`)_ | |");
+  });
+  test("readmeHeadingWhenNoProse", () => {
+    expect(out).toContain("| [`titled/`](titled/README.md) | A Heading Only _(from `README.md`)_ | |");
+  });
+  test("kindsInNameOrder", () => {
+    expect(out).toContain("| [`mixed/`](mixed/) | _holds `.lean` and `.ts` files_ | |");
+  });
+  test("declaredStillWins", async () => {
+    const declared = instancesIn(r).map((i) => ({
+      ...i,
+      dirs: i.dirs.map((d) => (d.id === "skills" ? { ...d, subdirs: { paper: "Declared." } } : d)),
+    }));
+    const q = (await plan(r, declared)).writes.get(join(skills, "README.md"))!;
+    expect(q).toContain("| [`paper/`](paper/) | Declared. | |");
+    rmSync(r, { recursive: true, force: true });
+  });
+});
+
+describe("many subdirectories fold under a disclosure, every row kept — owner, 2026-11-18", async () => {
+  const r = repo();
+  const notes = join(r, "demo", "notes");
+  for (let i = 0; i <= SUBDIR_LIST_LIMIT; i++) {
+    mkdirSync(join(notes, `d${String(i).padStart(3, "0")}`));
+    writeFileSync(join(notes, `d${String(i).padStart(3, "0")}`, "x.md"), "x\n");
+  }
+  const out = (await plan(r, instancesIn(r))).writes.get(join(notes, "README.md"))!;
+  test("foldedUnderDetails", () => {
+    expect(out).toContain('<details markdown="1">');
+    expect(out).toContain("| subdirectory | what it is |");
+    for (let i = 0; i <= SUBDIR_LIST_LIMIT; i++) expect(out).toContain(`[\`d${String(i).padStart(3, "0")}/\`]`);
+  });
+  test("filesStayAboveTheFold", () => {
+    expect(out.indexOf("| [`n.md`](n.md)")).toBeLessThan(out.indexOf("<details"));
+  });
+  test("foldPrintsNoCount", () => {
+    expect(out).not.toMatch(new RegExp(`\\b${SUBDIR_LIST_LIMIT + 1}\\b`));
+    rmSync(r, { recursive: true, force: true });
+  });
+});
+
+describe("a directory's visualisers, as the caller resolved them — owner, 2026-11-18", async () => {
+  // "each mounted subgraph/dir has a visualizer as required": linked where
+  // resolved, a finding where owed and missing, silent where never asked.
+  const r = repo();
+  const at = (id: string, extra: object) =>
+    instancesIn(r).map((i) => ({ ...i, dirs: i.dirs.map((d) => (d.id === id ? { ...d, ...extra } : d)) }));
+  const readme = (p: Awaited<ReturnType<typeof plan>>, id: string) => p.writes.get(join(r, "demo", id, "README.md"))!;
+
+  test("linkedWhenResolved", async () => {
+    const p = await plan(r, at("skills", { visualisers: [{ title: "Skills", href: "https://e.org/en/h/skills/demo/", undetermined: "" }], owesVisualiser: true }));
+    expect(readme(p, "skills")).toContain("**See it rendered:** [Skills](https://e.org/en/h/skills/demo/)");
+    expect(p.findings["no-visualiser"]).toEqual([]);
+  });
+  test("owedAndMissingIsAFinding", async () => {
+    const p = await plan(r, at("skills", { visualisers: [], owesVisualiser: true }));
+    expect(readme(p, "skills")).toContain("_No visualiser renders this directory, though its kind needs one._");
+    expect(p.findings["no-visualiser"].map((f) => f.directory)).toEqual(["skills"]);
+  });
+  test("notOwedAndMissingIsSilent", async () => {
+    const p = await plan(r, at("skills", { visualisers: [], owesVisualiser: false }));
+    expect(readme(p, "skills")).not.toContain("visualiser");
+    expect(p.findings["no-visualiser"]).toEqual([]);
+  });
+  test("unresolvedAddressIsPrintedAndAFinding", async () => {
+    const p = await plan(r, at("skills", { visualisers: [{ title: "Skills", href: "", undetermined: "no site address" }] }));
+    expect(readme(p, "skills")).toContain("Skills (_could not determine its address: no site address_)");
+    expect(p.findings["unresolved-visualiser"].map((f) => f.directory)).toEqual(["skills"]);
+  });
+  test("callerSaidNothing", async () => {
+    const p = await plan(r, instancesIn(r));
+    expect(readme(p, "skills")).not.toContain("See it rendered");
+    expect(p.findings["no-visualiser"]).toEqual([]);
     rmSync(r, { recursive: true, force: true });
   });
 });

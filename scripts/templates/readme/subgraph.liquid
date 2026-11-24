@@ -18,6 +18,11 @@
               subdirectory — empty when nothing does, and the row then
               shows the count), readme (a link, or empty)
     banner    the generated-by notice (`generated-by.ts`), first on the page
+    visualisers  the pages that render this directory, as the caller
+              resolved them (title, href, undetermined) — empty when it
+              resolved none; `missingVisualiser` is true when one is owed and
+              none was found
+    folded    true when the subdirectory rows fold under a disclosure
     process   the DECLARED governing process (`coverage.process`), resolved
               to its diagram and its rendered SVG — or nil when the directory
               declares none, which is an answer and not a gap
@@ -35,6 +40,10 @@ _No description is declared for `{{ subgraph.id }}`._
 
 Part of [{{ instance.title | default: instance.name }}]({{ instance.readme }}){% if release.version != "" %} {{ release.version }}{% endif %}, declared as `{{ subgraph.id }}`, holding {% for k in subgraph.kinds %}`{{ k }}`{% unless forloop.last %}, {% endunless %}{% endfor %}.
 
+{% if visualisers.size > 0 or missingVisualiser -%}
+{% include visualiser.liquid %}
+
+{% endif -%}
 {% if process -%}
 {% include process.liquid -%}
 
